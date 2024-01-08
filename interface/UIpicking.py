@@ -127,11 +127,10 @@ def UITodosLosPedidos(data):
                 st.markdown(f"**Seller:** {df_data.iloc[i, 1]}")
                 st.markdown(f"**Estado:** {df_data.iloc[i, 2]}")
             with col2:
-                if st.session_state['optionsPickear']=="Todos los seller":
-                    if st.button("Pickear", key=i):
-                        EventName,EventAction,EventUser='picking','Se pulso en botón Pickear',st.session_state.useremail
-                        event_instert(EventName,EventAction,EventUser)
-                        ver_detalle(df_data.iloc[i, 0],df_data.iloc[i, 1],df_data.iloc[i, 2])
+                if st.button("Pickear", key=i):
+                     EventName,EventAction,EventUser='picking','Se pulso en botón Pickear',st.session_state.useremail
+                     event_instert(EventName,EventAction,EventUser)
+                     ver_detalle(df_data.iloc[i, 0],df_data.iloc[i, 1],df_data.iloc[i, 2])
 
 
 
@@ -289,7 +288,7 @@ def UIDetallePedido(data_deta,idPedido):
                         ahora = datetime.now()
                         fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
                         insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'])
-                        update_order_product_status(objeto['producto_id'],'validacion')
+                        update_order_product_status(objeto['producto_id'],'pending')
                         linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe pickeo {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
                         lineasTest.append(linea)
                 
