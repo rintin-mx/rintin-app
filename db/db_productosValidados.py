@@ -66,8 +66,7 @@ def update_order_product_status(product_id,estatus) -> dict:
     try:
         conexion = mysql.connector.connect(**config)
         cursor = conexion.cursor(dictionary=True)
-        #sql = "UPDATE wp_posts SET post_status = %s WHERE post_type='product' and ID=%s"
-        sql = "update wp_posts set post_status = %s  where id = %s"
+        sql = "UPDATE wp_posts SET post_status = %s WHERE post_type='product' and ID=%s"
         cursor.execute(sql, (estatus,product_id))
         conexion.commit()
     finally:
