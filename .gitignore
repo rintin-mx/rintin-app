@@ -1,0 +1,10 @@
+# Ignora los archivos de configuración del sistema operativo
+.DS_Store
+
+# Ignora los archivos de logs y bases de datos
+*.log
+
+# Ignora los archivos de configuración de la base de datos
+*.sqlite3
+config.py
+rintin-16fee-firebase-adminsdk-zcrog-536fdf1dfb.json
