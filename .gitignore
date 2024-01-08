@@ -7,4 +7,5 @@
 # Ignora los archivos de configuración de la base de datos
 *.sqlite3
 config.py
+test.py
 rintin-16fee-firebase-adminsdk-zcrog-536fdf1dfb.json
