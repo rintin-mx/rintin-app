@@ -43,7 +43,7 @@ def UITodosLosPedidos(data):
         st.session_state['disabled']=False
     if st.session_state.disabled == False:
         option = st.selectbox(
-                "How would you like to be contacted?",
+                "",
                 unique_values_list,
                 label_visibility="hidden",
                 disabled=st.session_state.disabled,

@@ -51,7 +51,6 @@ def UIpendienteRecoleccion(total_pedidos, total_paquetes , total_registros, data
 
             
 def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_registros, data):
-    print("UIpendienteRecoleccionSeleccion")
     #if 'mostrar_expander' not in st.session_state:
     #st.session_state['mostrar_expander'] = False
     #if st.button("Volver a inicio"):
@@ -112,7 +111,6 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
 
 
 def UIagrerPedidoSellerSeleccion(data):
-    print("UIagrerPedidoSellerSeleccion")
     j=0
     st.title(f'Seller: {st.session_state.Seller_name}')
     st.header('Pedidos a recolectar')

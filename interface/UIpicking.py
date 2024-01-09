@@ -82,41 +82,6 @@ def UITodosLosPedidos(data):
     #print(options)
     #if len(unique_values_list)==0:
     #    st.session_state.filterOptions = options
-    '''
-    if 'options' not in st.session_state:
-        print("entre al if")
-        options = st.multiselect(
-        'Seleccione uno o varios seller',
-        unique_values_list)
-        st.session_state['options'] = options
-    else:
-        print("entre al else")
-        if len(st.session_state['options'])==0:
-            print("entre al if 2")
-            print("options")
-            options = st.multiselect(
-                'Seleccione uno o varios seller',
-                unique_values_list)
-            st.session_state['options'] = options
-        else:
-            resultado = ', '.join(str(option) for option in st.session_state['options'])
-            st.write(f"Usted selecciono: {resultado}")
-            if st.button("Limpiar", key="limpiarOpcionesPckerar"):
-                st.session_state['options'] = []
-                st.rerun()
-
-        #    print("entre al else 2")
-        #    print("options")
-        #    print(options)
-        #    st.session_state['options'] = options
-        #st.session_state['options'] = options
-    print("st.session_state['options']")
-    print(st.session_state['options'])
-    if len(st.session_state['options'])>0:
-        df_data = df[df['Seller'].isin(st.session_state['options'])]
-    else:
-        df_data = df
-    '''
     for i in range(len(df_data)):
         st.write("---")
         with st.container():
@@ -253,13 +218,6 @@ def UIDetallePedido(data_deta,idPedido):
     trigger_btn = ui.button(text="Confirmar Pickeo", key="trigger_btn")
     respuesta_auditoria=False
     respuesta_validacion=False
-    print("len(objArry)")
-    print(len(objArry))
-    print(objArry)
-    print("len(auditoria)")
-    print(len(auditoria))
-    print("len(validacion)")
-    print(len(validacion))
     if len(auditoria)==len(objArry):
         respuesta_auditoria=ui.alert_dialog(show=trigger_btn, title="Confirmemos el pickeo", description='Enviaremos el pedido a "Pedidos por auditar"\nConfirma si es lo que quisieras', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_auditoria")
         if respuesta_auditoria:
