@@ -37,37 +37,88 @@ def get_seller_centro_padre(db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_seller_sql = """
-                SELECT 
-                    um.meta_value AS seller_name,
-                    p.id AS order_id,
-                    COUNT(DISTINCT p.id) AS pedidos_activos,
-                    SUM(DISTINCT oi.quantity) AS pedidos_proceso,
+                with orders as (
+                    select
+                        id
+                    from
+                        wp_posts
+                    where
+                        post_parent = 0 
+                    AND post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
+                    or post_status = 'wc-agrupar-pedidos'
+                        
+                ),
+                ordermeta as(
+                    select
+                        post_id as order_id,
+                        max(
+                            case
+                                when `meta_key` = '_dokan_vendor_id' then `meta_value`
+                                else NULL
+                            end
+                        ) AS `dokan_vendor_id`
+                    from
+                        wp_postmeta inner join orders on orders.id = post_id
+                    group by post_id 
+                ),
+                sellers as (
+                    select
+                        user_id,
+                        max(
+                            case
+                                when `meta_key` = '_zone' then `meta_value`
+                                else NULL
+                            end
+                        ) AS `zone`,
+                        max(
+                            case
+                                when `meta_key` = 'dokan_store_name' then `meta_value`
+                                else NULL
+                            end
+                        ) AS `seller_name`
+                    from
+                        wp_usermeta
+                        inner join ordermeta on dokan_vendor_id = user_id
+                    where meta_value not in ('centro_cdmx', 'aj_cdmx')
+                    group by user_id
+                    having zone = 'centro'
+                ),
+                order_items as(
+                    select order_item_id, wp_woocommerce_order_items.order_id, order_item_name
+                    from wp_woocommerce_order_items
+                    inner join wp_posts on wp_posts.id = order_id
+                    where order_item_type = 'line_item'  AND post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
+                    and post_status = 'wc-agrupar-pedidos'
+                ),
+                product_order_meta_values as (
+                    select
+                        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
+                        max(
+                            case
+                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
+                                else NULL
+                            end
+                        ) AS `order_quantity`,
+                        count(wp_woocommerce_order_itemmeta.order_item_id)
+                    from
+                        `wp_woocommerce_order_itemmeta`
+                        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
+                    group by
+                        `wp_woocommerce_order_itemmeta`.`order_item_id`
+                )
+                select
+                    order_items.order_id,
+                    count(ordermeta.order_id) as pedidos_activos,
+                    sum(order_quantity) as pedidos_proceso,
                     CASE 
-                        WHEN (SUM( DISTINCT oi.quantity) - COUNT(DISTINCT p.id)) = 0 THEN 'Agrupar'
+                        WHEN (SUM(order_quantity) - COUNT(order_items.order_id)) = 0 THEN 'Agrupar'
                         ELSE 'Faltan Pedidos'
                     END AS estado
-                FROM 
-                    wp_posts p
-                INNER JOIN 
-                    wp_postmeta pm ON p.id = pm.post_id AND pm.meta_key = '_dokan_vendor_id'
-                INNER JOIN 
-                    wp_usermeta um ON um.user_id = pm.meta_value AND um.meta_key = 'dokan_store_name' AND um.meta_value NOT IN ('centro_cdmx', 'aj_cdmx')
-                INNER JOIN 
-                    wp_woocommerce_order_items woi ON p.id = woi.order_id
-                INNER JOIN 
-                    (SELECT 
-                        order_item_id, 
-                        SUM(CASE WHEN meta_key = '_qty' THEN meta_value ELSE 0 END) AS quantity
-                    FROM 
-                        wp_woocommerce_order_itemmeta
-                    GROUP BY 
-                        order_item_id) oi ON woi.order_item_id = oi.order_item_id
-                WHERE 
-                    p.post_parent = 0 
-                    AND p.post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
-                    AND p.post_status = 'wc-agrupar-pedidos'
-                GROUP BY 
-                    p.id
+                from ordermeta
+                    inner join sellers on sellers.user_id = dokan_vendor_id
+                    inner join order_items on order_items.order_id = ordermeta.order_id
+                    inner join product_order_meta_values on product_order_meta_values.order_item_id = order_items.order_item_id
+                group by seller_name,order_items.order_id
         """
 
         # Ejecutar la primera consulta
@@ -78,6 +129,7 @@ def get_seller_centro_padre(db='repl') -> dict:
 
         # Convertir los resultados a un DataFrame de pandas
         wp_seller = pd.DataFrame(resultados_wp_seller_sql)
+        print(wp_seller)
 
     finally:
         # Cerrar el cursor y la conexión
