@@ -8,7 +8,7 @@ def app():
                 if 'current_view' not in st.session_state:
                        print("entre al if")
                        st.session_state['current_view'] = 'auditoria'
-                if st.session_state.current_view== 'pick' or st.session_state.current_view== 'recolect' or st.session_state.current_view== 'ordenesAgrupar':
+                if st.session_state.current_view== 'pick' or st.session_state.current_view== 'recolect'  or st.session_state.current_view== 'ordenesAgrupar' or st.session_state.current_view== 'agrupacion' or st.session_state.current_view== 'detalleAgrupacion':
                       st.session_state['current_view'] = 'auditoria'
 
                 if st.session_state.current_view == 'auditoria':

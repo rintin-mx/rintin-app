@@ -47,7 +47,7 @@ class MultiApp:
                 menu=['Logout','Pickeo','Recoleccion','Auditoria']
                 pagina=1
             elif val in ('francisco', 'JuanMa'):
-                menu=['Logout','Register','Pickeo','Recoleccion','Auditoria', 'Agrupacion','Cookies']
+                menu=['Logout','Register','Pickeo','Recoleccion','Auditoria', 'Agrupacion','Cookies','Test']
             else:
                 menu=['Login']
             app = option_menu(
@@ -62,9 +62,6 @@ class MultiApp:
                     "nav-link": {"color":"white","font-size": "20px", "text-align": "left", "margin":"0px", "--hover-color": "blue"},
                     "nav-link-selected": {"background-color": "#02ab21"},}
                 )
-        print('app')
-        print(app)
-
         if app == "Login":
             login.app()
             if valEmail is not None:
@@ -105,4 +102,7 @@ class MultiApp:
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción agrupacion',valEmail
                 event_instert(EventName,EventAction,EventUser)
+        if app=='Test':
+            test.app()
+
     run() 
