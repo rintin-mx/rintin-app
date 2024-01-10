@@ -8,7 +8,7 @@ import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from db.db_UserInteractionEvents import event_instert
-
+from db.db_productosValidados import update_order_product_status
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
@@ -111,13 +111,17 @@ def UIOrdenesAgruparDetalle(data,idPedido):
                 event_instert(EventName,EventAction,EventUser)
             with st.spinner(f'Actualizando estatus del pedido de {st.session_state.orderId} a Embarque...'):
                 order_status='wc-embarque'
+                for objeto in objArry:
+                    print(objeto['agrupadoSeleccion'])
+                    if objeto['agrupadoSeleccion']=='agrupado':
+                        update_order_product_status(objeto['order_id'],order_status)
                 #idPedido
                 #para test '281660'
-                r = asyncio.run(update_status_wordpress(idPedido, order_status))
-                print("r")
-                print(r)
-                st.session_state.current_view = 'auditoria'
-                st.rerun()
+                #r = asyncio.run(update_status_wordpress(idPedido, order_status))
+                #print("r")
+                #print(r)
+                #st.session_state.current_view = 'auditoria'
+                #st.rerun()
     #if len(no_agrupado)>0:
     #if flag:
     #    st.session_state.current_view = 'auditoria'
