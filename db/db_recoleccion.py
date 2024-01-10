@@ -85,6 +85,7 @@ def get_seller_recollection(db='repl') -> dict:
                     from
                         wp_usermeta
                         inner join ordermeta on dokan_vendor_id = user_id
+                    where meta_value not in ('centro_cdmx', 'aj_cdmx')
                     group by user_id
                     having zone = 'centro' and bodega is null
                 ),
@@ -181,7 +182,7 @@ def get_data_seller_by_name(name,db='repl') -> dict:
                     from
                         wp_postmeta inner join orders on orders.id = post_id
                     group by post_id
-                    having dokan_vendor_id not in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '7180', '7201', '7202', '6927')
+                    #having dokan_vendor_id not in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '7180', '7201', '7202', '6927')
                 ),
                 sellers as (
                     select
@@ -201,6 +202,7 @@ def get_data_seller_by_name(name,db='repl') -> dict:
                     from
                         wp_usermeta
                         inner join ordermeta on dokan_vendor_id = user_id
+                    where meta_value not in ('centro_cdmx', 'aj_cdmx')
                     group by user_id
                     having zone = 'centro'
                 ),
@@ -308,13 +310,15 @@ def get_data_seller_by_name(name,db='repl') -> dict:
                 )
                 select
                     seller_name,
+                    ordermeta.order_id as order_id,
                     count(distinct ordermeta.order_id) as num_pedidos,
                     sum(order_quantity) as num_paquetes
                 from ordermeta
                     inner join sellers on sellers.user_id = dokan_vendor_id
                     inner join order_items on order_items.order_id = ordermeta.order_id
                     inner join product_order_meta_values on product_order_meta_values.order_item_id = order_items.order_item_id
-                group by seller_name
+                WHERE seller_name = %s
+                group by seller_name, ordermeta.order_id
         """
         # Ejecutar la primera consulta
         cursor.execute(wp_seller_by_name_recolection_sql,(name,))

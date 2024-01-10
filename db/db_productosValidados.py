@@ -29,7 +29,7 @@ def config_db(db='repl') -> dict:
         }
     return config
 
-def insert_productos_validados(productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada):
+def insert_productos_validados(productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada, fuente, email):
     db ='prod'
     config = config_db(db)
     start_time = time.time()
@@ -41,9 +41,9 @@ def insert_productos_validados(productID, SKU, usuarioTimestamp, orderID, cantid
 
             # Consulta SQL para insertar datos
             # Sentencia SQL para insertar datos
-            sql = "INSERT INTO productosValidados (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada) VALUES (%s, %s, %s, %s, %s, %s)"
+            sql = "INSERT INTO productosValidados (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada, fuente, email) VALUES (%s, %s, %s, %s, %s, %s,%s, %s)"
             # Ejecutar la sentencia SQL
-            cursor.execute(sql, (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada))
+            cursor.execute(sql, (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada,fuente, email))
             connection.commit()
 
             print("Evento insertado con éxito.")
@@ -66,7 +66,7 @@ def update_order_product_status(product_id,estatus) -> dict:
     try:
         conexion = mysql.connector.connect(**config)
         cursor = conexion.cursor(dictionary=True)
-        sql = "UPDATE wp_posts SET post_status = %s WHERE post_type='product' and ID=%s"
+        sql = "UPDATE wp_posts SET post_status = %s WHERE ID=%s"
         cursor.execute(sql, (estatus,product_id))
         conexion.commit()
     finally:

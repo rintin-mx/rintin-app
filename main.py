@@ -6,7 +6,7 @@ from db.db_UserInteractionEvents import event_instert
 st.set_page_config(
         page_title="Rintin",
 )
-import login,picking, recoleccion, auditoria,logout, cookiesMenu, register,test, register,agrupacion
+import login,picking, recoleccion, auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -44,10 +44,12 @@ class MultiApp:
                 menu=['Logout','Recoleccion']
                 pagina=1
             elif val== 'operaciones':
-                menu=['Logout','Pickeo','Recoleccion','Auditoria']
+                menu=['Logout','Pickeo','Recoleccion','Auditoria','Agrupacion']
                 pagina=1
+            elif val == 'ismael':
+                menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
-                menu=['Logout','Register','Pickeo','Recoleccion','Auditoria', 'Agrupacion','Cookies']
+                menu=['Logout','Register','Pickeo','Recoleccion','Auditoria', 'Agrupacion','Ordenes de Compra','Cookies','Test']
             else:
                 menu=['Login']
             app = option_menu(
@@ -62,9 +64,6 @@ class MultiApp:
                     "nav-link": {"color":"white","font-size": "20px", "text-align": "left", "margin":"0px", "--hover-color": "blue"},
                     "nav-link-selected": {"background-color": "#02ab21"},}
                 )
-        print('app')
-        print(app)
-
         if app == "Login":
             login.app()
             if valEmail is not None:
@@ -105,4 +104,12 @@ class MultiApp:
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción agrupacion',valEmail
                 event_instert(EventName,EventAction,EventUser)
+        if app == "Ordenes de Compra":
+            ordenesCompra.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Ordenes de Compra',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app=='Test':
+            test.app()
+
     run() 

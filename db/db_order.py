@@ -36,50 +36,6 @@ def get_seller(db='repl') -> dict:
         conexion = mysql.connector.connect(**config)
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
-        wp_seller_sql_old = """
-                with orders as (
-                select
-                    id,
-                    post_status
-                from
-                    wp_posts
-                where
-                    post_status = 'wc-recolectar-2'
-            ),
-            ordermeta as(
-                select
-                    post_id as order_id,
-                    post_status,
-                    max(
-                        case
-                            when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                            else NULL
-                        end
-                    ) AS `dokan_vendor_id`
-                from
-                    wp_postmeta inner join orders on orders.id = post_id
-                group by post_id, post_status
-                having dokan_vendor_id in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '2705', '7180', '7201', '7202','3465', '5894')
-            ),
-            users as (
-                select 
-                    user_id,
-                    max(
-                        case
-                            when `meta_key` = 'dokan_store_name' then `meta_value`
-                            else NULL
-                        end
-                    ) AS `dokan_store_name`
-                from wp_usermeta
-                inner join ordermeta on ordermeta.dokan_vendor_id = user_id
-                group by user_id
-            )
-            select order_id , dokan_vendor_id as seller_id, dokan_store_name as seller_name, post_status as estado
-            from ordermeta
-            inner join users on users.user_id = ordermeta.dokan_vendor_id
-            order by order_id ASC 
-        """
-
         wp_seller_sql ="""
         with orders as (
                 select
