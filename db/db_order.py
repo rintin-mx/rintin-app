@@ -103,7 +103,6 @@ def get_seller(db='repl') -> dict:
                 from
                     wp_postmeta inner join orders on orders.id = post_id
                 group by post_id, post_status
-                having dokan_vendor_id in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '2705', '7180', '7201', '7202','3465', '5894')
             ),
             users as (
                 select 
@@ -113,10 +112,17 @@ def get_seller(db='repl') -> dict:
                             when `meta_key` = 'dokan_store_name' then `meta_value`
                             else NULL
                         end
-                    ) AS `dokan_store_name`
+                    ) AS `dokan_store_name`,
+                    max(
+                        case
+                            when `meta_key` = 'bodega' then `meta_value`
+                            else NULL
+                        end
+                    ) AS `bodega`
                 from wp_usermeta
                 inner join ordermeta on ordermeta.dokan_vendor_id = user_id
                 group by user_id
+                having bodega in ('aj_cdmx', 'centro_cdmx')
             )
             select order_id , dokan_vendor_id as seller_id, dokan_store_name as seller_name, post_status as estado
             from ordermeta
