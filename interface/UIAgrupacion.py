@@ -14,39 +14,48 @@ async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
     return result
 
-
-def ver_detalle(id,pedidos_activos,pedidos_auditados,estado):
+def ver_detalle(id,pedidos_activos,pedidos_auditados,en_proceso,estado):
 
     st.session_state.orderId = id
     st.session_state.pedidos_activos = pedidos_activos
     st.session_state.pedidos_auditados = pedidos_auditados
+    st.session_state.en_proceso = en_proceso
     st.session_state.estado_agrupacion = estado
     st.session_state.current_view = 'detalleAgrupacion'
     st.rerun()
 
 def UIOrdenesAgrupar(data):
     st.header("Ordenes a agrupar")
+    df_data=[]
     df = pd.DataFrame(data)
 
-    df_data=df
+    options = st.multiselect(
+    'Selecciones el estado',
+     options=df['estado'].unique(),
+     key='centro_padre')
+    
+    print("options")
+    print(options)
+    if len(options)>0:
+        df_data =df[df['estado'].isin(options)]
+    else:
+        df_data = df
+
     for i, ordenes in df_data.iterrows():
         st.write("---")
         with st.container():
             col1, col2, col3 = st.columns([4, 3, 2])
             with col1:
-                st.markdown(f"**Orderid_:** {ordenes.id}")
-                st.markdown(f"**Pedidos Auditado:** {int(ordenes.pedidos_activos)}")
-                st.markdown(f"**En proceso:** {int(ordenes.pedidos_auditados)}")
-                #st.markdown(f"**En proceso:** {int(ordenes.estado)}")
-                if ordenes.estado==0:
-                    st.markdown(f"**Estado:** Agrupar")
-                else:
-                    st.markdown(f"**Estado:** Faltan Pedidos")
+                st.markdown(f"**Orderid_:** {ordenes.order_id}")
+                st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
+                st.markdown(f"**Pedidos Auditados:** {int(ordenes.pedidos_auditados)}")
+                st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
+                st.markdown(f"**Estado:** {ordenes.estado}")
             with col3:
                 if st.button("Agrupación", key=i):
                     EventName,EventAction,EventUser='picking','Se pulso en botón Iniciar Auditoria',st.session_state.useremail
                     event_instert(EventName,EventAction,EventUser)
-                    ver_detalle(ordenes.id,ordenes.pedidos_activos,ordenes.pedidos_auditados,ordenes.estado) 
+                    ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
 
 def UIOrdenesAgruparDetalle(data,idPedido):
     st.header(f"Pedidos a agrupar: {st.session_state.orderId}")

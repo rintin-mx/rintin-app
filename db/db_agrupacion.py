@@ -96,10 +96,24 @@ def get_seller_centro_padre(db='repl') -> dict:
                 where post_parent = 0 and id not in (select distinct post_parent from orders)
                 having pedidos_auditados > 0
             )
-            select post_parent as order_id, ordenes_activas, pedidos_auditados, ordenes_activas - pedidos_auditados as en_proceso from final_helper 
-            union 
-            select id as order_id, ordenes_activas, pedidos_auditados, ordenes_activas - pedidos_auditados as en_proceso from final_helper2 
+            select post_parent as order_id, 
+            ordenes_activas, 
+            pedidos_auditados, 
+            ordenes_activas - pedidos_auditados as en_proceso,
+            CASE 
+			    WHEN (ordenes_activas - pedidos_auditados) = 0 THEN 'Agrupar'
+			    ELSE 'Faltan Pedidos'
+			END AS estado
 
+            
+            from final_helper 
+            union 
+            select id as order_id, ordenes_activas, pedidos_auditados, ordenes_activas - pedidos_auditados as en_proceso,
+            CASE 
+			    WHEN (ordenes_activas - pedidos_auditados) = 0 THEN 'Agrupar'
+			    ELSE 'Faltan Pedidos'
+			END AS estado
+			from final_helper2 
         """
 
         # Ejecutar la primera consulta
@@ -127,8 +141,6 @@ def get_seller_centro_padre(db='repl') -> dict:
         minutes = int(duration // 60)
         seconds = int(duration % 60)
         # Nueva lista de nombres de columnas
-        wp_seller=wp_seller[['order_id','ordenes_activas', 'pedidos_auditados','en_proceso']]
-        wp_seller.columns = ['id','pedidos_activos', 'pedidos_auditados','estado']
         wp_seller_general_dict = wp_seller.to_dict(orient='list')
         return wp_seller_general_dict
 

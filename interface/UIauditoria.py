@@ -15,6 +15,7 @@ import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
 from db.db_auditoria import get_order_auditoria
 import random
+from st_material_table import st_material_table
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
@@ -101,10 +102,9 @@ def UIDetallePedido(data_deta,idPedido):
     # Título de la tabla
     #st.subheader(f"Nombre del Seller: {st.session_state.nombreSeller}")
     # Botón para finalizar la recolección
-    #if st.button("Regresar la lista de pedidos"):
-        #del st.session_state['data_deta']
-    #    st.session_state.current_view = 'auditoria'
-    #    st.rerun()
+    if st.button("Regresar la lista de pedidos para auditoria"):
+        st.session_state.current_view = 'auditoria'
+        st.rerun()
     # Espacio entre secciones
     st.subheader(f"Detallde la orden del pedido: {idPedido}")
     st.write("---")
@@ -200,13 +200,16 @@ def UIDetallePedido(data_deta,idPedido):
                     order_status='agrupar-pedidos'
                     #idPedido
                     #para test '281660'
-                    r = asyncio.run(update_status_wordpress(idPedido, order_status))
-                    print("r")
-                    print(r)
+                    #r = asyncio.run(update_status_wordpress(idPedido, order_status))
+                    #print("r")
+                    #print(r)
                     answer=None
                     if st.session_state['visible'] == True:
                         st.session_state['visible'] = False
+                        st.session_state['current_view'] = 'detalleAuditoria'
                         st.rerun()
+                        
+                        #st.rerun()
         
     else:
         answer_else = st_mui_dialog(title="Confirmemos audotoria", 
@@ -235,10 +238,10 @@ def UIDetallePedido(data_deta,idPedido):
                             print("---------------")
                             print(objeto['seller_id'])
                             print("---------------")
-                            if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
-                                lineasCDMX.append(BodegaCDMX(objeto))
-                            else:
-                                lineasProblemas.append(problemasRecoleccion(objeto))
+                            #if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
+                                #lineasCDMX.append(BodegaCDMX(objeto))
+                            #else:
+                                #lineasProblemas.append(problemasRecoleccion(objeto))
                         else:
                             print("-----------------------------------------------------------------------------------")
                             print('aca va el else por que al mensi una item no viene con conel estado de la validacion')
@@ -246,10 +249,10 @@ def UIDetallePedido(data_deta,idPedido):
                             print("***************")
                             print(objeto)
                             print("***************")
-                            if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
-                                lineasCDMX.append(BodegaCDMX(objeto))
-                            else:
-                                lineasProblemas.append(problemasRecoleccion(objeto))
+                            #if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
+                                #lineasCDMX.append(BodegaCDMX(objeto))
+                            #else:
+                                #lineasProblemas.append(problemasRecoleccion(objeto))
 
 
                     print('len(lineasCDMX)')
@@ -264,7 +267,7 @@ def UIDetallePedido(data_deta,idPedido):
                             print("bodegas CDMX")
                             #idPedido
                             #para test '281660'
-                            asyncio.run(update_order_note__wordpress(idPedido, order_notes))
+                            #asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                             st.snow()
                     if len(lineasProblemas)>0:
                         print("lineasProblemas")
@@ -274,14 +277,15 @@ def UIDetallePedido(data_deta,idPedido):
                             print("problemas de recolección")
                             #idPedido
                             #para test '281660'
-                            asyncio.run(update_order_note__wordpress(idPedido, order_notes))
+                            #asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                             st.snow()
 
-                    if st.session_state['visible'] == True:
-                        st.session_state['visible'] = False
-                        st.rerun()
-                    print("st.session_state['visible']")
-                    print(st.session_state['visible'])
+                    #if st.session_state['visible'] == True:
+                    #    st.session_state['visible'] = False
+                    #    st.session_state['current_view'] = 'detalleAuditoria'
+                    #    st.rerun()
+                    st.session_state['visible'] = False
+                    st.session_state['current_view'] = 'detalleAuditoria'
                     st.rerun()
 
                 
@@ -370,15 +374,22 @@ def UITodosLosPedidos(data):
         print("visible")
         st.session_state['visible'] = True
         st.rerun()
+    if 'Order_id_auditoria' not in st.session_state:
+        st.session_state['Order_id_auditoria'] = 0
+        
     #
 
     df['order_id'] = df['order_id'].astype(str)
     # function with list of labels
     def search_orderid(searchterm: str) -> List[any]:
         print("searchtermmmmmm")
+        
         df_filtrado = df[df['order_id'].str.contains(searchterm)]
         print(df_filtrado)
+        st.session_state['visible']=False
+  
         return df_filtrado['order_id'] if searchterm else []
+
     # pass search function to searchbox
     print("selected_value")
     print(selected_value)
@@ -388,15 +399,22 @@ def UITodosLosPedidos(data):
         rerun_on_update=True
     )
     submit = st.button("Buscar")
+    st.write(st.session_state['visible'])
+    _ = st_material_table(df)
+
     if submit:
-        st.session_state['visible'] = True
-    if st.session_state['visible']:
-        df_data=get_order_auditoria(int(selected_value))
-        print(st.session_state['visible'])
-        if len(df_data)>0:
-            UIDetallePedido(df_data,int(selected_value))
-            print('selected_value')
-            selected_value=''
+        st.session_state['Order_id_auditoria'] =int(selected_value)
+        st.session_state['current_view'] = 'detalleAuditoria'
+        st.rerun()
+        #st.session_state['visible'] = True
+    #if st.session_state['visible']:
+        #if selected_value != None:
+        #    df_data=get_order_auditoria(int(selected_value))
+        #    print(st.session_state['visible'])
+        #    if len(df_data)>0:
+        #        UIDetallePedido(df_data,int(selected_value))
+        #        print('selected_value')
+        #        selected_value=''
             
 
 

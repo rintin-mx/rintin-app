@@ -19,7 +19,15 @@ def app():
                         EventName,EventAction,EventUser='picking','acceso a las vista pick',st.session_state.useremail
                         event_instert(EventName,EventAction,EventUser)
                     data=get_seller_centro()
-                    UITodosLosPedidos(data)               
+                    UITodosLosPedidos(data)      
+                if st.session_state.current_view == 'detalleAuditoria':
+                      if st.session_state.useremail is not None:
+                        EventName,EventAction,EventUser='picking','acceso a las vista pick',st.session_state.useremail
+                        event_instert(EventName,EventAction,EventUser)  
+                        print("st.session_state['Order_id_auditoria']")
+                        print(st.session_state['Order_id_auditoria'])
+                        data=get_order_auditoria(int(st.session_state['Order_id_auditoria']))     
+                        UIDetallePedido(data,int(st.session_state['Order_id_auditoria']))
         else:
                 st.image("imagen/logo_imagen_no_loguado.png", width=300)
                 st.markdown("### Por favor, inicia sesión para continuar")
