@@ -245,7 +245,8 @@ def UIDetallePedido(data_deta,idPedido):
                     if objeto['estado'] == valor_estado_esperado:
                         ahora = datetime.now()
                         fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
-                        insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'])
+                        fuente='picking'
+                        #insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],st.session_state.useremail,fuente)
                         update_order_product_status(objeto['producto_id'],'pending')
                         linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe pickeo {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
                         lineasTest.append(linea)

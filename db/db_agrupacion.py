@@ -38,87 +38,68 @@ def get_seller_centro_padre(db='repl') -> dict:
         cursor = conexion.cursor(dictionary=True)
         wp_seller_sql = """
                 with orders as (
-                    select
-                        id
-                    from
-                        wp_posts
-                    where
-                        post_parent = 0 
-                    AND post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
-                    or post_status = 'wc-agrupar-pedidos'
-                        
-                ),
-                ordermeta as(
-                    select
-                        post_id as order_id,
-                        max(
-                            case
-                                when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `dokan_vendor_id`
-                    from
-                        wp_postmeta inner join orders on orders.id = post_id
-                    group by post_id 
-                ),
-                sellers as (
-                    select
-                        user_id,
-                        max(
-                            case
-                                when `meta_key` = '_zone' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `zone`,
-                        max(
-                            case
-                                when `meta_key` = 'dokan_store_name' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `seller_name`
-                    from
-                        wp_usermeta
-                        inner join ordermeta on dokan_vendor_id = user_id
-                    where meta_value not in ('centro_cdmx', 'aj_cdmx')
-                    group by user_id
-                    having zone = 'centro'
-                ),
-                order_items as(
-                    select order_item_id, wp_woocommerce_order_items.order_id, order_item_name
-                    from wp_woocommerce_order_items
-                    inner join wp_posts on wp_posts.id = order_id
-                    where order_item_type = 'line_item'  AND post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
-                    and post_status = 'wc-agrupar-pedidos'
-                ),
-                product_order_meta_values as (
-                    select
-                        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `order_quantity`,
-                        count(wp_woocommerce_order_itemmeta.order_item_id)
-                    from
-                        `wp_woocommerce_order_itemmeta`
-                        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-                    group by
-                        `wp_woocommerce_order_itemmeta`.`order_item_id`
-                )
                 select
-                    order_items.order_id,
-                    count(ordermeta.order_id) as pedidos_activos,
-                    sum(order_quantity) as pedidos_proceso,
-                    CASE 
-                        WHEN (SUM(order_quantity) - COUNT(order_items.order_id)) = 0 THEN 'Agrupar'
-                        ELSE 'Faltan Pedidos'
-                    END AS estado
-                from ordermeta
-                    inner join sellers on sellers.user_id = dokan_vendor_id
-                    inner join order_items on order_items.order_id = ordermeta.order_id
-                    inner join product_order_meta_values on product_order_meta_values.order_item_id = order_items.order_item_id
-                group by seller_name,order_items.order_id
+                    id,
+                    post_parent,
+                    post_status
+                from wp_posts 
+                where post_type = 'shop_order' and post_status NOT IN ('wc-pendientes_ograma','wc-failed', 'wc-caducado','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial')
+            ),
+            order_seller as (
+                select
+                    post_id,
+                    meta_value as dokan_vendor_id
+                from wp_postmeta
+                where meta_key = '_dokan_vendor_id'
+            ),
+            sellers as (
+                select
+                    user_id,
+                    max(
+                        case
+                            when `meta_key` = '_zone' then `meta_value`
+                            else NULL
+                        end
+                    ) AS `zone`,
+                    max(
+                        case
+                            when `meta_key` = 'dokan_store_name' then `meta_value`
+                            else NULL
+                        end
+                    ) AS `seller_name`
+                from
+                    wp_usermeta
+                group by user_id
+                having zone = 'centro'
+            ),
+            final_helper as(
+            select 
+                post_parent,
+                count(case when post_status not in ('wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end) as ordenes_activas,
+                count(case when post_status = 'wc-agrupar-pedidos' then id else null end) as pedidos_auditados
+            from 
+                orders
+                inner join order_seller on id = post_id
+                inner join sellers on user_id = dokan_vendor_id
+            where post_parent != 0
+            group by post_parent
+            having pedidos_auditados > 0
+            ),
+            final_helper2 as(
+                select
+                    id,
+                    case when post_status not in ('wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 1 else 0 end as ordenes_activas,
+                    case when post_status = 'wc-agrupar-pedidos' then 1 else 0 end as pedidos_auditados
+                from orders 
+                inner join order_seller on id = post_id
+                inner join sellers on user_id = dokan_vendor_id
+                where post_parent = 0 and id not in (select distinct post_parent from orders)
+                having pedidos_auditados > 0
+            )
+            select post_parent as order_id, ordenes_activas, pedidos_auditados, ordenes_activas - pedidos_auditados as en_proceso from final_helper 
+            union 
+            select id as order_id, ordenes_activas, pedidos_auditados, ordenes_activas - pedidos_auditados as en_proceso from final_helper2 
+
         """
 
         # Ejecutar la primera consulta
@@ -129,6 +110,7 @@ def get_seller_centro_padre(db='repl') -> dict:
 
         # Convertir los resultados a un DataFrame de pandas
         wp_seller = pd.DataFrame(resultados_wp_seller_sql)
+        print("wp_seller")
         print(wp_seller)
 
     finally:
@@ -145,8 +127,8 @@ def get_seller_centro_padre(db='repl') -> dict:
         minutes = int(duration // 60)
         seconds = int(duration % 60)
         # Nueva lista de nombres de columnas
-        wp_seller=wp_seller[['order_id','pedidos_activos', 'pedidos_proceso','estado']]
-        wp_seller.columns = ['id','pedidos_activos', 'pedidos_proceso','estado']
+        wp_seller=wp_seller[['order_id','ordenes_activas', 'pedidos_auditados','en_proceso']]
+        wp_seller.columns = ['id','pedidos_activos', 'pedidos_auditados','estado']
         wp_seller_general_dict = wp_seller.to_dict(orient='list')
         return wp_seller_general_dict
 
@@ -165,7 +147,8 @@ def get_order_detalle_agrupacion(id,db='repl') -> dict:
                     from
                         wp_posts
                     where
-                        id={id}
+                        post_parent={id} AND post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
+                        
                         
                 ),
                 ordermeta as(
@@ -185,6 +168,12 @@ def get_order_detalle_agrupacion(id,db='repl') -> dict:
                     user_id,
                     max(
                         case
+                            when `meta_key` = '_zone' then `meta_value`
+                            else NULL
+                        end
+                    ) AS `zone`,
+                    max(
+                        case
                             when `meta_key` = 'dokan_store_name' then `meta_value`
                             else NULL
                         end
@@ -192,6 +181,7 @@ def get_order_detalle_agrupacion(id,db='repl') -> dict:
                 from wp_usermeta
                 inner join ordermeta on ordermeta.dokan_vendor_id = user_id
                 group by user_id
+                 having zone = 'centro'
             ),
                 order_items as(
                     select order_item_id, ordermeta.order_id, order_item_name,dokan_vendor_id

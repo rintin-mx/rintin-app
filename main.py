@@ -44,8 +44,10 @@ class MultiApp:
                 menu=['Logout','Recoleccion']
                 pagina=1
             elif val== 'operaciones':
-                menu=['Logout','Pickeo','Recoleccion','Auditoria']
+                menu=['Logout','Pickeo','Recoleccion','Auditoria','Agrupacion']
                 pagina=1
+            elif val == 'ismael':
+                menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
                 menu=['Logout','Register','Pickeo','Recoleccion','Auditoria', 'Agrupacion','Ordenes de Compra','Cookies','Test']
             else:

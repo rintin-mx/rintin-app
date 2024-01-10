@@ -15,11 +15,11 @@ async def update_status_wordpress(order_id, order_status):
     return result
 
 
-def ver_detalle(id,pedidos_activos,pedidos_proceso,estado):
+def ver_detalle(id,pedidos_activos,pedidos_auditados,estado):
 
     st.session_state.orderId = id
     st.session_state.pedidos_activos = pedidos_activos
-    st.session_state.pedidos_proceso = pedidos_proceso
+    st.session_state.pedidos_auditados = pedidos_auditados
     st.session_state.estado_agrupacion = estado
     st.session_state.current_view = 'detalleAgrupacion'
     st.rerun()
@@ -36,13 +36,17 @@ def UIOrdenesAgrupar(data):
             with col1:
                 st.markdown(f"**Orderid_:** {ordenes.id}")
                 st.markdown(f"**Pedidos Auditado:** {int(ordenes.pedidos_activos)}")
-                st.markdown(f"**En proceso:** {int(ordenes.pedidos_proceso)}")
-                st.markdown(f"**Estado:** {ordenes.estado}")
+                st.markdown(f"**En proceso:** {int(ordenes.pedidos_auditados)}")
+                #st.markdown(f"**En proceso:** {int(ordenes.estado)}")
+                if ordenes.estado==0:
+                    st.markdown(f"**Estado:** Agrupar")
+                else:
+                    st.markdown(f"**Estado:** Faltan Pedidos")
             with col3:
                 if st.button("Agrupación", key=i):
                     EventName,EventAction,EventUser='picking','Se pulso en botón Iniciar Auditoria',st.session_state.useremail
                     event_instert(EventName,EventAction,EventUser)
-                    ver_detalle(ordenes.id,ordenes.pedidos_activos,ordenes.pedidos_proceso,ordenes.estado) 
+                    ver_detalle(ordenes.id,ordenes.pedidos_activos,ordenes.pedidos_auditados,ordenes.estado) 
 
 def UIOrdenesAgruparDetalle(data,idPedido):
     st.header(f"Pedidos a agrupar: {st.session_state.orderId}")
@@ -82,12 +86,6 @@ def UIOrdenesAgruparDetalle(data,idPedido):
                 estadoSeleccion='agrupado'
             else:
                 estadoSeleccion='noagrupado'
-                option = st.selectbox(
-                "",
-                unique_values_list,
-                label_visibility="hidden",
-                key=f"selectbox-{i}",
-            )
             objArry.append({"order_id":pedido.order_id,"seller_name":pedido.seller_name,"estado":pedido.estado,
                             "num_paquetes":pedido.num_paquetes,
                             "agrupadoSeleccion":estadoSeleccion})
