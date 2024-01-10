@@ -9,7 +9,7 @@ def app():
                        st.session_state['current_view'] = 'auditoria'
                 if 'visible' not in st.session_state:
                     st.session_state['visible'] = False
-                if st.session_state.current_view== 'pick' or st.session_state.current_view== 'recolect'  or st.session_state.current_view== 'ordenesAgrupar' or st.session_state.current_view== 'agrupacion' or st.session_state.current_view== 'detalleAgrupacion' or st.session_state.current_view=='ordenesCompra':
+                if st.session_state.current_view in ('pick','recolect','recoleccion','pendiente','ordenesAgrupar','agrupacion','detalleAgrupacion','ordenesCompra'):
                       st.session_state['current_view'] = 'auditoria'
 
                 if st.session_state.current_view == 'auditoria':
