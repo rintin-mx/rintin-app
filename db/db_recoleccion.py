@@ -75,13 +75,19 @@ def get_seller_recollection(db='repl') -> dict:
                                 when `meta_key` = 'dokan_store_name' then `meta_value`
                                 else NULL
                             end
-                        ) AS `seller_name`
+                        ) AS `seller_name`,
+                        max(
+                            case
+                                when `meta_key` = 'bodega' then `meta_value`
+                                else NULL
+                            end
+                        ) AS `bodega`
                     from
                         wp_usermeta
                         inner join ordermeta on dokan_vendor_id = user_id
                     where meta_value not in ('centro_cdmx', 'aj_cdmx')
                     group by user_id
-                    having zone = 'centro'
+                    having zone = 'centro' and bodega is null
                 ),
                 order_items as(
                     select order_item_id, wp_woocommerce_order_items.order_id, order_item_name
