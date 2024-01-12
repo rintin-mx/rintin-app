@@ -16,6 +16,7 @@ from streamlit_searchbox import st_searchbox
 from db.db_auditoria import get_order_auditoria
 import random
 from st_material_table import st_material_table
+from st_mui_table import st_mui_table
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
@@ -63,6 +64,10 @@ def problemasRecoleccion(objeto):
     return linea
 
 def UIDetallePedido(data_deta,idPedido):
+    st.subheader(f"Detalle del pedido # {idPedido}")
+    if st.button("Regresar la lista de auditoríaa"):
+            st.session_state.current_view = 'agrupacion'
+            st.rerun()
     #estilos en los textos
     st.markdown("""
         <style>
@@ -99,14 +104,8 @@ def UIDetallePedido(data_deta,idPedido):
             height=0,
             width=0,
         )
-    # Título de la tabla
-    #st.subheader(f"Nombre del Seller: {st.session_state.nombreSeller}")
-    # Botón para finalizar la recolección
-    if st.button("Regresar la lista de pedidos para auditoria"):
-        st.session_state.current_view = 'auditoria'
-        st.rerun()
-    # Espacio entre secciones
-    st.subheader(f"Detallde la orden del pedido: {idPedido}")
+
+   
     st.write("---")
     # Inicializar una lista para los estados
     estados = []
@@ -377,13 +376,9 @@ def UITodosLosPedidos(data):
     if 'Order_id_auditoria' not in st.session_state:
         st.session_state['Order_id_auditoria'] = 0
         
-    #
-
     df['order_id'] = df['order_id'].astype(str)
     # function with list of labels
     def search_orderid(searchterm: str) -> List[any]:
-        print("searchtermmmmmm")
-        
         df_filtrado = df[df['order_id'].str.contains(searchterm)]
         print(df_filtrado)
         st.session_state['visible']=False
@@ -399,22 +394,17 @@ def UITodosLosPedidos(data):
         rerun_on_update=True
     )
     submit = st.button("Buscar")
-    st.write(st.session_state['visible'])
-    _ = st_material_table(df)
+    st_mui_table(df)
+    
 
     if submit:
-        st.session_state['Order_id_auditoria'] =int(selected_value)
-        st.session_state['current_view'] = 'detalleAuditoria'
-        st.rerun()
-        #st.session_state['visible'] = True
-    #if st.session_state['visible']:
-        #if selected_value != None:
-        #    df_data=get_order_auditoria(int(selected_value))
-        #    print(st.session_state['visible'])
-        #    if len(df_data)>0:
-        #        UIDetallePedido(df_data,int(selected_value))
-        #        print('selected_value')
-        #        selected_value=''
+        if selected_value is not None:
+            st.session_state['Order_id_auditoria'] =int(selected_value)
+            st.session_state['current_view'] = 'detalleAuditoria'
+            st.rerun()
+        else:
+            st.info('Debes seleccionar un order_id para continuar', icon="ℹ️")
+
             
 
 

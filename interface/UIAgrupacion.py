@@ -28,7 +28,8 @@ def UIOrdenesAgrupar(data):
     st.header("Ordenes a agrupar")
     df_data=[]
     df = pd.DataFrame(data)
-
+    print("df")
+    print(df)
     options = st.multiselect(
     'Selecciones el estado',
      options=df['estado'].unique(),
@@ -59,9 +60,53 @@ def UIOrdenesAgrupar(data):
 
 def UIOrdenesAgruparDetalle(data,idPedido):
     st.header(f"Pedidos a agrupar: {st.session_state.orderId}")
-    if st.button("Regresar la lista de agrupación"):
-        st.session_state.current_view = 'agrupacion'
-        st.rerun()
+    st.markdown(
+    """
+    <style>
+    .stButton>button {
+        height: 3em;     /* Ajusta la altura del botón */
+    }
+    .stSelectbox {
+        height: 3em; /* Ajusta la altura del selectbox para que coincida con el botón */
+    }
+    /* Ajustes adicionales de CSS aquí si es necesario */
+    </style>
+    """,
+        unsafe_allow_html=True
+    )
+
+    col1, col2 = st.columns([2, 2])
+    option=''
+    # En la primera columna, puedes colocar un elemento
+    with col1:
+        if st.button("Regresar la lista de agrupación"):
+            st.session_state.current_view = 'agrupacion'
+            st.rerun()
+
+    # En la segunda columna, puedes colocar otro elemento
+    with col2:
+        option = st.selectbox(
+            'Tipos de envio',
+            ('Seleccione tipo de envío','Envío a Cliente', 'Envío a Bodega'),
+            label_visibility='collapsed')
+    
+    print("option")
+    print(option)
+    if option=='Envío a Bodega':
+        numGuiaInterno = st.text_input('Número de guía interno', '')
+        optioOperadorInterno = st.selectbox(
+            'Operador logistico interno',
+            ('Elije un operador', 'Estafeta', '99 MInutos', 
+             'Ogramak', 'FEDEX', 'Redpack', 
+             'Chavobus', 'Ogramak Caminon'), key='optioOperadorInterno')
+    if option=='Envío a Cliente':
+        numGuiaCliente = st.text_input('Número de guía cliente', '')
+        optioOperadorCliente = st.selectbox(
+            'Operador logistico cliente',
+            ('Elije un operador', 'Estafeta', '99 MInutos', 
+             'Ogramak', 'Redpack', 
+             'FEDEX', 'Tiui'), key='optioOperadorCliente')
+
     # Espacio entre secciones
     st.write("---")
     # Inicializar una lista para los estados

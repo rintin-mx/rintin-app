@@ -41,7 +41,7 @@ def insert_productos_validados(productID, SKU, usuarioTimestamp, orderID, cantid
 
             # Consulta SQL para insertar datos
             # Sentencia SQL para insertar datos
-            sql = "INSERT INTO productosValidados (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada, fuente, email) VALUES (%s, %s, %s, %s, %s, %s,%s, %s)"
+            sql = "INSERT INTO validacion_stock (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada, fuente, email) VALUES (%s, %s, %s, %s, %s, %s,%s, %s)"
             # Ejecutar la sentencia SQL
             cursor.execute(sql, (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada,fuente, email))
             connection.commit()
