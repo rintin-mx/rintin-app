@@ -24,7 +24,9 @@ def app():
             if len(data)>0:
                 UIOrdenesAgrupar(data)
             else:
-                st.write("No hay pedidos para agrupar, esta es data solo de demostración")
+                st.header('Agrupar pedidos', divider='rainbow')
+                st.header('No hay ordenes para agrupar :blue[en este momento] :sunglasses:')
+                '''
                 data=[
                     {
                         "order_id": 217024,
@@ -56,6 +58,7 @@ def app():
                     }
                 ]
                 UIOrdenesAgrupar(data)
+                '''
         if st.session_state.current_view == 'detalleAgrupacion':
             print(st.session_state.orderId)
             print(st.session_state.pedidos_activos)

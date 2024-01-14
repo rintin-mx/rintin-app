@@ -46,7 +46,7 @@ def BodegaCDMX(objeto):
     ahora = datetime.now()
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
     fuente='auditoria-wc-recolectar-2'
-    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],st.session_state.useremail,fuente)
+    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
     update_order_product_status(objeto['producto_id'],'wc-recolectar-2')
     linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
@@ -58,13 +58,13 @@ def problemasRecoleccion(objeto):
     ahora = datetime.now()
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
     fuente='auditoria-wc-recolectar-2'
-    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],st.session_state.useremail,fuente)
+    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
     update_order_product_status(objeto['producto_id'],'rec-problem-2')
     linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
 
 def UIDetallePedido(data_deta,idPedido):
-    st.subheader(f"Detalle del pedido # {idPedido}")
+    st.subheader(f"Detalle de la orden: {idPedido}")
     if st.button("Regresar la lista de auditoríaa"):
             st.session_state.current_view = 'agrupacion'
             st.rerun()
@@ -287,81 +287,6 @@ def UIDetallePedido(data_deta,idPedido):
                     st.session_state['current_view'] = 'detalleAuditoria'
                     st.rerun()
 
-                
-
-    '''
-    order_notes = "\n".join(lineasTest)
-    if st.button("Auditoría"):
-        if len(auditoria)==len(objArry):
-            if st.session_state.useremail is not None:
-                    EventName,EventAction,EventUser='picking','Se envio el pedido a "Pedidos agrupar"',st.session_state.useremail
-                    event_instert(EventName,EventAction,EventUser)
-            with st.spinner(f'Actualizando estatus del pedido'):
-                    order_status='agrupar-pedidos'
-                    #idPedido
-                    #para test '281660'
-                    r = asyncio.run(update_status_wordpress(idPedido, order_status))
-                    print("r")
-                    print(r)
-                    st.session_state.current_view = 'auditoria'
-                    st.rerun()
-        else:
-                print(' entre else len(auditoria)==len(objArry)')
-                if st.session_state.useremail is not None:
-                    print("entreee st.session_state.useremail is not None")
-                    EventName,EventAction,EventUser='picking','Se envio el pedido a "Validacion de Stock"',st.session_state.useremail
-                    event_instert(EventName,EventAction,EventUser)
-                
-                with st.spinner(f'Actualizando estatus del pedido'):
-                    lineasCDMX = []
-                    lineasProblemas = []
-                    i=0
-                    for objeto in objArry:
-                        print("---------------")
-                        print(objeto['estado'])
-                        print("---------------")
-                        if objeto['estado'] == valor_estado_esperado:
-                            print("if objeto['estado'] == valor_estado_esperado:")
-                            if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
-                                print("es de bodega CDMX")
-                                ahora = datetime.now()
-                                fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
-                                fuente='auditoria-wc-recolectar-2'
-                                insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],st.session_state.useremail,fuente)
-                                update_order_product_status(objeto['producto_id'],'wc-recolectar-2')
-                                linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
-                                lineasCDMX.append(linea)
-                        else:
-                                ahora = datetime.now()
-                                fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
-                                fuente='auditoria-wc-recolectar-2'
-                                insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],st.session_state.useremail,fuente)
-                                update_order_product_status(objeto['producto_id'],'rec-problem-2')
-                                linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
-                                lineasProblemas.append(linea)
-                    if len(lineasCDMX)>0:
-                            print("lineasCDMX")
-                            print(lineasCDMX)
-                            with st.spinner(f'Actualizano las notas del pedido para auditoria  en las bodegas CDMX'):
-                                print("bodegas CDMX")
-                                #idPedido
-                                #para test '281660'
-                                asyncio.run(update_order_note__wordpress(idPedido, order_notes))
-                                st.snow()
-                    if len(lineasProblemas)>0:
-                            print("lineasProblemas")
-                            print(lineasProblemas)
-                            with st.spinner(f'Actualizano las notas del pedido para auditoria  que tiene problemas de recolección'):
-                                print("problemas de recolección")
-                                #idPedido
-                                #para test '281660'
-                                asyncio.run(update_order_note__wordpress(idPedido, order_notes))
-                                st.snow()
-                        
-
-                    st.session_state.current_view = 'auditoria'
-                    st.rerun()
- '''           
 
 
 def UITodosLosPedidos(data):
@@ -376,19 +301,20 @@ def UITodosLosPedidos(data):
     if 'Order_id_auditoria' not in st.session_state:
         st.session_state['Order_id_auditoria'] = 0
         
-    df['order_id'] = df['order_id'].astype(str)
+    df['ID'] = df['ID'].astype(str)
     # function with list of labels
     def search_orderid(searchterm: str) -> List[any]:
-        df_filtrado = df[df['order_id'].str.contains(searchterm)]
+        df_filtrado = df[df['ID'].str.contains(searchterm)|(df['Seller'].str.contains(searchterm))]
         print(df_filtrado)
         st.session_state['visible']=False
   
-        return df_filtrado['order_id'] if searchterm else []
+        return df_filtrado['ID'] if searchterm else []
 
     # pass search function to searchbox
     print("selected_value")
     print(selected_value)
     selected_value = st_searchbox(
+        label='Buscar por ID o Seller',
         search_function=search_orderid,
         key=f"search_orderid",
         rerun_on_update=True

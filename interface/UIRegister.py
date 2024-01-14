@@ -16,7 +16,7 @@ if not firebase_admin._apps:
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
-    return stx.CookieManager(key="cookie_manager_login")
+    return stx.CookieManager(key="cookie_manager_register")
 cookie_manager = get_manager()
 
 def UIRegister():

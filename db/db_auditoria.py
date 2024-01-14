@@ -59,7 +59,6 @@ def get_seller_centro(db='repl') -> dict:
                 from
                     wp_postmeta inner join orders on orders.id = post_id
                 group by post_id
-                #having dokan_vendor_id not in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '2705', '7180', '7201', '7202','3465', '5894')
             ),
             sellers as (
                 select
@@ -83,86 +82,10 @@ def get_seller_centro(db='repl') -> dict:
                 having zone = 'centro'
             )
             select
-                ordermeta.order_id
+                ordermeta.order_id,
+                seller_name
             from ordermeta
                 inner join sellers on sellers.user_id = dokan_vendor_id
-        """
-        wp_seller_sql_mal = """
-                with orders as (
-                    select
-                        id
-                    from
-                        wp_posts
-                    where
-                        post_status = 'wc-recolectar-2'
-                        
-                ),
-                ordermeta as(
-                    select
-                        post_id as order_id,
-                        max(
-                            case
-                                when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `dokan_vendor_id`
-                    from
-                        wp_postmeta inner join orders on orders.id = post_id
-                    group by post_id
-                    #having dokan_vendor_id not in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '2705', '7180', '7201', '7202','3465', '5894')
-                ),
-                sellers as (
-                    select
-                        user_id,
-                        max(
-                            case
-                                when `meta_key` = '_zone' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `zone`,
-                        max(
-                            case
-                                when `meta_key` = 'dokan_store_name' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `seller_name`
-                    from
-                        wp_usermeta
-                        inner join ordermeta on dokan_vendor_id = user_id
-                    group by user_id
-                    having zone = 'centro'
-                ),
-                order_items as(
-                    select order_item_id, wp_woocommerce_order_items.order_id, order_item_name
-                    from wp_woocommerce_order_items
-                    inner join wp_posts on wp_posts.id = order_id
-                    where order_item_type = 'line_item' and post_status = 'wc-recolectar-2'
-                ),
-                product_order_meta_values as (
-                    select
-                        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `order_quantity`
-                    from
-                        `wp_woocommerce_order_itemmeta`
-                        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-                    group by
-                        `wp_woocommerce_order_itemmeta`.`order_item_id`
-                )
-                select
-                    ordermeta.order_id,
-                    user_id as seller_id,
-                    seller_name,
-                    sum(order_quantity) as num_paquetes
-                from ordermeta
-                    inner join sellers on sellers.user_id = dokan_vendor_id
-                    inner join order_items on order_items.order_id = ordermeta.order_id
-                    inner join product_order_meta_values on product_order_meta_values.order_item_id = order_items.order_item_id
-                group by seller_name
         """
         
         # Ejecutar la primera consulta
@@ -191,6 +114,7 @@ def get_seller_centro(db='repl') -> dict:
         #wp_seller['estado']='wc-recolectar-2'
         #wp_seller=wp_seller[['order_id','seller_id','seller_name', 'num_paquetes','estado']]
         #wp_seller.columns = ['id','Seller', 'num_paquetes','estado','seller_id']
+        wp_seller.columns = ['ID', 'Seller']
         wp_seller_general_dict = wp_seller.to_dict(orient='list')
         return wp_seller
 
