@@ -6,7 +6,7 @@ st.write("# Cookie Manager")
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
-    return stx.CookieManager()
+    return stx.CookieManager(key="cookie_manager_main_menus")
 
 cookie_manager = get_manager()
 def app():

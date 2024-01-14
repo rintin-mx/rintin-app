@@ -39,86 +39,99 @@ def get_seller_recollection(db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_seller_recolection_sql =  """
-               with orders as (
-                    select
-                        id
-                    from
-                        wp_posts
-                    where
-                        post_status = 'wc-recolectar-2'
-                        
+               WITH orders AS (
+                SELECT
+                    wp_posts.id,
+                    wp_dokan_orders.seller_id
+                FROM
+                    wp_posts
+                    LEFT JOIN wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
+                WHERE
+                    post_status = 'wc-recolectar-2'
                 ),
-                ordermeta as(
-                    select
-                        post_id as order_id,
-                        max(
-                            case
-                                when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `dokan_vendor_id`
-                    from
-                        wp_postmeta inner join orders on orders.id = post_id
-                    group by post_id 
+                ordermeta AS(
+                SELECT
+                    post_id AS order_id,
+                    max(
+                    CASE
+                        WHEN `meta_key` = '_dokan_vendor_id' THEN `meta_value`
+                        ELSE seller_id
+                    END
+                    ) AS `dokan_vendor_id`
+                FROM
+                    wp_postmeta
+                    INNER JOIN orders ON orders.id = post_id
+                GROUP BY
+                    post_id
                 ),
-                sellers as (
-                    select
-                        user_id,
-                        max(
-                            case
-                                when `meta_key` = '_zone' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `zone`,
-                        max(
-                            case
-                                when `meta_key` = 'dokan_store_name' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `seller_name`,
-                        max(
-                            case
-                                when `meta_key` = 'bodega' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `bodega`
-                    from
-                        wp_usermeta
-                        inner join ordermeta on dokan_vendor_id = user_id
-                    where meta_value not in ('centro_cdmx', 'aj_cdmx')
-                    group by user_id
-                    having zone = 'centro' and bodega is null
+                sellers AS (
+                SELECT
+                    user_id,
+                    max(
+                    CASE
+                        WHEN `meta_key` = '_zone' THEN `meta_value`
+                        ELSE NULL
+                    END
+                    ) AS `zone`,
+                    max(
+                    CASE
+                        WHEN `meta_key` = 'dokan_store_name' THEN `meta_value`
+                        ELSE NULL
+                    END
+                    ) AS `seller_name`,
+                    max(
+                    CASE
+                        WHEN `meta_key` = 'bodega' THEN `meta_value`
+                        ELSE NULL
+                    END
+                    ) AS `bodega`
+                FROM
+                    wp_usermeta
+                    INNER JOIN ordermeta ON dokan_vendor_id = user_id
+                GROUP BY
+                    user_id
+                HAVING
+                    zone = 'centro'
                 ),
-                order_items as(
-                    select order_item_id, wp_woocommerce_order_items.order_id, order_item_name
-                    from wp_woocommerce_order_items
-                    inner join wp_posts on wp_posts.id = order_id
-                    where order_item_type = 'line_item' and post_status = 'wc-recolectar-2'
+                order_items AS(
+                SELECT
+                    order_item_id,
+                    wp_woocommerce_order_items.order_id,
+                    order_item_name
+                FROM
+                    wp_woocommerce_order_items
+                    INNER JOIN wp_posts ON wp_posts.id = order_id
+                WHERE
+                    order_item_type = 'line_item'
+                    AND post_status = 'wc-recolectar-2'
                 ),
-                product_order_meta_values as (
-                    select
-                        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `order_quantity`
-                    from
-                        `wp_woocommerce_order_itemmeta`
-                        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-                    group by
-                        `wp_woocommerce_order_itemmeta`.`order_item_id`
+                product_order_meta_values AS (
+                SELECT
+                    `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
+                    max(
+                    CASE
+                        WHEN `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' THEN `wp_woocommerce_order_itemmeta`.`meta_value`
+                        ELSE NULL
+                    END
+                    ) AS `order_quantity`
+                FROM
+                    `wp_woocommerce_order_itemmeta`
+                    INNER JOIN order_items ON order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
+                GROUP BY
+                    `wp_woocommerce_order_itemmeta`.`order_item_id`
                 )
-                select
-                    seller_name,
-                    count(distinct ordermeta.order_id) as num_pedidos,
-                    sum(order_quantity) as num_paquetes
-                from ordermeta
-                    inner join sellers on sellers.user_id = dokan_vendor_id
-                    inner join order_items on order_items.order_id = ordermeta.order_id
-                    inner join product_order_meta_values on product_order_meta_values.order_item_id = order_items.order_item_id
-                group by seller_name
+                SELECT
+                seller_name,
+                count(DISTINCT ordermeta.order_id) AS num_pedidos,
+                sum(order_quantity) AS num_paquetes
+                FROM
+                ordermeta
+                INNER JOIN sellers ON sellers.user_id = dokan_vendor_id
+                INNER JOIN order_items ON order_items.order_id = ordermeta.order_id
+                INNER JOIN product_order_meta_values ON product_order_meta_values.order_item_id = order_items.order_item_id
+                where bodega IS NULL
+                GROUP BY
+                seller_name
         """
         # Ejecutar la primera consulta
         cursor.execute(wp_seller_recolection_sql)
@@ -160,85 +173,6 @@ def get_data_seller_by_name(name,db='repl') -> dict:
     try:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
-        wp_seller_by_name_recolection_sql_temp ="""
-           with orders as (
-                    select
-                        id
-                    from
-                        wp_posts
-                    where
-                        post_status = 'wc-recolectar-2'
-                        
-                ),
-                ordermeta as(
-                    select
-                        post_id as order_id,
-                        max(
-                            case
-                                when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `dokan_vendor_id`
-                    from
-                        wp_postmeta inner join orders on orders.id = post_id
-                    group by post_id
-                    #having dokan_vendor_id not in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '7180', '7201', '7202', '6927')
-                ),
-                sellers as (
-                    select
-                        user_id,
-                        max(
-                            case
-                                when `meta_key` = '_zone' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `zone`,
-                        max(
-                            case
-                                when `meta_key` = 'dokan_store_name' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `seller_name`
-                    from
-                        wp_usermeta
-                        inner join ordermeta on dokan_vendor_id = user_id
-                    where meta_value not in ('centro_cdmx', 'aj_cdmx')
-                    group by user_id
-                    having zone = 'centro'
-                ),
-                order_items as(
-                    select order_item_id, wp_woocommerce_order_items.order_id, order_item_name
-                    from wp_woocommerce_order_items
-                    inner join wp_posts on wp_posts.id = order_id
-                    where order_item_type = 'line_item' and post_status = 'wc-recolectar-2'
-                ),
-                product_order_meta_values as (
-                    select
-                        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `order_quantity`
-                    from
-                        `wp_woocommerce_order_itemmeta`
-                        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-                    group by
-                        `wp_woocommerce_order_itemmeta`.`order_item_id`
-                )
-                select
-                    seller_name,
-                    ordermeta.order_id as order_id,
-                    sum(order_quantity) as num_paquetes
-                from ordermeta
-                    inner join sellers on sellers.user_id = dokan_vendor_id
-                    inner join order_items on order_items.order_id = ordermeta.order_id
-                    inner join product_order_meta_values on product_order_meta_values.order_item_id = order_items.order_item_id
-                WHERE seller_name = %s
-                group by seller_name, ordermeta.order_id
-
-        """
         wp_seller_by_name_recolection_sql="""
         with orders as (
                     select

@@ -9,6 +9,8 @@ import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from db.db_UserInteractionEvents import event_instert
 from db.db_productosValidados import update_order_product_status
+from db.db_order import insert_order_metadata
+from st_mui_dialog import st_mui_dialog
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
@@ -28,7 +30,8 @@ def UIOrdenesAgrupar(data):
     st.header("Ordenes a agrupar")
     df_data=[]
     df = pd.DataFrame(data)
-
+    print("df")
+    print(df)
     options = st.multiselect(
     'Selecciones el estado',
      options=df['estado'].unique(),
@@ -59,19 +62,58 @@ def UIOrdenesAgrupar(data):
 
 def UIOrdenesAgruparDetalle(data,idPedido):
     st.header(f"Pedidos a agrupar: {st.session_state.orderId}")
-    if st.button("Regresar la lista de agrupación"):
-        st.session_state.current_view = 'agrupacion'
-        st.rerun()
+    st.markdown(
+    """
+    <style>
+    .stButton>button {
+        height: 3em;     /* Ajusta la altura del botón */
+    }
+    .stSelectbox {
+        height: 3em; /* Ajusta la altura del selectbox para que coincida con el botón */
+    }
+    /* Ajustes adicionales de CSS aquí si es necesario */
+    </style>
+    """,
+        unsafe_allow_html=True
+    )
+
+    col1, col2 = st.columns([2, 2])
+    option=''
+    # En la primera columna, puedes colocar un elemento
+    with col1:
+        if st.button("Regresar la lista de agrupación"):
+            st.session_state.current_view = 'agrupacion'
+            st.rerun()
+
+    # En la segunda columna, puedes colocar otro elemento
+    with col2:
+        option = st.selectbox(
+            'Tipos de envio',
+            ('Seleccione tipo de envío','Envío a Cliente', 'Envío a Bodega'),
+            label_visibility='collapsed')
+
+    if option=='Envío a Bodega':
+        numGuiaInterno = st.text_input('Número de guía interno', '')
+        optioOperadorInterno = st.selectbox(
+            'Operador logistico interno',
+            ('Elije un operador', 'Estafeta', '99 MInutos', 
+             'Ogramak', 'FEDEX', 'Redpack', 
+             'Chavobus', 'Ogramak Caminon'), key='optioOperadorInterno')
+    if option=='Envío a Cliente':
+        numGuiaCliente = st.text_input('Número de guía cliente', '')
+        optioOperadorCliente = st.selectbox(
+            'Operador logistico cliente',
+            ('Elije un operador', 'Estafeta', '99 MInutos', 
+             'Ogramak', 'Redpack', 
+             'FEDEX', 'Tiui'), key='optioOperadorCliente')
+
+    
     # Espacio entre secciones
     st.write("---")
     # Inicializar una lista para los estados
-    estados = []
-    cantidad_pickeada =0
-
     df = pd.DataFrame(data)
     objArry=[]
     estadoSeleccion=''
-    unique_values_list = ['Motivo A','Motivo B']
     header_col1, header_col2, header_col3, header_col4,header_col5 = st.columns([2, 2, 3, 3, 2])
     header_col1.write("**Pedido**")
     header_col2.write("**Seller**")
@@ -106,24 +148,87 @@ def UIOrdenesAgruparDetalle(data,idPedido):
             agrupado.append(objArry[i]['order_id'])
         else:
             no_agrupado.append(objArry[i]['order_id'])
-    
-
-    print(agrupado)
-    print(no_agrupado)
-    trigger_btn = ui.button(text="Agrupar", key="trigger_btn_agrupacion")
+    #proceos para los ids Padres
     flag=False
-    if len(agrupado)>0:
-        respuesta_agrupacion=ui.alert_dialog(show=trigger_btn, title="Confirmemos agrupación", description='Enviaremos el pedido a "Embarque"\nConfirma si es lo que quisieras', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_agrupacion")
-        if respuesta_agrupacion:
-            if st.session_state.useremail is not None:
-                EventName,EventAction,EventUser='Agrupación','Se envio el pedido a "Embarque"',st.session_state.useremail
-                event_instert(EventName,EventAction,EventUser)
-            with st.spinner(f'Actualizando estatus del pedido de {st.session_state.orderId} a Embarque...'):
-                order_status='wc-embarque'
-                for objeto in objArry:
-                    print(objeto['agrupadoSeleccion'])
-                    if objeto['agrupadoSeleccion']=='agrupado':
-                        update_order_product_status(objeto['order_id'],order_status)
+    meta_key1=''
+    meta_key2=''
+    flagProceso=False
+    if option=='Envío a Bodega':
+        if optioOperadorInterno!='Elije un operador' and numGuiaInterno!='':
+            print(optioOperadorInterno)
+            print('+++++++++++++++++++++++++++++++++++++++')
+            print('Insertar meta campos de envio a cliente id padre')
+            print('+++++++++++++++++++++++++++++++++++++++')
+            meta_key1='_numero_guia_interno'
+            insert_order_metadata(idPedido,meta_key1,numGuiaInterno)
+            meta_key2='_logis_op_interno'
+            insert_order_metadata(idPedido,meta_key2,optioOperadorInterno)
+            flag=True
+        else:
+            st.warning('Favor de llenar los campos de "Envío a Bodega" para continuar')
+    if option=='Envío a Cliente':
+        if optioOperadorCliente!='Elije un operador' and numGuiaCliente!='':
+            print('+++++++++++++++++++++++++++++++++++++++')
+            print('Insertar meta campos de envio a cliente id padre')
+            print('+++++++++++++++++++++++++++++++++++++++')
+            meta_key1='_numero_guia'
+            insert_order_metadata(idPedido,meta_key1,numGuiaCliente)
+            meta_key2='_logis_op_interno'
+            insert_order_metadata(idPedido,meta_key2,optioOperadorCliente)
+            flag=True
+        else:
+            st.warning('Favor de llenar los campos de "Envío a Cliente" para continuar')
+    
+    print('+++++++++++++++++++++++++++++++++++++++')
+    print(flag)
+    print('+++++++++++++++++++++++++++++++++++++++')
+    if flag==True:
+        if len(agrupado)>0:
+            answer = st_mui_dialog(title="Confirmemos agrupación", 
+                            content='Enviaremos el pedido a "Embarque"\nConfirma si es lo que quisieras', 
+                            button_txt = "Agrupar",
+                            agreelabel="Confirmar",
+                            abortlabel = "Volver",
+                            transition_mode = "slide", 
+                            slide_direction = "up",
+                            adapt_width_dialog = True,
+                            key='button_if_agrupar'
+                            )
+            if answer!=None:
+                if answer:
+                    if st.session_state.useremail is not None:
+                        EventName,EventAction,EventUser='Agrupación','Se envio el pedido a "Embarque"',st.session_state.useremail
+                        event_instert(EventName,EventAction,EventUser)
+                    with st.spinner(f'Actualizando estatus del pedido de {st.session_state.orderId} a Embarque...'):
+                        order_status='wc-embarque'
+                        if len(objArry)>0:
+                            for objeto in objArry:
+                                print(objeto['agrupadoSeleccion'])
+                                if objeto['agrupadoSeleccion']=='agrupado':
+                                    print('+++++++++++++++++++++++++++++++++++++++')
+                                    print("agrupadoSeleccion']=='agrupado")
+                                    print('+++++++++++++++++++++++++++++++++++++++')
+                                    update_order_product_status(objeto['order_id'],order_status)
+                                    meta_key1=''
+                                    meta_key2=''
+                                    if option=='Envío a Bodega':
+                                            print('+++++++++++++++++++++++++++++++++++++++')
+                                            print('Insertar meta campos de envio a cliente id hijo')
+                                            print('+++++++++++++++++++++++++++++++++++++++')
+                                            meta_key1='_numero_guia_interno'
+                                            insert_order_metadata(objeto['order_id'],meta_key1,numGuiaInterno)
+                                            meta_key2='_logis_op_interno'
+                                            insert_order_metadata(objeto['order_id'],meta_key2,optioOperadorInterno)
+                                    if option=='Envío a Cliente':
+                                            print('+++++++++++++++++++++++++++++++++++++++')
+                                            print('Insertar meta campos de envio a cliente id hijo')
+                                            print('+++++++++++++++++++++++++++++++++++++++')
+                                            meta_key1='_numero_guia'
+                                            insert_order_metadata(objeto['order_id'],meta_key1,numGuiaCliente)
+                                            meta_key2='_logis_op_interno'
+                                            insert_order_metadata(objeto['order_id'],meta_key2,optioOperadorCliente)
+                                    flagProceso=True
+    
                 #idPedido
                 #para test '281660'
                 #r = asyncio.run(update_status_wordpress(idPedido, order_status))
@@ -131,7 +236,12 @@ def UIOrdenesAgruparDetalle(data,idPedido):
                 #print(r)
                 #st.session_state.current_view = 'auditoria'
                 #st.rerun()
-    #if len(no_agrupado)>0:
-    #if flag:
-    #    st.session_state.current_view = 'auditoria'
-    #    st.rerun()
+        else:
+            print('+++++++++++++++++++++++++++++++++++++++')
+            print('No se encontraron pedidos para agrupar')
+            print('+++++++++++++++++++++++++++++++++++++++')  
+            st.warning('No a agrupado ningun pedido, por esta razon no se actualizo el estatus del pedido a wc-embarque')
+
+    if flagProceso:
+        st.session_state.current_view = 'auditoria'
+        st.rerun()

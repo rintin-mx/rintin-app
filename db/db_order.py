@@ -37,53 +37,67 @@ def get_seller(db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_seller_sql ="""
-        with orders as (
-                select
-                    id,
-                    post_status
-                from
-                    wp_posts
-                where
-                    post_status = 'wc-recolectar-2'
+        WITH orders AS (
+            SELECT
+                wp_posts.id,
+                wp_posts.post_status,
+                wp_dokan_orders.seller_id
+            FROM
+                wp_posts
+                left join wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
+            WHERE
+                post_status = 'wc-recolectar-2'
             ),
-            ordermeta as(
-                select
-                    post_id as order_id,
-                    post_status,
-                    max(
-                        case
-                            when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                            else NULL
-                        end
-                    ) AS `dokan_vendor_id`
-                from
-                    wp_postmeta inner join orders on orders.id = post_id
-                group by post_id, post_status
+            ordermeta AS(
+            SELECT
+                post_id AS order_id,
+                post_status,
+                max(
+                CASE
+                    WHEN `meta_key` = '_dokan_vendor_id' THEN `meta_value`
+                    ELSE orders.seller_id
+                END
+                ) AS `dokan_vendor_id`
+            FROM
+                wp_postmeta
+                INNER JOIN orders ON orders.id = post_id
+            GROUP BY
+                post_id,
+                post_status
             ),
-            users as (
-                select 
-                    user_id,
-                    max(
-                        case
-                            when `meta_key` = 'dokan_store_name' then `meta_value`
-                            else NULL
-                        end
-                    ) AS `dokan_store_name`,
-                    max(
-                        case
-                            when `meta_key` = 'bodega' then `meta_value`
-                            else NULL
-                        end
-                    ) AS `bodega`
-                from wp_usermeta
-                inner join ordermeta on ordermeta.dokan_vendor_id = user_id
-                group by user_id
-                having bodega in ('aj_cdmx', 'centro_cdmx')
+            users AS (
+            SELECT
+                user_id,
+                max(
+                CASE
+                    WHEN `meta_key` = 'dokan_store_name' THEN `meta_value`
+                    ELSE NULL
+                END
+                ) AS `dokan_store_name`,
+                max(
+                CASE
+                    WHEN `meta_key` = 'bodega' THEN `meta_value`
+                    ELSE NULL
+                END
+                ) AS `bodega`
+            FROM
+                wp_usermeta
+                INNER JOIN ordermeta ON ordermeta.dokan_vendor_id = user_id
+            GROUP BY
+                user_id
             )
-            select order_id , dokan_vendor_id as seller_id, dokan_store_name as seller_name, post_status as estado
-            from ordermeta
-            inner join users on users.user_id = ordermeta.dokan_vendor_id
-            order by order_id ASC 
+            SELECT
+            order_id,
+            dokan_vendor_id AS seller_id,
+            dokan_store_name AS seller_name,
+            post_status AS estado
+            FROM
+            ordermeta
+            INNER JOIN users ON users.user_id = ordermeta.dokan_vendor_id
+                WHERE
+                bodega IN ('centro_cdmx', 'aj_cdmx')
+            ORDER BY
+            order_id ASC
         """
 
         # Ejecutar la primera consulta
