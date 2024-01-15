@@ -65,7 +65,7 @@ def problemasRecoleccion(objeto):
 
 def UIDetallePedido(data_deta,idPedido):
     st.subheader(f"Detalle de la orden: {idPedido}")
-    if st.button("Regresar la lista de auditoríaa"):
+    if st.button("Regresar la lista de auditoría"):
             st.session_state.current_view = 'agrupacion'
             st.rerun()
     #estilos en los textos
@@ -199,9 +199,9 @@ def UIDetallePedido(data_deta,idPedido):
                     order_status='agrupar-pedidos'
                     #idPedido
                     #para test '281660'
-                    #r = asyncio.run(update_status_wordpress(idPedido, order_status))
-                    #print("r")
-                    #print(r)
+                    r = asyncio.run(update_status_wordpress(idPedido, order_status))
+                    print("r")
+                    print(r)
                     answer=None
                     if st.session_state['visible'] == True:
                         st.session_state['visible'] = False
@@ -237,10 +237,10 @@ def UIDetallePedido(data_deta,idPedido):
                             print("---------------")
                             print(objeto['seller_id'])
                             print("---------------")
-                            #if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
-                                #lineasCDMX.append(BodegaCDMX(objeto))
-                            #else:
-                                #lineasProblemas.append(problemasRecoleccion(objeto))
+                            if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
+                                lineasCDMX.append(BodegaCDMX(objeto))
+                            else:
+                                lineasProblemas.append(problemasRecoleccion(objeto))
                         else:
                             print("-----------------------------------------------------------------------------------")
                             print('aca va el else por que al mensi una item no viene con conel estado de la validacion')
@@ -248,10 +248,10 @@ def UIDetallePedido(data_deta,idPedido):
                             print("***************")
                             print(objeto)
                             print("***************")
-                            #if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
-                                #lineasCDMX.append(BodegaCDMX(objeto))
-                            #else:
-                                #lineasProblemas.append(problemasRecoleccion(objeto))
+                            if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
+                                lineasCDMX.append(BodegaCDMX(objeto))
+                            else:
+                                lineasProblemas.append(problemasRecoleccion(objeto))
 
 
                     print('len(lineasCDMX)')
@@ -266,7 +266,7 @@ def UIDetallePedido(data_deta,idPedido):
                             print("bodegas CDMX")
                             #idPedido
                             #para test '281660'
-                            #asyncio.run(update_order_note__wordpress(idPedido, order_notes))
+                            asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                             st.snow()
                     if len(lineasProblemas)>0:
                         print("lineasProblemas")
@@ -276,7 +276,7 @@ def UIDetallePedido(data_deta,idPedido):
                             print("problemas de recolección")
                             #idPedido
                             #para test '281660'
-                            #asyncio.run(update_order_note__wordpress(idPedido, order_notes))
+                            asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                             st.snow()
 
                     #if st.session_state['visible'] == True:
