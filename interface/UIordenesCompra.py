@@ -36,7 +36,7 @@ def terminarOrden():
 # Se maneja un diccionario cuya llave es el nombre del seller y su valor es una lista de productos
 # De esta forma siempre se guardarán los productos agregados al seller antes de que se confirme para BD
 def verDetalle(seller_name):
-    st.session_state.current_view = 'detalle'
+    st.session_state.current_view = 'detalleOrdenCompra'
     if "dictProductos" not in st.session_state:
         st.session_state['dictProductos']={seller_name: []}
     elif seller_name not in st.session_state['dictProductos']:
@@ -50,7 +50,7 @@ def editarProducto(index, seller_name):
     productsArr = st.session_state['dictProductos'][seller_name]
     st.session_state['editProduct'] = productsArr[index]
     st.session_state['editProductIndex'] = index
-    st.session_state.current_view = 'detalle'
+    st.session_state.current_view = 'detalleOrdenCompra'
     st.rerun()
 
 # Funcion para agregar un producto a lista del diccionario del seller
@@ -80,13 +80,22 @@ def create_download_link(val, filename):
 
 
 # Vista de confirmación de orden de compra
-def UITTerminarOrdenCompra():
-    # Calculo de valores acumulados
-    total_bultos = 0
+def UITTerminarOrdenCompra(parents, order_data):
+    order_parent_list = [0]
+    bodegas_recepcion = ['centro_cdmx', 'oaxaca', 'aj_cdmx', 'showroom']
+    print('order')
+    print(order_data)
+    if parents is not None and len(parents['id_orden_compra']) > 0:
+        order_parent_list = order_parent_list + parents['id_orden_compra']
+    if order_data is not None:
+        bodevaValIndex = bodegas_recepcion.index(order_data['bodega_recepcion'][0])
+        parentIndex = order_parent_list.index(order_data['orden_compra_padre'][0])
+    else:
+        bodevaValIndex = 0
+        parentIndex = 0
     total_cobro = 0
     for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-        total_bultos = total_bultos + value['cantidad_pack']
-        total_cobro = total_cobro + (value['costo'] * value['cantidad_pack'])
+        total_cobro = total_cobro + (float(value['costo']) * value['cantidad_pack'])
         
     if st.button('Volver'):
         st.session_state.current_view = 'ordenesCompraMenu'
@@ -116,13 +125,11 @@ def UITTerminarOrdenCompra():
                 pdf.cell(62, 10, 'Seller: ' + str(st.session_state['currentSeller']), 0, align='C')
                 pdf.cell(62, 10, 'Fecha Creación: ' + str(st.session_state['fechaCreacionOrden']), 0, align='C')
                 pdf.ln()
-                pdf.cell(62, 10, 'Total a Pagar', 1, align='C')
-                pdf.cell(62, 10, 'Total Paquetes', 1, align='C')
-                pdf.cell(62, 10, 'Total Bultos', 1, align='C')
+                pdf.cell(93, 10, 'Total a Pagar', 1, align='C')
+                pdf.cell(93, 10, 'Total Paquetes', 1, align='C')
                 pdf.ln()
-                pdf.cell(62, 10, str(total_cobro), 1, align='C')
-                pdf.cell(62, 10, str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])), 1, align='C')
-                pdf.cell(62, 10, str(total_bultos), 1, align='C')
+                pdf.cell(93, 10, str(total_cobro), 1, align='C')
+                pdf.cell(93, 10, str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])), 1, align='C')
                 pdf.ln()
                 pdf.ln()
                 pdf.cell(31, 10, 'Nombre de producto', 1, align='C')
@@ -146,29 +153,29 @@ def UITTerminarOrdenCompra():
                 st.markdown(html, unsafe_allow_html=True)
 
     st.write('---')
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
         st.markdown('**Total Paquetes**')
         st.text(str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])))
     with col2:
-        st.markdown('**Total Bultos**')
-        st.text(str(total_bultos))
-    with col3:
         st.markdown('**Total a Pagar**')
         st.text(str(total_cobro))
     st.write("---")
-
-    
     st.table(tableArr)
-    
+    col1, col2 = st.columns(2)
+    with col1:
+        orden_padre = st.selectbox('Orden Padre', options=order_parent_list, index=parentIndex)
+    with col2:
+        bodega_recepcion = st.selectbox('Bodega Recepción', options=bodegas_recepcion, index=bodevaValIndex)
     # INSERT a BD
     if 'isEditing' in st.session_state and 'isSaved' not in st.session_state:
         if st.button('Guardar cambios'):
             orderDict = {            
                 'total_paquetes': len(st.session_state['dictProductos'][st.session_state['currentSeller']]),
                 'total_cost': total_cobro,
-                'total_bultos': total_bultos,
-                'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S')
+                'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'bodega_recepcion': bodega_recepcion,
+                'orden_padre': orden_padre
             }
             print('deletedProducts')
             print(st.session_state['deletedProducts'])
@@ -186,7 +193,8 @@ def UITTerminarOrdenCompra():
                 'seller_name': st.session_state['currentSeller'],
                 'total_paquetes': len(st.session_state['dictProductos'][st.session_state['currentSeller']]),
                 'total_cost': total_cobro,
-                'total_bultos': total_bultos,
+                'bodega_recepcion': bodega_recepcion,
+                'orden_padre': orden_padre,
                 'usuario_creacion': st.session_state['username'],
                 'fecha_creacion': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S')
@@ -207,12 +215,17 @@ def UITAddProduct(producto):
         tipo_product_indexVal = producto['tipo_product_index']
         costoVal = float(producto['costo'])
         img_url = producto['img_url']
+        units_per_packVal =int(producto['units_per_pack'])
         strBtn = 'Confirmar Edición'
+        product_id = None
+        if 'product_id' in producto:
+            product_id = producto['product_id']
     else:
         nombreVal = ''
         skuVal = ''
         tipo_product_indexVal = 0
         costoVal = 0
+        units_per_packVal = 0
         strBtn = 'Confirmar Creación'
         
     st.title('Producto Nuevo')
@@ -221,18 +234,23 @@ def UITAddProduct(producto):
     tipo_producto_list = ['Unidad', 'Paquete']
     tipo_producto = st.selectbox('Tipo de producto', tipo_producto_list, index=tipo_product_indexVal)
     tipo_product_index = tipo_producto_list.index(tipo_producto)
+    if tipo_producto == 'Paquete':
+        units_per_pack = st.number_input('Unidades por paquete', value=units_per_packVal)
+    else:
+        units_per_pack = 0
     costo = st.number_input('Costo [Paquete/Unidad]', value=costoVal)
-    if producto is not None:
+    if producto is not None and img_url != '':
         st.image(img_url)
     input_file = st.file_uploader("Agrega la imagen del producto", accept_multiple_files=False)
     if st.button(strBtn):
-        if nombre != '' and sku != '' and costo != 0 and (input_file is not None or img_url is not None):
+        if nombre != '' and sku != '' and costo != 0:
             productoDict = {
                 'nombre': nombre,
                 'sku': sku,
                 'tipo_producto': tipo_producto,
                 'tipo_product_index': tipo_product_index,
-                'costo': costo
+                'costo': costo,
+                'units_per_pack': units_per_pack
             }
             if producto is not None:
                 if input_file is not None:
@@ -241,11 +259,16 @@ def UITAddProduct(producto):
                         productoDict['img_url'] = res
                 else:
                     productoDict['img_url'] = img_url
+                if product_id is not None:
+                    productoDict['product_id'] = product_id
                 modificarProducto(productoDict)
             else:
-                res = insertImage(input_file, st.session_state['currentSellerId'], input_file.name, 'rintin-internal-apps')
-                if res:
-                    productoDict['img_url'] = res
+                if input_file is not None:
+                    res = insertImage(input_file, st.session_state['currentSellerId'], input_file.name, 'rintin-internal-apps')
+                    if res:
+                        productoDict['img_url'] = res
+                else:
+                    productoDict['img_url'] = ''
                 agregarProducto(productoDict)
         else:
             st.error('Debes llenar todos los campos correctamente')
@@ -322,6 +345,7 @@ def UITOrdenesCompra(data, products):
                 'tipo_producto': products['tipo_producto'][i],
                 'tipo_product_index': tipo_product_index,
                 'cantidad_pack': products['line_paquetes'][i],
+                'units_per_pack': products['units_per_pack'][i],
                 'costo': products['cost_of_goods'][i],
                 'img_url': products['foto'][i]
             }
@@ -356,11 +380,14 @@ def UITOrdenesCompra(data, products):
             for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    if 'img_url' in value:
+                    if 'img_url' in value and value['img_url'] != '':
                         st.image(value['img_url'])
+                    else:    
+                        st.write("Sin imagen")
                 with col2:
                     st.markdown('**SKU:** ' + value['sku'])
                     st.markdown('**Costo:** ' + str(value['costo']))
+                    st.markdown('**Tipo de producto:** ' + str(value['tipo_producto']))
                     
                 with col3:
                     qty_val = 1

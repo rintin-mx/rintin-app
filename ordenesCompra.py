@@ -3,7 +3,7 @@ import streamlit as st
 from interface.UIordenesCompra import UITOrdenesCompra
 from interface.UIordenesCompra import UITAddProduct
 from db.db_UserInteractionEvents import event_instert   
-from db.db_ordenesCompra import get_live_sellers, get_ordenes_compra, get_products
+from db.db_ordenesCompra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info
 from interface.UIordenesCompra import UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
 
 def app():
@@ -23,7 +23,7 @@ def app():
                 orderProducts = get_products(st.session_state['ordenCompraId'])
             data = get_live_sellers()
             UITOrdenesCompra(data, orderProducts)
-        elif st.session_state.current_view == 'detalle':
+        elif st.session_state.current_view == 'detalleOrdenCompra':
             if 'editProduct' in st.session_state:
                 product = st.session_state['editProduct']
             else:
@@ -53,4 +53,11 @@ def app():
                 del st.session_state['isEditing']
             UITOrdenesCompraEdit(data)
         elif st.session_state.current_view == 'terminar_orden_compra':
-            UITTerminarOrdenCompra()
+            data = get_parent_orders()
+            
+            if 'ordenCompraId' in st.session_state:
+                orderData = get_order_info(st.session_state['ordenCompraId'])
+            else:
+                orderData = None
+            UITTerminarOrdenCompra(data, orderData)
+            

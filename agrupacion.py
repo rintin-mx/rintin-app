@@ -11,7 +11,7 @@ def app():
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'agrupacion'
         print(st.session_state.current_view)
-        if st.session_state.current_view in ('pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompra','auditoria'):
+        if st.session_state.current_view in ('pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra'):
             st.session_state['current_view'] = 'agrupacion'
         if st.session_state.current_view == 'agrupacion':
             if st.session_state.useremail is not None:
