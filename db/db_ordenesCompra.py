@@ -61,6 +61,7 @@ def updateOrdenCompra(order_id, orderInfo, products):
     except Exception as e:
         print("Error al conectar a la base de datos:", e)
         return False
+    
 def insertOrdenCompra(orderInfo, products):
     db ='prod'
     config = config_db(db)

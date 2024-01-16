@@ -187,7 +187,7 @@ def UITTerminarOrdenCompra():
                 'total_paquetes': len(st.session_state['dictProductos'][st.session_state['currentSeller']]),
                 'total_cost': total_cobro,
                 'total_bultos': total_bultos,
-                'usuario_creacion': 'juanma',
+                'usuario_creacion': st.session_state['username'],
                 'fecha_creacion': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S')
             }

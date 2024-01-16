@@ -9,7 +9,6 @@ from interface.UIordenesCompra import UITTerminarOrdenCompra, UITOrdenesCompraMe
 def app():
     if 'username' in st.session_state:
         data = []
-        print(st.session_state.current_view)
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'ordenesCompraMenu'
         if st.session_state.current_view== 'pick' or st.session_state.current_view== 'auditoria' or st.session_state.current_view== 'recolect' or st.session_state.current_view== 'ordenesAgrupar' or st.session_state.current_view=='ordenesCompraMenu' or st.session_state.current_view=='agrupacion':
