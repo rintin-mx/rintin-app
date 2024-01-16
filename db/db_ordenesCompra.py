@@ -15,7 +15,8 @@ def config_db(db='repl') -> dict:
             'user': USER,
             'password': PASSWORD,
             'host': HOST,
-            'database': DATABASE
+            'database': DATABASE,
+            'charset': 'latin1'
         }
     else:
         config = {

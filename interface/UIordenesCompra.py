@@ -254,7 +254,7 @@ def UITAddProduct(producto):
             }
             if producto is not None:
                 if input_file is not None:
-                    res = insertImage(input_file, st.session_state['currentSellerId'], input_file.name, 'rintin-internal-apps')
+                    res = insertImage(input_file, st.session_state['currentSellerId'], 'rintin-internal-apps')
                     if res:
                         productoDict['img_url'] = res
                 else:
@@ -264,7 +264,7 @@ def UITAddProduct(producto):
                 modificarProducto(productoDict)
             else:
                 if input_file is not None:
-                    res = insertImage(input_file, st.session_state['currentSellerId'], input_file.name, 'rintin-internal-apps')
+                    res = insertImage(input_file, st.session_state['currentSellerId'], 'rintin-internal-apps')
                     if res:
                         productoDict['img_url'] = res
                 else:
