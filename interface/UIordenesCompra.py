@@ -96,10 +96,10 @@ def UITTerminarOrdenCompra(parents, order_data):
     total_cobro = 0
     for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
         total_cobro = total_cobro + (float(value['costo']) * value['cantidad_pack'])
-        
-    if st.button('Volver'):
-        st.session_state.current_view = 'ordenesCompraMenu'
-        st.rerun()
+    if 'isSaved' not in st.session_state:    
+        if st.button('Volver'):
+            st.session_state.current_view = 'ordenesCompra'
+            st.rerun()
     tableArr = []
     for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
         tableArr.append({
@@ -112,46 +112,9 @@ def UITTerminarOrdenCompra(parents, order_data):
     col1, col2 = st.columns(2)
     with col1:
         st.markdown('#### **Seller:** ' + st.session_state['currentSeller'])
+    with col2:
         if 'ordenCompraId' in st.session_state:
             st.markdown('#### **Orden de Compra:** ' + str(st.session_state['ordenCompraId']))
-    with col2:
-        # Generación de PDF
-        if 'ordenCompraId' in st.session_state:
-            if st.button('Generar PDF'):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font('Arial', 'B', 8)
-                pdf.cell(62, 10, 'Orden de Compra: ' + str(st.session_state['ordenCompraId']), 0, align='C')
-                pdf.cell(62, 10, 'Seller: ' + str(st.session_state['currentSeller']), 0, align='C')
-                pdf.cell(62, 10, 'Fecha Creación: ' + str(st.session_state['fechaCreacionOrden']), 0, align='C')
-                pdf.ln()
-                pdf.cell(93, 10, 'Total a Pagar', 1, align='C')
-                pdf.cell(93, 10, 'Total Paquetes', 1, align='C')
-                pdf.ln()
-                pdf.cell(93, 10, str(total_cobro), 1, align='C')
-                pdf.cell(93, 10, str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])), 1, align='C')
-                pdf.ln()
-                pdf.ln()
-                pdf.cell(31, 10, 'Nombre de producto', 1, align='C')
-                pdf.cell(31, 10, 'SKU', 1, align='C')
-                pdf.cell(31, 10, 'Tipo de Producto', 1, align='C')
-                pdf.cell(31, 10, 'Costo', 1, align='C')
-                pdf.cell(31, 10, 'Cantindad', 1, align='C')
-                pdf.cell(31, 10, 'Total', 1, align='C')
-                pdf.ln()
-                pdf.set_font('Arial', '', 6)
-                for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                    pdf.cell(31, 10, str(value['nombre']), 1, align='C')
-                    pdf.cell(31, 10, str(value['sku']), 1, align='C')
-                    pdf.cell(31, 10, str(value['tipo_producto']), 1, align='C')
-                    pdf.cell(31, 10, str(value['costo']), 1, align='C')
-                    pdf.cell(31, 10, str(value['cantidad_pack']), 1, align='C')
-                    total = value['cantidad_pack'] * value['costo']
-                    pdf.cell(31, 10, str(total), 1, align='C')
-                    pdf.ln()
-                html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
-                st.markdown(html, unsafe_allow_html=True)
-
     st.write('---')
     col1, col2 = st.columns(2)
     with col1:
@@ -167,6 +130,45 @@ def UITTerminarOrdenCompra(parents, order_data):
         orden_padre = st.selectbox('Orden Padre', options=order_parent_list, index=parentIndex)
     with col2:
         bodega_recepcion = st.selectbox('Bodega Recepción', options=bodegas_recepcion, index=bodevaValIndex)
+    # Generación de PDF
+    if 'ordenCompraId' in st.session_state:
+        if st.button('Generar PDF'):
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font('Arial', 'B', 8)
+            pdf.cell(62, 10, 'Orden de Compra: ' + str(st.session_state['ordenCompraId']), 0, align='C')
+            pdf.cell(62, 10, 'Seller: ' + str(st.session_state['currentSeller']), 0, align='C')
+            pdf.cell(62, 10, 'Fecha Creación: ' + str(st.session_state['fechaCreacionOrden']), 0, align='C')
+            pdf.ln()
+            pdf.cell(62, 10, 'Total a Pagar', 1, align='C')
+            pdf.cell(62, 10, 'Total Paquetes', 1, align='C')
+            pdf.cell(62, 10, 'Almacen', 1, align='C')
+            pdf.ln()
+            pdf.cell(62, 10, str(total_cobro), 1, align='C')
+            pdf.cell(62, 10, str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])), 1, align='C')
+            pdf.cell(62, 10, str(bodega_recepcion), 1, align='C')
+            pdf.ln()
+            pdf.ln()
+            pdf.cell(31, 10, 'Nombre de producto', 1, align='C')
+            pdf.cell(31, 10, 'SKU', 1, align='C')
+            pdf.cell(31, 10, 'Tipo de Producto', 1, align='C')
+            pdf.cell(31, 10, 'Costo', 1, align='C')
+            pdf.cell(31, 10, 'Cantindad', 1, align='C')
+            pdf.cell(31, 10, 'Total', 1, align='C')
+            pdf.ln()
+            pdf.set_font('Arial', '', 6)
+            for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
+                pdf.cell(31, 10, str(value['nombre']), 1, align='C')
+                pdf.cell(31, 10, str(value['sku']), 1, align='C')
+                pdf.cell(31, 10, str(value['tipo_producto']), 1, align='C')
+                pdf.cell(31, 10, str(value['costo']), 1, align='C')
+                pdf.cell(31, 10, str(value['cantidad_pack']), 1, align='C')
+                total = value['cantidad_pack'] * value['costo']
+                pdf.cell(31, 10, str(total), 1, align='C')
+                pdf.ln()
+            html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'orden_de_compra_' + str(st.session_state['ordenCompraId']))
+            st.markdown(html, unsafe_allow_html=True)
+
     # INSERT a BD
     if 'isEditing' in st.session_state and 'isSaved' not in st.session_state:
         if st.button('Guardar cambios'):
@@ -205,6 +207,11 @@ def UITTerminarOrdenCompra(parents, order_data):
                 st.session_state['fechaCreacionOrden'] = fechaCreacion
                 st.session_state['isSaved'] = True
                 st.rerun()
+    
+    elif 'isSaved' in st.session_state:
+        if st.button('Regresar al Inicio'):
+            st.session_state.current_view = 'ordenesCompraMenu'
+            st.rerun()
         
 # Vista de creación de producto
 def UITAddProduct(producto):
@@ -330,7 +337,7 @@ def UITOrdenesCompra(data, products):
         titleStr = 'Edicion Orden Compra'
         
         
-    if products is not None and 'initialFetch' not in st.session_state:
+    if products is not None and 'initialFetch' not in st.session_state and 'isSaved' not in st.session_state:
         if 'dictProductos' not in st.session_state:
             st.session_state['dictProductos'] = {}
             st.session_state['dictProductos'][st.session_state['currentSeller']] = []
@@ -397,8 +404,22 @@ def UITOrdenesCompra(data, products):
                     total = qty * value['costo']
                     st.markdown('**Total:** ' + str(total))
                     if st.button('Editar Producto', key=value['sku']):
+                        if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
+                            tempArr = []
+                            for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
+                                tempDict = value
+                                tempDict['cantidad_pack'] = st.session_state[value['sku'] + 'input']
+                                tempArr.append(tempDict)
+                            st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
                         editarProducto(index, st.session_state['currentSeller'])
                     if st.button('Eliminar Producto', key=value['sku'] + 'eliminar'):
+                        if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
+                            tempArr = []
+                            for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
+                                tempDict = value
+                                tempDict['cantidad_pack'] = st.session_state[value['sku'] + 'input']
+                                tempArr.append(tempDict)
+                            st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
                         if 'isEditing' in st.session_state:
                             tempArrDeleted = st.session_state['deletedProducts']
                             tempArrDeleted.append(value['product_id'])
@@ -413,6 +434,13 @@ def UITOrdenesCompra(data, products):
                 
     if 'currentSeller' in st.session_state:
         if st.button('Agregar Producto'):
+            if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
+                tempArr = []
+                for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
+                    tempDict = value
+                    tempDict['cantidad_pack'] = st.session_state[value['sku'] + 'input']
+                    tempArr.append(tempDict)
+                st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
             verDetalle(seller)
             
     if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:

@@ -76,7 +76,7 @@ def insertOrdenCompra(orderInfo, products):
             # Sentencia SQL para insertar datos
             sql = "INSERT INTO orden_compra (codigo_seller, orden_compra_padre, seller_name, estado, total_paquetes, total_cost, usuario_creacion, fecha_creacion, fecha_edicion, bodega_recepcion) VALUES (%s, %s, %s, %s, %s, %s, %s,%s, %s, %s)"
             # Ejecutar la sentencia SQL
-            cursor.execute(sql, (orderInfo['codigo_seller'], orderInfo['orden_padre'], orderInfo['seller_name'], 'Solicitado Seller', orderInfo['total_paquetes'], orderInfo['total_cost'],orderInfo['usuario_creacion'], orderInfo['fecha_creacion'], orderInfo['fecha_edicion'], orderInfo['bodega_recepcion']))
+            cursor.execute(sql, (orderInfo['codigo_seller'], orderInfo['orden_padre'], orderInfo['seller_name'], 'solicitado_seller', orderInfo['total_paquetes'], orderInfo['total_cost'],orderInfo['usuario_creacion'], orderInfo['fecha_creacion'], orderInfo['fecha_edicion'], orderInfo['bodega_recepcion']))
             connection.commit()
             insertedId = cursor.lastrowid
             for value in products:
