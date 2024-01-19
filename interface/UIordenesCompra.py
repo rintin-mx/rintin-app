@@ -311,7 +311,9 @@ def UITOrdenesCompraEdit(data):
                 st.session_state.current_view = 'ordenesCompra'
                 st.session_state['currentSeller'] = data['seller_name'][i]
                 st.rerun()
-            if st.button('Eliminar', key=str(data['id_orden_compra'][i]) + '_eliminar'):
+            trigger_btn = ui.button(text="Eliminar", key=f"{str(data['id_orden_compra'][i])}_trigger_btn")
+            respuesta_auditoria=ui.alert_dialog(show=trigger_btn, title="Eliminar orden de compra", description=f"¿Estas seguro que deseas eliminar la orden de compra #{data['id_orden_compra'][i]}?", confirm_label="Confirmar", cancel_label="Volver", key=f"{str(data['id_orden_compra'][i])}_eliminar_orden_compra")
+            if respuesta_auditoria:
                 updateOrdenCompraStatus('trash', data['id_orden_compra'][i])
                 st.rerun()
         st.write('---')
