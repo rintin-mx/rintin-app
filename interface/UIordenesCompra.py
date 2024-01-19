@@ -208,6 +208,7 @@ def UITTerminarOrdenCompra(parents, order_data):
                 st.rerun()
     
     elif 'isSaved' in st.session_state:
+        st.success('Orden guardada con éxito')
         if st.button('Regresar al Inicio'):
             st.session_state.current_view = 'ordenesCompraMenu'
             st.rerun()
