@@ -26,7 +26,7 @@ def app():
                         event_instert(EventName,EventAction,EventUser)  
                         print("st.session_state['Order_id_auditoria']")
                         print(st.session_state['Order_id_auditoria'])
-                        data=get_order_auditoria(int(st.session_state['Order_id_auditoria']))     
+                        data=get_order_auditoria(int(st.session_state['Order_id_auditoria'])) 
                         UIDetallePedido(data,int(st.session_state['Order_id_auditoria']))
         else:
                 st.image("imagen/logo_imagen_no_loguado.png", width=300)

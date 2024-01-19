@@ -232,7 +232,7 @@ def get_order_auditoria(id,db='repl') -> dict:
         # Cerrar el cursor y la conexión
         cursor.close()
         conexion.close()
-
+    
     # Registrar el tiempo de finalización
     end_time = time.time()
 
@@ -251,6 +251,107 @@ def get_order_auditoria(id,db='repl') -> dict:
         #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo
+
+def valido_bodega_CDMX(id,db='repl') -> dict:
+    config = config_db(db)
+    # Registrar el tiempo de inicio
+    start_time = time.time()
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        #and id={id}
+        wp_pickeo_sql = f"""
+            WITH orders AS (
+            SELECT
+                wp_posts.id,
+                wp_posts.post_status,
+                wp_dokan_orders.seller_id
+            FROM
+                wp_posts
+                left join wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
+            WHERE
+                post_status = 'wc-recolectar-2'
+            ),
+            ordermeta AS(
+            SELECT
+                post_id AS order_id,
+                post_status,
+                max(
+                CASE
+                    WHEN `meta_key` = '_dokan_vendor_id' THEN `meta_value`
+                    ELSE orders.seller_id
+                END
+                ) AS `dokan_vendor_id`
+            FROM
+                wp_postmeta
+                INNER JOIN orders ON orders.id = post_id
+            GROUP BY
+                post_id,
+                post_status
+            ),
+            users AS (
+            SELECT
+                user_id,
+                max(
+                CASE
+                    WHEN `meta_key` = 'dokan_store_name' THEN `meta_value`
+                    ELSE NULL
+                END
+                ) AS `dokan_store_name`,
+                max(
+                CASE
+                    WHEN `meta_key` = 'bodega' THEN `meta_value`
+                    ELSE NULL
+                END
+                ) AS `bodega`
+            FROM
+                wp_usermeta
+                INNER JOIN ordermeta ON ordermeta.dokan_vendor_id = user_id
+            GROUP BY
+                user_id
+            )
+            SELECT
+             CASE
+		        WHEN count(order_id) = 1 THEN 'CDMX'
+		        ELSE 'NoCDMX'
+		    END AS es_cdmx
+            FROM
+            ordermeta
+            INNER JOIN users ON users.user_id = ordermeta.dokan_vendor_id
+                WHERE  order_id={id} and 
+                bodega IN ('centro_cdmx', 'aj_cdmx')
+            ORDER BY
+            order_id ASC
+        """
+                
+        # Ejecutar la primera consulta
+        cursor.execute(wp_pickeo_sql)
+
+        # Obtener los resultados de la primera consulta
+        resultados_wp_pickeo_sql = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        wp_es_bodega = pd.DataFrame(resultados_wp_pickeo_sql)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+
+    # Registrar el tiempo de finalización
+    end_time = time.time()
+
+    # Calcular la duración
+    duration = end_time - start_time
+
+    # Convertir a minutos y segundos
+    minutes = int(duration // 60)
+    seconds = int(duration % 60)
+    # Nueva lista de nombres de columnas
+   #order_id,order_item_name,line_qty,sku,img_url, estado
+    if len(wp_es_bodega) > 0:
+        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
+        return wp_es_bodega
     else:
         return {}
 
