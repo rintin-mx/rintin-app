@@ -44,7 +44,7 @@ def BodegaCDMX(objeto):
     order_status='recolectar-2'
     print(order_status)
     r = asyncio.run(update_status_wordpress(objeto['producto_id'], order_status))
-    #insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
+    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
     #update_order_product_status(objeto['producto_id'],'wc-recolectar-2')
     #linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
