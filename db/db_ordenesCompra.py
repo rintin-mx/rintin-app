@@ -214,7 +214,7 @@ def get_ordenes_compra(db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_ordenes_compra ="""
-            SELECT id_orden_compra, codigo_seller, seller_name, estado, fecha_creacion, total_cost FROM orden_compra;
+            SELECT id_orden_compra, codigo_seller, seller_name, estado, fecha_creacion, total_cost FROM orden_compra WHERE estado != 'trash';
         """
         cursor.execute(wp_ordenes_compra)
 

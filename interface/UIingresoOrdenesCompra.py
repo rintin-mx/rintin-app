@@ -4,7 +4,7 @@ sys.path.append('..')
 
 import streamlit as st
 import streamlit_shadcn_ui as ui
-from db.db_ingresoOrdenesCompra import get_ordenes_compra, updateOrdenCompra, insertFaults
+from db.db_ingresoOrdenesCompra import get_ordenes_compra, updateOrdenCompraStatus, insertFaults
 
 
 def orderDetail(products):
@@ -67,7 +67,7 @@ def orderDetail(products):
         respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description='Enviaremos la orden de compra a "Ingresado a bodega con faltantes"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
             with st.spinner(f'Actualizando estado'):
-                updateOrdenCompra('ingresado_bodega_faltantes', ordenCompra['id_orden_compra'])
+                updateOrdenCompraStatus('ingresado_bodega_faltantes', ordenCompra['id_orden_compra'])
                 insertFaults(products_validacion, ordenCompra['id_orden_compra'])
                 st.session_state['current_view'] = 'ingresoOrdenesCompra'
                 st.rerun()
@@ -76,7 +76,7 @@ def orderDetail(products):
         respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description='Enviaremos la orden de compra a "Ingresado a bodega"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
             with st.spinner(f'Actualizando estado'):
-                updateOrdenCompra('ingresado_bodega', ordenCompra['id_orden_compra'])
+                updateOrdenCompraStatus('ingresado_bodega', ordenCompra['id_orden_compra'])
                 st.session_state['current_view'] = 'ingresoOrdenesCompra'
                 st.rerun()
 

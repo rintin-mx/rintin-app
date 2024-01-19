@@ -162,7 +162,7 @@ def get_products(id, db='repl') -> dict:
         wp_products_general_dict = wp_products.to_dict(orient='list')
         return wp_products_general_dict
 
-def updateOrdenCompra(status, id):
+def updateOrdenCompraStatus(status, id):
     db ='prod'
     config = config_db(db)
     try:

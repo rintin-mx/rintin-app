@@ -11,8 +11,7 @@ from fpdf import FPDF
 import asyncio
 import time
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
-from db.db_productosValidados import insert_productos_validados,update_order_product_status
-from db.db_UserInteractionEvents import event_instert
+from db.db_ingresoOrdenesCompra import updateOrdenCompraStatus
 from db.db_ordenesCompra import insertOrdenCompra, update_oi_values, update_product, updateOrdenCompra, deleteProducts
 from datetime import datetime
 import streamlit.components.v1 as components
@@ -106,7 +105,7 @@ def UITTerminarOrdenCompra(parents, order_data):
             'Nombre Producto': value['nombre'],
             'SKU': value['sku'],
             'Cantindad:': value['cantidad_pack'],
-            'Total': float(value['cantidad_pack'] * value['costo'])
+            'Total': str(f"${round(value['cantidad_pack'] * value['costo'], 2):,}")
         })
     # Despliegue de información de orden de compra
     col1, col2 = st.columns(2)
@@ -118,11 +117,11 @@ def UITTerminarOrdenCompra(parents, order_data):
     st.write('---')
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown('**Total Paquetes**')
+        st.markdown('**Total Productos**')
         st.text(str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])))
     with col2:
         st.markdown('**Total a Pagar**')
-        st.text(str(total_cobro))
+        st.text(str(f'${round(total_cobro, 2):,}'))
     st.write("---")
     st.table(tableArr)
     col1, col2 = st.columns(2)
@@ -141,10 +140,10 @@ def UITTerminarOrdenCompra(parents, order_data):
             pdf.cell(62, 10, 'Fecha Creación: ' + str(st.session_state['fechaCreacionOrden']), 0, align='C')
             pdf.ln()
             pdf.cell(62, 10, 'Total a Pagar', 1, align='C')
-            pdf.cell(62, 10, 'Total Paquetes', 1, align='C')
+            pdf.cell(62, 10, 'Total Productos', 1, align='C')
             pdf.cell(62, 10, 'Almacen', 1, align='C')
             pdf.ln()
-            pdf.cell(62, 10, str(total_cobro), 1, align='C')
+            pdf.cell(62, 10, str(f'${round(total_cobro, 2):,}'), 1, align='C')
             pdf.cell(62, 10, str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])), 1, align='C')
             pdf.cell(62, 10, str(bodega_recepcion), 1, align='C')
             pdf.ln()
@@ -153,7 +152,7 @@ def UITTerminarOrdenCompra(parents, order_data):
             pdf.cell(31, 10, 'SKU', 1, align='C')
             pdf.cell(31, 10, 'Tipo de Producto', 1, align='C')
             pdf.cell(31, 10, 'Costo', 1, align='C')
-            pdf.cell(31, 10, 'Cantindad', 1, align='C')
+            pdf.cell(31, 10, 'Cantidad', 1, align='C')
             pdf.cell(31, 10, 'Total', 1, align='C')
             pdf.ln()
             pdf.set_font('Arial', '', 6)
@@ -164,7 +163,7 @@ def UITTerminarOrdenCompra(parents, order_data):
                 pdf.cell(31, 10, str(value['costo']), 1, align='C')
                 pdf.cell(31, 10, str(value['cantidad_pack']), 1, align='C')
                 total = value['cantidad_pack'] * value['costo']
-                pdf.cell(31, 10, str(total), 1, align='C')
+                pdf.cell(31, 10, str(f"${round(total,2):,}"), 1, align='C')
                 pdf.ln()
             html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'orden_de_compra_' + str(st.session_state['ordenCompraId']))
             st.markdown(html, unsafe_allow_html=True)
@@ -301,7 +300,7 @@ def UITOrdenesCompraEdit(data):
             st.text(str(data['estado'][i]))
         with col3:
             st.markdown('**Total**')
-            st.text(str(data['total_cost'][i]))
+            st.text(str(f"${data['total_cost'][i]:,}"))
             st.text(' ')
             st.text(' ')
             if st.button('Editar', key=data['id_orden_compra'][i]):
@@ -310,6 +309,9 @@ def UITOrdenesCompraEdit(data):
                 st.session_state['isEditing'] = True
                 st.session_state.current_view = 'ordenesCompra'
                 st.session_state['currentSeller'] = data['seller_name'][i]
+                st.rerun()
+            if st.button('Eliminar', key=str(data['id_orden_compra'][i]) + '_eliminar'):
+                updateOrdenCompraStatus('trash', data['id_orden_compra'][i])
                 st.rerun()
         st.write('---')
 
@@ -393,7 +395,7 @@ def UITOrdenesCompra(data, products):
                         st.write("Sin imagen")
                 with col2:
                     st.markdown('**SKU:** ' + value['sku'])
-                    st.markdown('**Costo:** ' + str(value['costo']))
+                    st.markdown('**Costo:** ' + str(f"${value['costo']:,}"))
                     st.markdown('**Tipo de producto:** ' + str(value['tipo_producto']))
                     
                 with col3:
@@ -402,7 +404,7 @@ def UITOrdenesCompra(data, products):
                         qty_val = value['cantidad_pack']
                     qty = st.number_input('Cantidad', key=value['sku'] + 'input', value=qty_val)
                     total = qty * value['costo']
-                    st.markdown('**Total:** ' + str(total))
+                    st.markdown('**Total:** ' + str(f"${total:,}"))
                     if st.button('Editar Producto', key=value['sku']):
                         if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
                             tempArr = []
