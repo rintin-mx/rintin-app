@@ -214,7 +214,7 @@ def get_ordenes_compra(db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_ordenes_compra ="""
-            SELECT id_orden_compra, codigo_seller, seller_name, estado, fecha_creacion, total_cost FROM orden_compra WHERE estado != 'trash';
+            SELECT id_orden_compra, codigo_seller, seller_name, estado, fecha_creacion, total_cost, bodega_recepcion FROM orden_compra WHERE estado != 'trash';
         """
         cursor.execute(wp_ordenes_compra)
 
@@ -238,7 +238,7 @@ def get_ordenes_compra(db='repl') -> dict:
         seconds = int(duration % 60)
         # Nueva lista de nombres de columnas
         #wp_seller=wp_seller[['user_id' 'dokan_store_name']]
-        wp_ordenes.columns = ['id_orden_compra', 'codigo_seller', 'seller_name', 'estado', 'fecha_creacion', 'total_cost']
+        wp_ordenes.columns = ['id_orden_compra', 'codigo_seller', 'seller_name', 'estado', 'fecha_creacion', 'total_cost', 'bodega_recepcion']
         wp_order_general_dict = wp_ordenes.to_dict(orient='list')
         return wp_order_general_dict
 

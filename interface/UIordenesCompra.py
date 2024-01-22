@@ -26,6 +26,13 @@ async def update_order_note__wordpress(order_id, order_notes):
 
 list_test = []
 
+bodega_destino = {
+    "centro_cdmx": "Bodega Centro CDMX",
+    "oaxaca": "Bodega Oaxaca",
+    "aj_cdmx": "A&J CDMX",
+    "showroom": "Showroom"
+}
+
 # Funcion para cambio de vista a terminación de orden
 def terminarOrden():
     st.session_state['current_view'] = 'terminar_orden_compra'
@@ -145,7 +152,7 @@ def UITTerminarOrdenCompra(parents, order_data):
             pdf.ln()
             pdf.cell(62, 10, str(f'${round(total_cobro, 2):,}'), 1, align='C')
             pdf.cell(62, 10, str(len(st.session_state['dictProductos'][st.session_state['currentSeller']])), 1, align='C')
-            pdf.cell(62, 10, str(bodega_recepcion), 1, align='C')
+            pdf.cell(62, 10, bodega_destino[bodega_recepcion], 1, align='C')
             pdf.ln()
             pdf.ln()
             pdf.cell(31, 10, 'Nombre de producto', 1, align='C')
@@ -287,7 +294,7 @@ def UITOrdenesCompraEdit(data):
     st.title('Ordenes de compra')
     st.write('---')
     for i in range(len(data['id_orden_compra'])):
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.markdown('**Numero orden**')
             st.text(str(data['id_orden_compra'][i]))
@@ -316,6 +323,9 @@ def UITOrdenesCompraEdit(data):
             if respuesta_auditoria:
                 updateOrdenCompraStatus('trash', data['id_orden_compra'][i])
                 st.rerun()
+        with col4:
+            st.markdown('**Bodega Destino**')
+            st.text(bodega_destino[data['bodega_recepcion'][i]])
         st.write('---')
 
 def UITOrdenesCompraMenu():
