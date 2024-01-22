@@ -43,6 +43,9 @@ class MultiApp:
             if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
                 menu=['Logout','Pickeo', 'Ingreso OC Bodega']
                 pagina=1
+            elif val in ('picker_oaxaca', 'ivan'):
+                menu=['Logout','Pickeo']
+                pagina=1
             elif val == 'Usuario Recoleccion':
                 menu=['Logout','Recoleccion']
                 pagina=1
