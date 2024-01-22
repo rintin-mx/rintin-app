@@ -95,7 +95,7 @@ def get_seller(db='repl') -> dict:
             ordermeta
             INNER JOIN users ON users.user_id = ordermeta.dokan_vendor_id
                 WHERE
-                bodega IN ('centro_cdmx', 'aj_cdmx')
+                bodega IN ('centro_cdmx', 'aj_cdmx', 'oaxaca')
             ORDER BY
             order_id ASC
         """
