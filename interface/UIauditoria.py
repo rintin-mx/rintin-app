@@ -9,10 +9,11 @@ import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
 from db.db_productosValidados import insert_productos_validados,update_order_product_status
+from db.db_UserInteractionEvents import event_instert
 from datetime import datetime
 import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
-from db.db_auditoria import get_order_auditoria,valido_bodega_CDMX
+from db.db_auditoria import get_order_auditoria
 import random
 from st_material_table import st_material_table
 from st_mui_table import st_mui_table
@@ -37,27 +38,13 @@ def ver_detalle(order_id,seller_id,seller_name,num_paquetes,estado):
     st.session_state.disabled = True
     st.rerun()
 
-def BodegaCDMX(objeto):
+def orderMsjString(objeto):
     linea=''
     ahora = datetime.now()
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
-    order_status='recolectar-2'
-    print(order_status)
-    r = asyncio.run(update_status_wordpress(objeto['producto_id'], order_status))
+    fuente='auditoria-wc-recolectar-2'
     insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
-    #update_order_product_status(objeto['producto_id'],'wc-recolectar-2')
-    #linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
-    return linea
-def problemasRecoleccion(objeto):
-    linea=''
-    ahora = datetime.now()
-    fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
-    order_status='rec-problem-2'
-    print(order_status)
-    r = asyncio.run(update_status_wordpress(objeto['producto_id'], order_status))
-    #insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
-    #update_order_product_status(objeto['producto_id'],'rec-problem-2')
-    #linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
+    linea = f"Producto: {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
 
 def UIDetallePedido(data_deta,idPedido):
@@ -107,7 +94,14 @@ def UIDetallePedido(data_deta,idPedido):
     # Inicializar una lista para los estados
     estados = []
     cantidad_pickeada =0
-
+    bodega = data_deta['bodega'][0]
+    
+    if bodega == 'centro_cdmx':
+        banner_text = 'Recolectar'
+        banner_status = 'recolectar-2'
+    else:
+        banner_text = 'Recolección con problemas'
+        banner_status = 'rec-problem-2'
     df = pd.DataFrame(data_deta)
     objArry=[]
     header_col1, header_col2, header_col3, header_col4,header_col5 = st.columns([2, 3, 1, 1, 2])
@@ -144,149 +138,75 @@ def UIDetallePedido(data_deta,idPedido):
                 st.success(estado)
             elif cantidad_pickeada > int(pedido.Cantidad):
                 cantidad_pickeada=0
-                estado = 'Validacion'
+                estado = 'NO OK'
                 st.error(estado)
             else:
-                estado = 'Validacion'
+                estado = 'NO OK'
                 st.error(estado)
             estados.append(estado)
             objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
                             "sku":pedido.SKU,
                             "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado,"seller_id":pedido.seller_id})
 
-    auditoria=[]
-    validacion=[]
-    validacionSeller=[]
+    agrupacion=[]
+    recolec=[]
     for i in range(len(objArry)):
         if objArry[i]['estado'] =='OK':
-            auditoria.append(objArry[i]['order_id'])
+            agrupacion.append(objArry[i]['order_id'])
         else:
-            validacion.append(objArry[i]['order_id'])
-    lineasTest = []
-    for objeto in objArry:
-        if objeto['estado'] == "Validacion":
-            linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe pickeo {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
-            lineasTest.append(linea)
-    
-
-    answer=None
-    answer_else=None
-    if len(auditoria)==len(objArry):
-        answer = st_mui_dialog(title="Confirmemos audotoria", 
-                            content="Enviaremos el pedido a 'AUDITAR'", 
-                            button_txt = "Auditar",
-                            agreelabel="Confirmar",
-                            abortlabel = "Volver",
-                            transition_mode = "slide", 
-                            slide_direction = "up",
-                            adapt_width_dialog = True,
-                            fullscreen = True,
-                            width_dialog = "xl",
-                            key='button_if'
-                            )
-        if answer!=None:
-            if answer:
-                with st.spinner(f'Actualizando estatus del pedido'):
-                    #if st.session_state.useremail is not None:
-                    #    EventName,EventAction,EventUser='picking','Se envio el pedido a "Pedidos agrupar"',st.session_state.useremail
-                    #    event_instert(EventName,EventAction,EventUser)
-                    arra=[{"producto_id":289039},{"producto_id":289040}]
-                    for objeto in arra:
-                        print("---------------")
-                        print(objeto['producto_id'])
-                        print("---------------")
-                        order_status='agrupar-pedidos'
-                        print
-                        #idPedido
-                        #para test '281660'
-                        r = asyncio.run(update_status_wordpress(objeto['producto_id'], order_status))
-                        answer=None
-                        print("st.session_state['visible']")
-                        print(st.session_state['visible'])
-                    #if st.session_state['visible'] == True:
-                    print("visiblevisiblevisiblevisiblevisible")
-                    st.session_state['visible'] = False
-                    st.session_state['current_view'] = 'agrupacion'
-                    st.rerun()
-                        
-        
+            recolec.append(objArry[i]['order_id'])
+    trigger_btn = ui.button(text="Auditar", key="trigger_btn")
+    respuesta = False
+    if len(agrupacion)==len(objArry):
+        banner_text = 'Pedidos por agrupar'
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        if respuesta:
+            with st.spinner(f'Actualizando estado del pedido a "Pedidos por agrupar"'):
+                if st.session_state.useremail is not None:
+                    EventName,EventAction,EventUser='picking','Se envio el pedido a "Pedidos agrupar"',st.session_state.useremail
+                    event_instert(EventName,EventAction,EventUser)
+                banner_status='agrupar-pedidos'
+                r = asyncio.run(update_status_wordpress(idPedido, banner_status))
+            st.session_state.current_view = 'finalProceso'
+            st.session_state.current_status = banner_text
+            st.rerun()
+           
     else:
-        answer_else = st_mui_dialog(title="Confirmemos audotoria", 
-                            content="Enviaremos el pedido a 'PICKEO' y a 'RECOLECCIÓN CON PROBLEMAS'", 
-                            button_txt = "Auditar",
-                            agreelabel="Confirmar",
-                            abortlabel = "Volver",
-                            transition_mode = "slide", 
-                            slide_direction = "up",
-                            key='button_else'
-                            )
-        if answer_else!=None:
-            if answer_else:
-                with st.spinner(f'Actualizando estatus del pedido'):
-                    answer_else=None
-                    lineasCDMX = []
-                    lineasProblemas = []
-                    i=0
-                    arra=[{"producto_id":289039,"estado":"Validacion"},{"producto_id":289040,"estado":"OK"}]
-                    for objeto in arra:
-                    #for objeto in objArry:
-                        if objeto['estado'] == "Validacion":
-                            print("Validacion")
-                            bodega=valido_bodega_CDMX(objeto['producto_id'])
-                            if bodega['es_cdmx'][0]=="CDMX":
-                                print("---------------")
-                                print("es de bodega CDMX")
-                                print("---------------")
-                            #if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
-                                lineasCDMX.append(BodegaCDMX(objeto))
-                            else:
-                                print("---------------")
-                                print("es de problemas Recoleccion no bodega CDMX ")
-                                print("---------------")
-                                lineasProblemas.append(problemasRecoleccion(objeto))
-                        else:
-                            print("noValidacion")
-                            bodega=valido_bodega_CDMX(objeto['producto_id'])
-                            if bodega['es_cdmx'][0]=="CDMX":
-                                print("---------------")
-                                print("es de bodega CDMX")
-                                print("---------------")
-                            #if objeto['seller_id'] in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663',  '7180', '7201', '7202', '6927'):
-                                lineasCDMX.append(BodegaCDMX(objeto))
-                            else:
-                                print("---------------")
-                                print("es de problemas Recoleccion no bodega CDMX ")
-                                print("---------------")
-                                lineasProblemas.append(problemasRecoleccion(objeto))
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order_2")
+        if respuesta:
+            with st.spinner(f'Actualizando estado del pedido a "{banner_text}"'):
+                lineasProblemas = []
+                i=0
+                for objeto in objArry:
+                    if objeto['estado'] == 'NO OK':
+                        lineasProblemas.append(orderMsjString(objeto))
+                if len(lineasProblemas) > 0:
+                    order_notes = "\n".join(lineasProblemas)
+                    with st.spinner(f'Actualizano las notas del pedido para auditoria  en las bodegas CDMX'):
+                        asyncio.run(update_order_note__wordpress(idPedido, order_notes))
+                r = asyncio.run(update_status_wordpress(idPedido, banner_status))
+            st.session_state.current_view = 'finalProceso'
+            st.session_state.current_status = banner_text
+            st.rerun()
 
-
-                    if len(lineasCDMX)>0:
-                        order_notes = "\n".join(lineasCDMX)
-                        with st.spinner(f'Actualizano las notas del pedido para auditoria  en las bodegas CDMX'):
-                            print("")
-                            #idPedido
-                            #para test '281660'
-                            #asyncio.run(update_order_note__wordpress(idPedido, order_notes))
-                            st.snow()
-                    if len(lineasProblemas)>0:
-                        order_notes = "\n".join(lineasProblemas)
-                        with st.spinner(f'Actualizano las notas del pedido para auditoria  que tiene problemas de recolección'):
-                            print("problemas de recolección")
-                            #idPedido
-                            #para test '281660'
-                            #asyncio.run(update_order_note__wordpress(idPedido, order_notes))
-                            st.snow()
-
-                    #if st.session_state['visible'] == True:
-                    #    st.session_state['visible'] = False
-                    #    st.session_state['current_view'] = 'detalleAuditoria'
-                    #    st.rerun()
-          
-                st.session_state['visible'] = False
-                st.session_state['current_view'] = 'agrupacion'
-                st.rerun()
-
-
+def UITFinalizarProceso(data, currentStatus):
+    grouped = data['num_agrupados'][0]
+    childs = data['childs'][0]
+    if childs == grouped and childs == 1:
+        text = 'Es pedido único, ahora debes imprimir bitácora y empaquetar'
+    elif childs == grouped and childs > 1:
+        text = 'Es el último pedido, ahora debes Agrupar y Empaquetar'
+    elif grouped < childs and grouped > 0 and grouped != 1:
+        text = 'Este pedido ya tiene órdenes en agrupar, ahora debes Agruparlo'
+    else:
+        text = 'Este es el primer pedido, ahora debes imprimir bitácora y abrir espacio para orden completa'
+    st.markdown(f'## Se actualizó el pedido con número {data["id"][0]} al estado "{currentStatus}"')
+    st.write('---')
+    if currentStatus == 'Pedidos por agrupar':
+        st.markdown(f'### {text}')
+    if st.button('Regresar'):
+        st.session_state['current_view'] = 'auditoria'
+        st.rerun()
 
 def UITodosLosPedidos(data):
     df = pd.DataFrame(data)

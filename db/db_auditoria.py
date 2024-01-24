@@ -149,7 +149,6 @@ def get_order_auditoria(id,db='repl') -> dict:
                     from
                         wp_postmeta inner join orders on orders.id = post_id
                     group by post_id
-                    #having dokan_vendor_id in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '2705', '7180', '7201', '7202', '3465', '5894')
                 ),
                 order_items as(
                     select order_item_id, ordermeta.order_id, order_item_name,dokan_vendor_id
@@ -203,6 +202,20 @@ def get_order_auditoria(id,db='repl') -> dict:
                     from wp_postmeta
                     inner join order_item_meta on order_item_meta.product_id = post_id
                     group by post_id
+                ),
+                seller_meta as(
+                select
+                user_id,
+                max(
+					case
+						when `wp_usermeta`.`meta_key` = 'bodega' then `wp_usermeta`.`meta_value`
+						else NULL
+					end
+				) AS `bodega`
+                
+                from
+                wp_usermeta
+                group by user_id
                 )
                 select
                     order_items.order_id,
@@ -212,12 +225,14 @@ def get_order_auditoria(id,db='repl') -> dict:
                     line_qty,
                     sku,
                     units_per_pack,
-                    replace(wp_posts.guid, 'http://dev.', 'https://') as img_url
+                    replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
+                    bodega
                 from 
                     order_items
                     left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
                     left join product_meta on order_item_meta.product_id = product_meta.product_id
                     left join wp_posts on wp_posts.id = product_meta.image_id  
+                    left join seller_meta on seller_meta.user_id = order_items.dokan_vendor_id
         """
                 
         # Ejecutar la primera consulta
@@ -245,9 +260,9 @@ def get_order_auditoria(id,db='repl') -> dict:
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_pickeo) > 0:
-        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id','seller_id']]
+        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id','seller_id', 'bodega']]
         # Nueva lista de nombres de columnas
-        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id','seller_id']
+        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id','seller_id', 'bodega']
         #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo
@@ -355,4 +370,69 @@ def valido_bodega_CDMX(id,db='repl') -> dict:
     else:
         return {}
 
+def checkForChildStatusses(orderId, db='repl'):
+    config = config_db(db)
+    try:
+        conexion = mysql.connector.connect(**config)
+        cursor = conexion.cursor(dictionary=True)
+        check_statusses = f"""
+            with orders_grouped_by_parent as (
+	select 
+		post_parent,
+        sum(
+			case
+				when post_status = 'wc-agrupar-pedidos' then 1 
+                else 0
+			end
+        ) as num_agrupados,
+        count(
+            case
+                when post_status != 'wc-cancelled' then id
+                else null
+            end
+        ) as childs
+	from wp_posts 
+    where post_parent != 0 and post_type = 'shop_order'
+    group by post_parent, post_type
+),
+final as(
+select 
+	id, num_agrupados, childs 
+from wp_posts 
+inner join orders_grouped_by_parent on wp_posts.post_parent = orders_grouped_by_parent.post_parent
+union
+	select
+		id,
+        case 
+			when post_status = 'wc-agrupar-pedidos' then 1
+            else 0
+		end as num_agrupados,
+        1 as childs
+	from wp_posts
+    where 
+		post_type = 'shop_order'
+        and post_parent = 0
+        and id not in (select distinct post_parent from wp_posts)
+)
+select * from final where id = {orderId}
 
+        """
+        # Ejecutar la primera consulta
+        cursor.execute(check_statusses)
+
+        # Obtener los resultados de la primera consulta
+        resultados_check_statusses = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        wp_check_statusses = pd.DataFrame(resultados_check_statusses)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+    if len(wp_check_statusses) > 0:
+        wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs']]
+        # Nueva lista de nombres de columnas
+        wp_check_statusses.columns = ['id','num_agrupados','childs']
+        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
+        wp_check_statusses_general_dict = wp_check_statusses.to_dict(orient='list')
+        return wp_check_statusses_general_dict
