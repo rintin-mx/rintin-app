@@ -397,7 +397,7 @@ def checkForChildStatusses(orderId, db='repl'):
 ),
 final as(
 select 
-	id, num_agrupados, childs 
+	id, num_agrupados, childs, wp_posts.post_parent
 from wp_posts 
 inner join orders_grouped_by_parent on wp_posts.post_parent = orders_grouped_by_parent.post_parent
 union
@@ -407,7 +407,8 @@ union
 			when post_status = 'wc-agrupar-pedidos' then 1
             else 0
 		end as num_agrupados,
-        1 as childs
+        1 as childs,
+        id as post_parent
 	from wp_posts
     where 
 		post_type = 'shop_order'
@@ -430,9 +431,9 @@ select * from final where id = {orderId}
         cursor.close()
         conexion.close()
     if len(wp_check_statusses) > 0:
-        wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs']]
+        wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs', 'post_parent']]
         # Nueva lista de nombres de columnas
-        wp_check_statusses.columns = ['id','num_agrupados','childs']
+        wp_check_statusses.columns = ['id','num_agrupados','childs', 'post_parent']
         #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_check_statusses_general_dict = wp_check_statusses.to_dict(orient='list')
         return wp_check_statusses_general_dict

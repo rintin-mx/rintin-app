@@ -202,8 +202,13 @@ def UITFinalizarProceso(data, currentStatus):
         text = 'Este es el primer pedido, ahora debes imprimir bitácora y abrir espacio para orden completa'
     st.markdown(f'## Se actualizó el pedido con número {data["id"][0]} al estado "{currentStatus}"')
     st.write('---')
+    
     if currentStatus == 'Pedidos por agrupar':
         st.markdown(f'### {text}')
+    if data["post_parent"][0] != data["id"][0]:
+        st.markdown(f'### Su orden padre es: {data["post_parent"][0]}')
+        st.write('---')
+    
     if st.button('Regresar'):
         st.session_state['current_view'] = 'auditoria'
         st.rerun()
