@@ -6,7 +6,7 @@ from db.db_UserInteractionEvents import event_instert
 st.set_page_config(
         page_title="Rintin",
 )
-import login,picking, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
+import login,picking,confirmacion, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -55,7 +55,7 @@ class MultiApp:
             elif val == 'ismael':
                 menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
-                menu=['Logout','Register','Pickeo','Recoleccion','Auditoria', 'Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
+                menu=['Logout','Register','Pickeo','Confirmación Seller','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
             else:
                 menu=['Login']
             app = option_menu(
@@ -79,6 +79,16 @@ class MultiApp:
             picking.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción picking',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Empaquetado':
+            empaquetado.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción empaquetado',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Confirmación Seller':
+            confirmacion.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción confirmacion',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == "Recoleccion":
             recoleccion.app()

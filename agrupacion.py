@@ -1,6 +1,6 @@
 
 import streamlit as st
-from interface.UIAgrupacion import UIOrdenesAgrupar,UIOrdenesAgruparDetalle
+from interface.UIAgrupacion import UIOrdenesAgrupar,UIOrdenesAgruparDetalle, UITFinalizarProceso
 from db.db_UserInteractionEvents import event_instert   
 from db.db_agrupacion import get_seller_centro_padre,get_order_detalle_agrupacion
 
@@ -11,7 +11,7 @@ def app():
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'agrupacion'
         print(st.session_state.current_view)
-        if st.session_state.current_view in ('pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra'):
+        if st.session_state.current_view in ('empaquetado','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra'):
             st.session_state['current_view'] = 'agrupacion'
         if st.session_state.current_view == 'agrupacion':
             if st.session_state.useremail is not None:
@@ -68,3 +68,5 @@ def app():
             st.session_state['current_view'] = 'detalleAgrupacion'
             data=get_order_detalle_agrupacion(st.session_state.orderId)
             UIOrdenesAgruparDetalle(data,st.session_state.orderId)
+        if st.session_state.current_view == 'finalProcesoAgrupacion':
+                UITFinalizarProceso(st.session_state.orderId, st.session_state['orderList'], st.session_state['orderListStr'])

@@ -8,7 +8,7 @@ def app():
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'recolect'
-        if st.session_state.current_view in ('pick', 'detalle', 'auditoria', 'detalleAuditoria', 'ordenesAgrupar', 'agrupacion', 'detalleAgrupacion', 'ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra', 'detalleAuditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'currentOrder'):
+        if st.session_state.current_view in ('empaquetado','pick', 'detalle', 'auditoria', 'detalleAuditoria', 'ordenesAgrupar', 'agrupacion', 'detalleAgrupacion', 'ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra', 'detalleAuditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'currentOrder'):
             st.session_state['current_view'] = 'recolect'
         # Mostrar la vista correspondiente
         if st.session_state.current_view == 'recolect':

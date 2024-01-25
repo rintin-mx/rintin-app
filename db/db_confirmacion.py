@@ -44,7 +44,7 @@ def get_seller_centro(db='repl') -> dict:
                 from
                     wp_posts
                 where
-                    post_status = 'wc-auditoria-2'
+                    post_status = 'wc-prepara_pedido'
                     and id not in (select distinct post_parent from wp_posts)
             ),
             ordermeta as(
@@ -79,7 +79,6 @@ def get_seller_centro(db='repl') -> dict:
                     wp_usermeta
                     inner join ordermeta on dokan_vendor_id = user_id
                 group by user_id
-                having zone = 'centro'
             )
             select
                 ordermeta.order_id,

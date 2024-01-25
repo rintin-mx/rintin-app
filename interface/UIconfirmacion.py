@@ -33,7 +33,7 @@ def ver_detalle(order_id,seller_id,seller_name,num_paquetes,estado):
     st.session_state.nombreSeller = seller_name
     st.session_state.estadoPedido = estado
     st.session_state.num_paquetes =num_paquetes
-    st.session_state.current_view = 'detalleAuditoria'
+    st.session_state.current_view = 'detalleConfirmacion'
     st.session_state['estadoUITP']=True
     st.session_state.disabled = True
     st.rerun()
@@ -42,15 +42,15 @@ def orderMsjString(objeto):
     linea=''
     ahora = datetime.now()
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
-    fuente='auditoria-wc-recolectar-2'
+    fuente='confirmacion-validacion'
     insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
     linea = f"Producto: {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
 
 def UIDetallePedido(data_deta,idPedido):
     st.subheader(f"Detalle de la orden: {idPedido}")
-    if st.button("Regresar la lista de auditoría"):
-            st.session_state.current_view = 'auditoria'
+    if st.button("Regresar la lista de confirmación"):
+            st.session_state.current_view = 'confirmacion'
             st.rerun()
     #estilos en los textos
     st.markdown("""
@@ -108,7 +108,7 @@ def UIDetallePedido(data_deta,idPedido):
     header_col1.write("")
     header_col2.write("**Producto**")
     header_col3.write("**Cantidad**")
-    header_col4.write("**Auditado**") 
+    header_col4.write("**Pickeo**") 
     header_col5.write("**Estado**") 
     for i, pedido in df.iterrows():
         #col1, col2, col3, col4, col5 = st.columns(5)
@@ -155,7 +155,7 @@ def UIDetallePedido(data_deta,idPedido):
             agrupacion.append(objArry[i]['order_id'])
         else:
             recolec.append(objArry[i]['order_id'])
-    trigger_btn = ui.button(text="Auditar", key="trigger_btn")
+    trigger_btn = ui.button(text="Confirmar", key="trigger_btn")
     respuesta = False
     if len(agrupacion)==len(objArry):
         banner_text = 'Pedidos por agrupar'
@@ -172,7 +172,7 @@ def UIDetallePedido(data_deta,idPedido):
             st.rerun()
            
     else:
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order_2")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de seller", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order_2")
         if respuesta:
             with st.spinner(f'Actualizando estado del pedido a "{banner_text}"'):
                 lineasProblemas = []
@@ -182,7 +182,7 @@ def UIDetallePedido(data_deta,idPedido):
                         lineasProblemas.append(orderMsjString(objeto))
                 if len(lineasProblemas) > 0:
                     order_notes = "\n".join(lineasProblemas)
-                    with st.spinner(f'Actualizano las notas del pedido para auditoria  en las bodegas CDMX'):
+                    with st.spinner(f'Actualizano las notas del pedido para confirmación de seller  en las bodegas CDMX'):
                         asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                 r = asyncio.run(update_status_wordpress(idPedido, banner_status))
             st.session_state.current_view = 'finalProceso'
@@ -210,7 +210,7 @@ def UITFinalizarProceso(data, currentStatus):
         st.write('---')
     
     if st.button('Regresar'):
-        st.session_state['current_view'] = 'auditoria'
+        st.session_state['current_view'] = 'confirmacion'
         st.rerun()
 
 def UITodosLosPedidos(data):
@@ -222,8 +222,8 @@ def UITodosLosPedidos(data):
         print("visible")
         st.session_state['visible'] = True
         st.rerun()
-    if 'Order_id_auditoria' not in st.session_state:
-        st.session_state['Order_id_auditoria'] = 0
+    if 'Order_id_confirmacion' not in st.session_state:
+        st.session_state['Order_id_confirmacion'] = 0
         
     df['ID'] = df['ID'].astype(str)
     # function with list of labels
@@ -236,21 +236,22 @@ def UITodosLosPedidos(data):
 
     # pass search function to searchbox
     print("selected_value")
-    print(selected_value)
+    
     selected_value = st_searchbox(
         label='Buscar por ID o Seller',
         search_function=search_orderid,
         key=f"search_orderid",
         rerun_on_update=True
     )
+    print(selected_value)
     submit = st.button("Buscar")
     st_mui_table(df)
     
 
     if submit:
         if selected_value is not None:
-            st.session_state['Order_id_auditoria'] =int(selected_value)
-            st.session_state['current_view'] = 'detalleAuditoria'
+            st.session_state['Order_id_confirmacion'] =int(selected_value)
+            st.session_state['current_view'] = 'detalleConfirmacion'
             st.rerun()
         else:
             st.info('Debes seleccionar un order_id para continuar', icon="ℹ️")

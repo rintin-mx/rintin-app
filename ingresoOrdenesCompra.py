@@ -6,7 +6,7 @@ def app():
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'ingresoOrdenesCompra'
-        if st.session_state.current_view in('pick', 'auditoria', 'recolect', 'ordenesAgrupar', 'ordenesCompraMenu', 'agrupacion', 'ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra', 'detalleOrdenCompra'):
+        if st.session_state.current_view in('empaquetado','pick', 'auditoria', 'recolect', 'ordenesAgrupar', 'ordenesCompraMenu', 'agrupacion', 'ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra', 'detalleOrdenCompra'):
             st.session_state['current_view'] = 'ingresoOrdenesCompra'
         if st.session_state['current_view'] == 'ingresoOrdenesCompra':
             if 'currentOrder' in st.session_state:

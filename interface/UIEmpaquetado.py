@@ -8,25 +8,23 @@ import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from db.db_UserInteractionEvents import event_instert
-from db.db_productosValidados import update_order_product_status
-from db.db_order import insert_order_metadata
-from st_mui_dialog import st_mui_dialog
+
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
     return result
 
-def ver_detalle(id,pedidos_activos,pedidos_auditados,en_proceso,estado):
+def ver_detalle(id,pedidos_activos,pedidos_agrupados,en_proceso,estado):
 
     st.session_state.orderId = id
     st.session_state.pedidos_activos = pedidos_activos
-    st.session_state.pedidos_auditados = pedidos_auditados
+    st.session_state.pedidos_agrupados = pedidos_agrupados
     st.session_state.en_proceso = en_proceso
     st.session_state.estado_agrupacion = estado
-    st.session_state.current_view = 'detalleAgrupacion'
+    st.session_state.current_view = 'detalleEmpaquetado'
     st.rerun()
 
-def UIOrdenesAgrupar(data):
+def UIOrdenesEmpaquetar(data):
     st.header("Ordenes a agrupar")
     df_data=[]
     df = pd.DataFrame(data)
@@ -51,30 +49,30 @@ def UIOrdenesAgrupar(data):
             with col1:
                 st.markdown(f"**Orden Padre:** {ordenes.order_id}")
                 st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
-                st.markdown(f"**Pedidos Auditados:** {int(ordenes.pedidos_auditados)}")
-                st.markdown(f'**Hijos Auditados:** {ordenes.hijos_auditados}')
+                st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_agrupados)}")
+                st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_agrupados}')
                 st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
                 st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
                 st.markdown(f"**Estado:** {ordenes.estado}")
             with col3:
-                if st.button("Agrupación", key=i):
-                    EventName,EventAction,EventUser='picking','Se pulso en botón Iniciar Auditoria',st.session_state.useremail
+                if st.button("Empaquetado", key=i):
+                    EventName,EventAction,EventUser='empaquetado','Se pulso en botón Iniciar Empaquetado',st.session_state.useremail
                     event_instert(EventName,EventAction,EventUser)
-                    ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
+                    ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_agrupados,ordenes.en_proceso,ordenes.estado) 
 
 def UITFinalizarProceso(parentId, childList, childListString):
     if len(childList) == 1:
-        st.markdown(f'## Se actualizó el pedido #{parentId} al estado "Embarque"')
+        st.markdown(f'## Se actualizó el pedido #{parentId} al estado "Generar Guía"')
     elif len(childList) > 1:
-        st.markdown(f'## Se actualizaron los pedidos con número {childListString} al estado "Embarque"')
+        st.markdown(f'## Se actualizaron los pedidos con número {childListString} al estado "Generar Guía"')
         st.markdown(f'### Su orden padre es: {parentId}')
     st.write('---')
     if st.button('Regresar'):
-        st.session_state['current_view'] = 'agrupacion'
+        st.session_state['current_view'] = 'empaquetado'
         st.rerun()
 
-def UIOrdenesAgruparDetalle(data,idPedido):
-    st.header(f"Pedidos a agrupar: {st.session_state.orderId}")
+def UIOrdenesEmpaquetarDetalle(data,idPedido):
+    st.header(f"Pedidos a empaquetar: {st.session_state.orderId}")
     st.markdown(
     """
     <style>
@@ -94,8 +92,8 @@ def UIOrdenesAgruparDetalle(data,idPedido):
     option=''
     # En la primera columna, puedes colocar un elemento
     with col1:
-        if st.button("Regresar la lista de agrupación"):
-            st.session_state.current_view = 'agrupacion'
+        if st.button("Regresar la lista de empaquetado"):
+            st.session_state.current_view = 'empaquetado'
             st.rerun()
     
     # Espacio entre secciones
@@ -120,45 +118,45 @@ def UIOrdenesAgruparDetalle(data,idPedido):
             st.write("**Ingresado**") 
             agrupadoSeleccion = st.toggle('',key=f'recolectado{i}')
             if agrupadoSeleccion:
-                estadoSeleccion='agrupado'
+                estadoSeleccion='empaquetado'
             else:
-                estadoSeleccion='noagrupado'
+                estadoSeleccion='noempaquetado'
             objArry.append({"order_id":pedido.order_id,"seller_name":pedido.seller_name,
                             "num_paquetes":pedido.num_paquetes,
                             "agrupadoSeleccion":estadoSeleccion})
         st.write('---')
         
-    agrupado=[]
-    no_agrupado=[]
-    agrupado_str = ''
+    empaquetado=[]
+    no_empaquetado=[]
+    empaquetado_str = ''
     for i in range(len(objArry)):
-        if objArry[i]['agrupadoSeleccion'] =='agrupado':
-            agrupado.append(objArry[i]['order_id'])
-            agrupado_str += str(objArry[i]['order_id']) + ', '
+        if objArry[i]['agrupadoSeleccion'] =='empaquetado':
+            empaquetado.append(objArry[i]['order_id'])
+            empaquetado_str += str(objArry[i]['order_id']) + ', '
         else:
-            no_agrupado.append(objArry[i]['order_id'])
+            no_empaquetado.append(objArry[i]['order_id'])
     #proceos para los ids Padres
 
     trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
     respuesta = False
-    agrupado_str = agrupado_str[:-2]
-    respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {idPedido} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+    empaquetado_str = empaquetado_str[:-2]
+    respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de empaquetado", description=f'Enviaremos a "Generar Guía" \n Padre: {idPedido} \n Hijos: {empaquetado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
     if respuesta:
-        if len(agrupado)>0:
+        if len(empaquetado)>0:
             if st.session_state.useremail is not None:
-                EventName,EventAction,EventUser='Agrupación','Se envio el pedido a "Embarque"',st.session_state.useremail
+                EventName,EventAction,EventUser='empaquetado','Se envio el pedido a "Generar Guía"',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
-            with st.spinner(f'Actualizando estatus de los pedidos a Empaquetar...'):
-                order_status='empaquetar'
-                for order_id in agrupado:
+            with st.spinner(f'Actualizando estatus de los pedidos a Generar Guía...'):
+                order_status='generar_guia'
+                for order_id in empaquetado:
                     r = asyncio.run(update_status_wordpress(order_id, order_status))
-                st.session_state['orderList'] = agrupado
-                st.session_state['orderListStr'] = agrupado_str
-            st.session_state.current_view = 'finalProcesoAgrupacion'
+                st.session_state['orderList'] = empaquetado
+                st.session_state['orderListStr'] = empaquetado_str
+            st.session_state.current_view = 'finalProcesoEmpaquetado'
             st.rerun()
         else:
             print('+++++++++++++++++++++++++++++++++++++++')
             print('No se encontraron pedidos para agrupar')
             print('+++++++++++++++++++++++++++++++++++++++')  
-            st.warning('No a agrupado ningun pedido, por esta razon no se actualizo el estatus del pedido a wc-embarque')
+            st.warning('No se ha empaquetado ningún pedido.')
 
