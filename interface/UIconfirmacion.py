@@ -94,14 +94,6 @@ def UIDetallePedido(data_deta,idPedido):
     # Inicializar una lista para los estados
     estados = []
     cantidad_pickeada =0
-    bodega = data_deta['bodega'][0]
-    
-    if bodega == 'centro_cdmx':
-        banner_text = 'Recolectar'
-        banner_status = 'recolectar-2'
-    else:
-        banner_text = 'Recolección con problemas'
-        banner_status = 'rec-problem-2'
     df = pd.DataFrame(data_deta)
     objArry=[]
     header_col1, header_col2, header_col3, header_col4,header_col5 = st.columns([2, 3, 1, 1, 2])
@@ -149,62 +141,54 @@ def UIDetallePedido(data_deta,idPedido):
                             "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado,"seller_id":pedido.seller_id})
 
     agrupacion=[]
-    recolec=[]
+    validacion=[]
+    validacionStr = ''
     for i in range(len(objArry)):
         if objArry[i]['estado'] =='OK':
             agrupacion.append(objArry[i]['order_id'])
         else:
-            recolec.append(objArry[i]['order_id'])
+            validacion.append(objArry[i]['producto_id'])
+            validacionStr = validacionStr + str(objArry[i]['sku']) + ', '
     trigger_btn = ui.button(text="Confirmar", key="trigger_btn")
     respuesta = False
     if len(agrupacion)==len(objArry):
         banner_text = 'Pedidos por agrupar'
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Todos los productos de la orden #{idPedido} estan completos', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
-            with st.spinner(f'Actualizando estado del pedido a "Pedidos por agrupar"'):
-                if st.session_state.useremail is not None:
-                    EventName,EventAction,EventUser='picking','Se envio el pedido a "Pedidos agrupar"',st.session_state.useremail
-                    event_instert(EventName,EventAction,EventUser)
-                banner_status='agrupar-pedidos'
-                r = asyncio.run(update_status_wordpress(idPedido, banner_status))
-            st.session_state.current_view = 'finalProceso'
+            st.toast('¡Orden guardada con éxito!')
+            st.session_state.current_view = 'confirmacion'
             st.session_state.current_status = banner_text
             st.rerun()
            
     else:
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de seller", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order_2")
+        validacionStr = validacionStr[:-2]
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de seller", description=f'Enviaremos los productos {validacionStr} de la orden #{idPedido} a validación de stock', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order_2")
         if respuesta:
-            with st.spinner(f'Actualizando estado del pedido a "{banner_text}"'):
+            with st.spinner(f'Actualizando estado de los productos del pedido pedido a "Validación Stock"'):
                 lineasProblemas = []
                 i=0
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
+                        update_order_product_status(objeto['producto_id'],'validacion')
+
                 if len(lineasProblemas) > 0:
                     order_notes = "\n".join(lineasProblemas)
                     with st.spinner(f'Actualizano las notas del pedido para confirmación de seller  en las bodegas CDMX'):
                         asyncio.run(update_order_note__wordpress(idPedido, order_notes))
-                r = asyncio.run(update_status_wordpress(idPedido, banner_status))
-            st.session_state.current_view = 'finalProceso'
-            st.session_state.current_status = banner_text
+                with st.spinner('Actualizando estado de orden a "Validacion stock"'):
+                    r = asyncio.run(update_status_wordpress(idPedido, 'stock-2'))
+            st.session_state.current_view = 'finalProcesoConfirmacion'
+            st.session_state.productos_validacion = validacionStr
             st.rerun()
 
-def UITFinalizarProceso(data, currentStatus):
-    grouped = data['num_agrupados'][0]
-    childs = data['childs'][0]
-    if childs == grouped and childs == 1:
-        text = 'Es pedido único, ahora debes imprimir bitácora y empaquetar'
-    elif childs == grouped and childs > 1:
-        text = 'Es el último pedido, ahora debes Agrupar y Empaquetar'
-    elif grouped < childs and grouped > 0 and grouped != 1:
-        text = 'Este pedido ya tiene órdenes en agrupar, ahora debes Agruparlo'
-    else:
-        text = 'Este es el primer pedido, ahora debes imprimir bitácora y abrir espacio para orden completa'
-    st.markdown(f'## Se actualizó el pedido con número {data["id"][0]} al estado "{currentStatus}"')
+def UITFinalizarProceso(data, productList):
+    
+    st.markdown(f'## Se actualizaron algunos productos del pedido con número {data["id"][0]} al estado "Validacion Stock"')
     st.write('---')
     
-    if currentStatus == 'Pedidos por agrupar':
-        st.markdown(f'### {text}')
+    st.markdown(f'### Los productos son los siguientes: {productList}')
+
     if data["post_parent"][0] != data["id"][0]:
         st.markdown(f'### Su orden padre es: {data["post_parent"][0]}')
         st.write('---')

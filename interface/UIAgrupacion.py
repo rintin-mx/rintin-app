@@ -51,22 +51,23 @@ def UIOrdenesAgrupar(data):
             with col1:
                 st.markdown(f"**Orden Padre:** {ordenes.order_id}")
                 st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
-                st.markdown(f"**Pedidos Auditados:** {int(ordenes.pedidos_auditados)}")
-                st.markdown(f'**Hijos Auditados:** {ordenes.hijos_auditados}')
+                st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_auditados)}")
+                st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_auditados}')
                 st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
                 st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
                 st.markdown(f"**Estado:** {ordenes.estado}")
             with col3:
-                if st.button("Agrupación", key=i):
-                    EventName,EventAction,EventUser='picking','Se pulso en botón Iniciar Auditoria',st.session_state.useremail
-                    event_instert(EventName,EventAction,EventUser)
-                    ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
+                if ordenes.estado == 'Agrupar':
+                    if st.button("Agrupación", key=i):
+                        EventName,EventAction,EventUser='agrupacion','Se pulso en botón Iniciar Agrupación',st.session_state.useremail
+                        event_instert(EventName,EventAction,EventUser)
+                        ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
 
 def UITFinalizarProceso(parentId, childList, childListString):
     if len(childList) == 1:
-        st.markdown(f'## Se actualizó el pedido #{parentId} al estado "Embarque"')
+        st.markdown(f'## Se actualizó el pedido #{parentId} al estado "Empaquetar"')
     elif len(childList) > 1:
-        st.markdown(f'## Se actualizaron los pedidos con número {childListString} al estado "Embarque"')
+        st.markdown(f'## Se actualizaron los pedidos con número {childListString} al estado "Empaquetar"')
         st.markdown(f'### Su orden padre es: {parentId}')
     st.write('---')
     if st.button('Regresar'):
@@ -138,15 +139,18 @@ def UIOrdenesAgruparDetalle(data,idPedido):
         else:
             no_agrupado.append(objArry[i]['order_id'])
     #proceos para los ids Padres
-
-    trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
     respuesta = False
-    agrupado_str = agrupado_str[:-2]
-    respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {idPedido} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+    if len(agrupado) == len(objArry):
+        trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
+        
+        agrupado_str = agrupado_str[:-2]
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {idPedido} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+
+    
     if respuesta:
         if len(agrupado)>0:
             if st.session_state.useremail is not None:
-                EventName,EventAction,EventUser='Agrupación','Se envio el pedido a "Embarque"',st.session_state.useremail
+                EventName,EventAction,EventUser='Agrupación','Se envio el pedido a "Empaquetar"',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
             with st.spinner(f'Actualizando estatus de los pedidos a Empaquetar...'):
                 order_status='empaquetar'

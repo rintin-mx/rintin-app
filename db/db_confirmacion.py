@@ -44,7 +44,7 @@ def get_seller_centro(db='repl') -> dict:
                 from
                     wp_posts
                 where
-                    post_status = 'wc-prepara_pedido'
+                    post_status in ('wc-prepara_pedido', 'wc-recolectar-2')
                     and id not in (select distinct post_parent from wp_posts)
             ),
             ordermeta as(

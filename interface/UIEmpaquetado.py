@@ -25,7 +25,7 @@ def ver_detalle(id,pedidos_activos,pedidos_agrupados,en_proceso,estado):
     st.rerun()
 
 def UIOrdenesEmpaquetar(data):
-    st.header("Ordenes a agrupar")
+    st.header("Ordenes a empaquetar")
     df_data=[]
     df = pd.DataFrame(data)
     print("df")
@@ -55,10 +55,11 @@ def UIOrdenesEmpaquetar(data):
                 st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
                 st.markdown(f"**Estado:** {ordenes.estado}")
             with col3:
-                if st.button("Empaquetado", key=i):
-                    EventName,EventAction,EventUser='empaquetado','Se pulso en botón Iniciar Empaquetado',st.session_state.useremail
-                    event_instert(EventName,EventAction,EventUser)
-                    ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_agrupados,ordenes.en_proceso,ordenes.estado) 
+                if ordenes.estado == 'Empaquetar':
+                    if st.button("Empaquetado", key=i):
+                        EventName,EventAction,EventUser='empaquetado','Se pulso en botón Iniciar Empaquetado',st.session_state.useremail
+                        event_instert(EventName,EventAction,EventUser)
+                        ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_agrupados,ordenes.en_proceso,ordenes.estado) 
 
 def UITFinalizarProceso(parentId, childList, childListString):
     if len(childList) == 1:
@@ -137,10 +138,14 @@ def UIOrdenesEmpaquetarDetalle(data,idPedido):
             no_empaquetado.append(objArry[i]['order_id'])
     #proceos para los ids Padres
 
-    trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
+    
     respuesta = False
-    empaquetado_str = empaquetado_str[:-2]
-    respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de empaquetado", description=f'Enviaremos a "Generar Guía" \n Padre: {idPedido} \n Hijos: {empaquetado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+    if (len(empaquetado) == len(objArry)):
+        trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de empaquetado", description=f'Enviaremos a "Generar Guía" \n Padre: {idPedido} \n Hijos: {empaquetado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        empaquetado_str = empaquetado_str[:-2]
+
+
     if respuesta:
         if len(empaquetado)>0:
             if st.session_state.useremail is not None:

@@ -75,10 +75,10 @@ sellers as (
 final_helper as(
 select 
 	post_parent,
-	count(case when post_status not in ('wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end) as ordenes_activas,
+	count(case when post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end) as ordenes_activas,
 	count(case when post_status = 'wc-agrupar-pedidos' then id else null end) as pedidos_auditados,
     group_concat(case when post_status = 'wc-agrupar-pedidos' then id else null end separator ', ') as hijos_auditados,
-    group_concat(case when post_status not in ('wc-agrupar-pedidos', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end separator ', ') as hijos_en_proceso
+    group_concat(case when post_status not in ('wc-empaquetar','wc-agrupar-pedidos', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end separator ', ') as hijos_en_proceso
 from 
 	orders
 	inner join order_seller on id = post_id
@@ -90,7 +90,7 @@ having pedidos_auditados > 0
 final_helper2 as(
 	select
 		id,
-		case when post_status not in ('wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 1 else 0 end as ordenes_activas,
+		case when post_status not in ('wc-empaquetar','wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 1 else 0 end as ordenes_activas,
 		case when post_status = 'wc-agrupar-pedidos' then 1 else 0 end as pedidos_auditados,
         'N/A' as hijos_auditados,
         'N/A' as hijos_en_proceso
@@ -167,7 +167,7 @@ def get_order_detalle_agrupacion(id,db='repl') -> dict:
 	from
 		wp_posts
 	where
-		post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
+		post_status NOT IN ('wc-empaquetar','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
 	union 
 	select
 		id, 
@@ -176,7 +176,7 @@ def get_order_detalle_agrupacion(id,db='repl') -> dict:
 	from 
 		wp_posts
     where
-		post_status NOT IN ('wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
+		post_status NOT IN ('wc-empaquetar','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
 		and id not in (select distinct post_parent from wp_posts where post_type = 'shop_order')
         and post_type = 'shop_order'
 ),

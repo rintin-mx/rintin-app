@@ -214,46 +214,50 @@ def UITFinalizarProceso(data, currentStatus):
         st.rerun()
 
 def UITodosLosPedidos(data):
-    df = pd.DataFrame(data)
-    global df_data
-    df_data=[]
-    selected_value = ''
-    if 'visible' not in st.session_state:
-        print("visible")
-        st.session_state['visible'] = True
-        st.rerun()
-    if 'Order_id_auditoria' not in st.session_state:
-        st.session_state['Order_id_auditoria'] = 0
-        
-    df['ID'] = df['ID'].astype(str)
-    # function with list of labels
-    def search_orderid(searchterm: str) -> List[any]:
-        df_filtrado = df[df['ID'].str.contains(searchterm)|(df['Seller'].str.contains(searchterm))]
-        print(df_filtrado)
-        st.session_state['visible']=False
-  
-        return df_filtrado['ID'] if searchterm else []
-
-    # pass search function to searchbox
-    print("selected_value")
-    print(selected_value)
-    selected_value = st_searchbox(
-        label='Buscar por ID o Seller',
-        search_function=search_orderid,
-        key=f"search_orderid",
-        rerun_on_update=True
-    )
-    submit = st.button("Buscar")
-    st_mui_table(df)
     
-
-    if submit:
-        if selected_value is not None:
-            st.session_state['Order_id_auditoria'] =int(selected_value)
-            st.session_state['current_view'] = 'detalleAuditoria'
+    df = pd.DataFrame(data)
+    if len(df) > 0:
+        global df_data
+        df_data=[]
+        selected_value = ''
+        if 'visible' not in st.session_state:
+            print("visible")
+            st.session_state['visible'] = True
             st.rerun()
-        else:
-            st.info('Debes seleccionar un order_id para continuar', icon="ℹ️")
+        if 'Order_id_auditoria' not in st.session_state:
+            st.session_state['Order_id_auditoria'] = 0
+            
+        df['ID'] = df['ID'].astype(str)
+        # function with list of labels
+        def search_orderid(searchterm: str) -> List[any]:
+            df_filtrado = df[df['ID'].str.contains(searchterm)|(df['Seller'].str.contains(searchterm))]
+            print(df_filtrado)
+            st.session_state['visible']=False
+    
+            return df_filtrado['ID'] if searchterm else []
+
+        # pass search function to searchbox
+        print("selected_value")
+        print(selected_value)
+        selected_value = st_searchbox(
+            label='Buscar por ID o Seller',
+            search_function=search_orderid,
+            key=f"search_orderid",
+            rerun_on_update=True
+        )
+        submit = st.button("Buscar")
+        st_mui_table(df)
+        
+
+        if submit:
+            if selected_value is not None:
+                st.session_state['Order_id_auditoria'] =int(selected_value)
+                st.session_state['current_view'] = 'detalleAuditoria'
+                st.rerun()
+            else:
+                st.info('Debes seleccionar un order_id para continuar', icon="ℹ️")
+    else:
+        st.write('### No hay ordenes por auditar')
 
             
 

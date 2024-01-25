@@ -114,9 +114,12 @@ def get_seller_centro(db='repl') -> dict:
         #wp_seller['estado']='wc-recolectar-2'
         #wp_seller=wp_seller[['order_id','seller_id','seller_name', 'num_paquetes','estado']]
         #wp_seller.columns = ['id','Seller', 'num_paquetes','estado','seller_id']
-        wp_seller.columns = ['ID', 'Seller']
-        wp_seller_general_dict = wp_seller.to_dict(orient='list')
-        return wp_seller
+        if len(wp_seller) > 0:
+            wp_seller.columns = ['ID', 'Seller']
+            wp_seller_general_dict = wp_seller.to_dict(orient='list')
+            return wp_seller
+        else:
+            return {}
 
 def get_order_auditoria(id,db='repl') -> dict:
     config = config_db(db)

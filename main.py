@@ -40,20 +40,20 @@ class MultiApp:
             valEmail=cookie_manager.get(cookie="useremail")
             st.session_state.username=val
             st.session_state.useremail=valEmail
-            if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
-                menu=['Logout','Pickeo', 'Ingreso OC Bodega']
-                pagina=1
-            elif val in ('picker_oaxaca', 'ivan'):
+            # if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
+            #     menu=['Logout','Pickeo', 'Ingreso OC Bodega']
+            #     pagina=1
+            if val == 'picker_oaxaca':
                 menu=['Logout','Pickeo']
                 pagina=1
-            elif val == 'Usuario Recoleccion':
-                menu=['Logout','Recoleccion']
+            # elif val == 'Usuario Recoleccion':
+            #     menu=['Logout','Recoleccion']
+            #     pagina=1
+            elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
+                menu=['Logout','Confirmación Seller', 'Empaquetado','Pickeo','Recoleccion','Auditoria','Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
-            elif val in ('operaciones','santiago','leslie','joshua'):
-                menu=['Logout','Pickeo','Recoleccion','Auditoria','Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega']
-                pagina=1
-            elif val == 'ismael':
-                menu=['Logout','Auditoria','Agrupacion']
+            # elif val == 'ismael':
+            #     menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
                 menu=['Logout','Register','Pickeo','Confirmación Seller','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
             else:
