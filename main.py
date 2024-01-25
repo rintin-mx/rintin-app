@@ -6,7 +6,7 @@ from db.db_UserInteractionEvents import event_instert
 st.set_page_config(
         page_title="Rintin",
 )
-import login,picking,confirmacion, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, register,test, register,agrupacion, ordenesCompra
+import login,picking,confirmacion, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -49,22 +49,16 @@ class MultiApp:
             # elif val == 'Usuario Recoleccion':
             #     menu=['Logout','Recoleccion']
             #     pagina=1
-            elif val == 'aurea':
-                menu=['Logout','Confirmación Seller']
-                pagina=1
-            elif val in ('operaciones','santiago','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo',):
-                print('entro')
-                print(val)
-                menu=['Logout','Agrupacion','Confirmación Seller', 'Empaquetado','Pickeo','Recoleccion','Auditoria','Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega']
+            elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
+                menu=['Logout','Confirmación Seller', 'Empaquetado','Pickeo','Recoleccion','Auditoria','Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
             elif val == ' ivan':
                  menu=['Logout','Pickeo','Ordenes de Compra']
+            # elif val == 'ismael':
+            #     menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
-                menu=['Logout','Register','Pickeo','Confirmación Seller','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega']
+                menu=['Logout','Register','Pickeo','Confirmación Seller','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
             else:
-                print('entro')
-                print(val)
-                print('entro')
                 menu=['Login']
             app = option_menu(
                 menu_title='Operaciones',
@@ -113,11 +107,11 @@ class MultiApp:
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción ingresoPickeoReco',valEmail
                 event_instert(EventName,EventAction,EventUser)
-        #if app == "Cookies":
-        #    cookiesMenu.app()
-        #    if valEmail is not None:
-        #        EventName,EventAction,EventUser='Main','acceso a la opción cookies',valEmail
-        #        event_instert(EventName,EventAction,EventUser)
+        if app == "Cookies":
+            cookiesMenu.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción cookies',valEmail
+                event_instert(EventName,EventAction,EventUser)
         if app == "Register":
             register.app()
             if valEmail is not None:
