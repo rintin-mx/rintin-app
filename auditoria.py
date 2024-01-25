@@ -2,6 +2,7 @@ import streamlit as st
 from interface.UIauditoria import UITodosLosPedidos,UIDetallePedido,UITFinalizarProceso
 from db.db_auditoria import get_seller_centro,get_order_auditoria, checkForChildStatusses
 from db.db_UserInteractionEvents import event_instert
+
 def app():
         if 'username' in st.session_state:
                 data=[]
@@ -9,7 +10,7 @@ def app():
                        st.session_state['current_view'] = 'auditoria'
                 if 'visible' not in st.session_state:
                     st.session_state['visible'] = False
-                if st.session_state.current_view in ('pick','recolect','recoleccion','pendiente','ordenesAgrupar','agrupacion','detalleAgrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'currentOrder'):
+                if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra'):
                       st.session_state['current_view'] = 'auditoria'
 
                 if st.session_state.current_view == 'auditoria':
