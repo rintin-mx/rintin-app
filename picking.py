@@ -10,7 +10,7 @@ def app():
                 if 'current_view' not in st.session_state:
                     st.session_state['current_view'] = 'pick'
                 
-                if st.session_state.current_view in ('pick', 'auditoria', 'detalleAuditoria', 'ordenesAgrupar', 'agrupacion', 'detalleAgrupacion', 'ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra', 'detalleAuditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'currentOrder'):
+                if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra'):
                     st.session_state['current_view'] = 'recolect'
 
                 if st.session_state.current_view== 'recolect' or st.session_state.current_view== 'recoleccion' or st.session_state.current_view== 'pendiente' or st.session_state.current_view== 'detalle' :

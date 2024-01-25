@@ -75,48 +75,48 @@ sellers as (
 final_helper as(
 select 
 	post_parent,
-	count(case when post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end) as ordenes_activas,
-	count(case when post_status = 'wc-agrupar-pedidos' then id else null end) as pedidos_auditados,
-    group_concat(case when post_status = 'wc-agrupar-pedidos' then id else null end separator ', ') as hijos_auditados,
-    group_concat(case when post_status not in ('wc-empaquetar','wc-agrupar-pedidos', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end separator ', ') as hijos_en_proceso
+	count(case when post_status not in ('wc-generar_guia','wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end) as ordenes_activas,
+	count(case when post_status = 'wc-empaquetar' then id else null end) as pedidos_agrupados,
+    group_concat(case when post_status = 'wc-empaquetar' then id else null end separator ', ') as hijos_agrupados,
+    group_concat(case when post_status not in ('wc-generar_guia','wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end separator ', ') as hijos_en_proceso
 from 
 	orders
 	inner join order_seller on id = post_id
 	inner join sellers on user_id = dokan_vendor_id
 where post_parent != 0
 group by post_parent
-having pedidos_auditados > 0
+having pedidos_agrupados > 0
 ),
 final_helper2 as(
 	select
 		id,
-		case when post_status not in ('wc-empaquetar','wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 1 else 0 end as ordenes_activas,
-		case when post_status = 'wc-agrupar-pedidos' then 1 else 0 end as pedidos_auditados,
-        'N/A' as hijos_auditados,
+		case when post_status not in ('wc-generar_guia','wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 1 else 0 end as ordenes_activas,
+		case when post_status = 'wc-empaquetar' then 1 else 0 end as pedidos_agrupados,
+        'N/A' as hijos_agrupados,
         'N/A' as hijos_en_proceso
 	from orders 
 	inner join order_seller on id = post_id
 	inner join sellers on user_id = dokan_vendor_id
 	where post_parent = 0 and id not in (select distinct post_parent from orders)
-	having pedidos_auditados > 0
+	having pedidos_agrupados > 0
 )
 select post_parent as order_id, 
 ordenes_activas, 
-pedidos_auditados, 
-ordenes_activas - pedidos_auditados as en_proceso,
-hijos_auditados,
+pedidos_agrupados, 
+ordenes_activas - pedidos_agrupados as en_proceso,
+hijos_agrupados,
 hijos_en_proceso,
 CASE 
-	WHEN (ordenes_activas - pedidos_auditados) = 0 THEN 'Agrupar'
+	WHEN (ordenes_activas - pedidos_agrupados) = 0 THEN 'Empaquetar'
 	ELSE 'Faltan Pedidos'
 END AS estado
 
 
 from final_helper 
 union 
-select id as order_id, ordenes_activas, pedidos_auditados, ordenes_activas - pedidos_auditados as en_proceso, hijos_auditados, hijos_en_proceso,
+select id as order_id, ordenes_activas, pedidos_agrupados, ordenes_activas - pedidos_agrupados as en_proceso, hijos_agrupados, hijos_en_proceso,
 CASE 
-	WHEN (ordenes_activas - pedidos_auditados) = 0 THEN 'Agrupar'
+	WHEN (ordenes_activas - pedidos_agrupados) = 0 THEN 'Empaquetar'
 	ELSE 'Faltan Pedidos'
 END AS estado
 from final_helper2 
@@ -150,7 +150,7 @@ from final_helper2
         wp_seller_general_dict = wp_seller.to_dict(orient='list')
         return wp_seller_general_dict
 
-def get_order_detalle_agrupacion(id,db='repl') -> dict:
+def get_order_detalle_empaquetado(id,db='repl') -> dict:
     config = config_db(db)
     # Registrar el tiempo de inicio
     start_time = time.time()
@@ -167,7 +167,7 @@ def get_order_detalle_agrupacion(id,db='repl') -> dict:
 	from
 		wp_posts
 	where
-		post_status NOT IN ('wc-empaquetar','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
+		post_status NOT IN ('wc-generar_guia','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
 	union 
 	select
 		id, 
@@ -176,7 +176,7 @@ def get_order_detalle_agrupacion(id,db='repl') -> dict:
 	from 
 		wp_posts
     where
-		post_status NOT IN ('wc-empaquetar','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
+		post_status NOT IN ('wc-generar_guia','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
 		and id not in (select distinct post_parent from wp_posts where post_type = 'shop_order')
         and post_type = 'shop_order'
 ),

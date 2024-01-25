@@ -44,7 +44,7 @@ def get_seller_centro(db='repl') -> dict:
                 from
                     wp_posts
                 where
-                    post_status = 'wc-auditoria-2'
+                    post_status in ('wc-prepara_pedido', 'wc-recolectar-2')
                     and id not in (select distinct post_parent from wp_posts)
             ),
             ordermeta as(
@@ -79,7 +79,6 @@ def get_seller_centro(db='repl') -> dict:
                     wp_usermeta
                     inner join ordermeta on dokan_vendor_id = user_id
                 group by user_id
-                having zone = 'centro'
             )
             select
                 ordermeta.order_id,
@@ -114,12 +113,9 @@ def get_seller_centro(db='repl') -> dict:
         #wp_seller['estado']='wc-recolectar-2'
         #wp_seller=wp_seller[['order_id','seller_id','seller_name', 'num_paquetes','estado']]
         #wp_seller.columns = ['id','Seller', 'num_paquetes','estado','seller_id']
-        if len(wp_seller) > 0:
-            wp_seller.columns = ['ID', 'Seller']
-            wp_seller_general_dict = wp_seller.to_dict(orient='list')
-            return wp_seller
-        else:
-            return {}
+        wp_seller.columns = ['ID', 'Seller']
+        wp_seller_general_dict = wp_seller.to_dict(orient='list')
+        return wp_seller
 
 def get_order_auditoria(id,db='repl') -> dict:
     config = config_db(db)
