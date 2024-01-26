@@ -142,7 +142,7 @@ def UIOrdenesEmpaquetarDetalle(data,idPedido):
     respuesta = False
     if (len(empaquetado) == len(objArry)):
         trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de empaquetado", description=f'Enviaremos a "Generar Guía" \n Padre: {idPedido} \n Hijos: {empaquetado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de empaquetado", description=f'Enviaremos a "Generar Guía" \n Padre: {str(idPedido)} \n Hijos: {empaquetado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         empaquetado_str = empaquetado_str[:-2]
 
 

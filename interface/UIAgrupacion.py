@@ -144,7 +144,7 @@ def UIOrdenesAgruparDetalle(data,idPedido):
         trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
         
         agrupado_str = agrupado_str[:-2]
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {idPedido} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {str(idPedido)} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
 
     
     if respuesta:
