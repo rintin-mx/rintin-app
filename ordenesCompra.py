@@ -11,7 +11,7 @@ def app():
         data = []
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'ordenesCompraMenu'
-        if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'ordenesCompra','auditoria', 'ingresoOrdenesCompra'):
+        if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu','auditoria', 'ingresoOrdenesCompra'):
             st.session_state['current_view'] = 'ordenesCompraMenu'
         if st.session_state.current_view == 'ordenesCompra':
             orderProducts = None
