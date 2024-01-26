@@ -74,7 +74,7 @@ def UIDetallePedido(data_deta,idPedido):
     objArry=[]
     for i, pedido in df.iterrows():
         #col1, col2, col3, col4, col5 = st.columns(5)
-        col1, col2, col3, col4, col5, col6 = st.columns([3, 3, 3, 3, 3, 2])
+        col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
         with col1:
             if pedido.Imagen is not  None:
                 st.image(pedido.Imagen, use_column_width=True)
@@ -103,13 +103,14 @@ def UIDetallePedido(data_deta,idPedido):
             else:
                 estado = 'NO OK'
                 st.error(estado)
-        with col6:
             otro_producto = ''
             razon = None
             if cantidad_pickeada < int(pedido.Cantidad):
                 razon= st.selectbox('Razon no auditoria', options=noAuditoriaOpt ,key=str(pedido.product_id) + '_select')
                 if razon == 'Llego otro producto':
                     otro_producto = st.text_input('Producto que ingresó', key=str(pedido.product_id) + '_nuevo_producto')
+
+
         estados.append(estado)
         objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
                             "sku":pedido.SKU,

@@ -138,7 +138,6 @@ def UIDetallePedido(data_deta,idPedido):
             st.write("")  # Espacio extra
 
         with col4:
-            st.markdown(f'### Cantidad pickeada: {pedido.Cantidad}')
             cantidad_pickeada = st.number_input(f"Cantidad pickeada", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad))
         with col5:
             # Comparar si la cantidad ingresada es igual a la cantidad requerida
