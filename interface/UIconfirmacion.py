@@ -43,7 +43,7 @@ def orderMsjString(objeto):
     ahora = datetime.now()
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
     fuente='confirmacion-validacion'
-    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
+    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail, 'wc-prepara_pedido', 'wc-stock-2')
     linea = f"Producto: {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe confirmó {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
 

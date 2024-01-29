@@ -205,7 +205,7 @@ def UIDetallePedido(data_deta,idPedido):
                         fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
                         fuente='picking'
                         #descomentar para guardar en la base de datos
-                        insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente, st.session_state.useremail)
+                        insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente, st.session_state.useremail, 'wc-recolectar-2', 'wc-stock-2', 'No hay stock')
                         update_order_product_status(objeto['producto_id'],'validacion')
                         linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe pickeo {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
                         lineasTest.append(linea)

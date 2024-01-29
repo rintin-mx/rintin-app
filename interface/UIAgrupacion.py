@@ -32,15 +32,21 @@ def UIOrdenesAgrupar(data):
     df = pd.DataFrame(data)
     print("df")
     print(df)
+    default_option = None
+    if 'filtro_agrupacion' in st.session_state:
+        default_option = st.session_state['filtro_agrupacion']
+        del st.session_state['filtro_agrupacion']
     options = st.multiselect(
     'Selecciones el estado',
      options=df['estado'].unique(),
-     key='centro_padre')
+     key='centro_padre',
+     default=default_option)
     
     print("options")
     print(options)
     if len(options)>0:
         df_data =df[df['estado'].isin(options)]
+        st.session_state['filtro_agrupacion'] = options
     else:
         df_data = df
 

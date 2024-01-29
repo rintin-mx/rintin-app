@@ -50,7 +50,7 @@ class MultiApp:
             #     menu=['Logout','Recoleccion']
             #     pagina=1
             elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
-                menu=['Logout','Confirmación Seller', 'Empaquetado','Pickeo','Recoleccion','Auditoria','Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega']
+                menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
             # elif val == 'ismael':
             #     menu=['Logout','Auditoria','Agrupacion']
