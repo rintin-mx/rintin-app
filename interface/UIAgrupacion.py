@@ -32,15 +32,21 @@ def UIOrdenesAgrupar(data):
     df = pd.DataFrame(data)
     print("df")
     print(df)
+    default_option = None
+    if 'filtro_agrupacion' in st.session_state:
+        default_option = st.session_state['filtro_agrupacion']
+        del st.session_state['filtro_agrupacion']
     options = st.multiselect(
     'Selecciones el estado',
      options=df['estado'].unique(),
-     key='centro_padre')
+     key='centro_padre',
+     default=default_option)
     
     print("options")
     print(options)
     if len(options)>0:
         df_data =df[df['estado'].isin(options)]
+        st.session_state['filtro_agrupacion'] = options
     else:
         df_data = df
 
@@ -144,7 +150,7 @@ def UIOrdenesAgruparDetalle(data,idPedido):
         trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
         
         agrupado_str = agrupado_str[:-2]
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {idPedido} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {str(idPedido)} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
 
     
     if respuesta:

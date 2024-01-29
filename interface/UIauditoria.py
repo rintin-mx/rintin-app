@@ -18,6 +18,8 @@ import random
 from st_material_table import st_material_table
 from st_mui_table import st_mui_table
 
+noAuditoriaOpt = ['No llego', 'Llego otro producto']
+
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
     return result
@@ -38,13 +40,16 @@ def ver_detalle(order_id,seller_id,seller_name,num_paquetes,estado):
     st.session_state.disabled = True
     st.rerun()
 
-def orderMsjString(objeto):
+def orderMsjString(objeto, status):
     linea=''
     ahora = datetime.now()
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
     fuente='auditoria-wc-recolectar-2'
-    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail)
-    linea = f"Producto: {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
+    insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail, 'wc-auditoria-2', 'wc-' + status, objeto['razon'])
+    if objeto['otro_producto'] == '':
+        linea = f"Producto: {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}\nRazón de diferencia: {objeto['razon']}"
+    else:
+        linea = f"Producto: {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}\nRazón de diferencia: {objeto['razon']}\nProducto que llegó: {objeto['otro_producto']}"
     return linea
 
 def UIDetallePedido(data_deta,idPedido):
@@ -53,43 +58,6 @@ def UIDetallePedido(data_deta,idPedido):
             st.session_state.current_view = 'auditoria'
             st.rerun()
     #estilos en los textos
-    st.markdown("""
-        <style>
-        .flex-container {
-            display: flex;
-            align-items: center; /* Alinea los items verticalmente */
-            justify-content: space-between; /* Espacio entre los elementos */
-        }
-        .nombre-producto {
-            font-size:12px !important; 
-            font-weight: bold; 
-        }
-        .sku-producto {
-            font-size:12px !important;
-            font-weight: bold; 
-        }
-        .cantidad{
-            font-size:20px !important;
-            font-weight: bold; 
-        }
-        .number-input-container > div {
-            margin-top: 0px; /* Ajusta este valor según sea necesario */
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    components.html(
-            """
-        <script>
-        const elements = window.parent.document.querySelectorAll('.stNumberInput div[data-baseweb="input"] > div')
-        console.log(elements)
-        elements[1].display: none;
-        </script>
-        """,
-            height=0,
-            width=0,
-        )
-
-   
     st.write("---")
     # Inicializar una lista para los estados
     estados = []
@@ -104,15 +72,9 @@ def UIDetallePedido(data_deta,idPedido):
         banner_status = 'rec-problem-2'
     df = pd.DataFrame(data_deta)
     objArry=[]
-    header_col1, header_col2, header_col3, header_col4,header_col5 = st.columns([2, 3, 1, 1, 2])
-    header_col1.write("")
-    header_col2.write("**Producto**")
-    header_col3.write("**Cantidad**")
-    header_col4.write("**Auditado**") 
-    header_col5.write("**Estado**") 
     for i, pedido in df.iterrows():
         #col1, col2, col3, col4, col5 = st.columns(5)
-        col1, col2, col3, col4, col5 = st.columns([2, 3, 1, 1, 2])
+        col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
         with col1:
             if pedido.Imagen is not  None:
                 st.image(pedido.Imagen, use_column_width=True)
@@ -120,17 +82,15 @@ def UIDetallePedido(data_deta,idPedido):
                 st.write("Sin imagen")
 
         with col2:
-            st.markdown(f'<div class="flex-container"><div class="nombre-producto">Nombre: {pedido.Producto}</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="flex-container"><div class="sku-producto">SKU: {pedido.SKU}</div></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="flex-container"><div class="sku-producto">{pedido.units_per_pack}</div></div>', unsafe_allow_html=True)            
+            st.markdown(f'##### Nombre: {pedido.Producto}')
+            st.markdown(f'##### SKU: {pedido.SKU}')
+            st.markdown(f'##### Unidades: {pedido.units_per_pack}')            
         with col3:
-            st.markdown(f'<div class="flex-container"><div class="cantidad">{pedido.Cantidad}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'##### Cantidad: {pedido.Cantidad}')
             st.write("")  # Espacio extra
 
         with col4:
-            #st.markdown('<div class="flex-container">', unsafe_allow_html=True)
-            cantidad_pickeada = st.number_input(f"holwwwa", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad),label_visibility='hidden')
-            #st.markdown('</div>', unsafe_allow_html=True)
+            cantidad_pickeada = st.number_input(f"Auditado", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad))
         with col5:
             # Comparar si la cantidad ingresada es igual a la cantidad requerida
             if cantidad_pickeada == int(pedido.Cantidad):
@@ -143,11 +103,19 @@ def UIDetallePedido(data_deta,idPedido):
             else:
                 estado = 'NO OK'
                 st.error(estado)
-            estados.append(estado)
-            objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
-                            "sku":pedido.SKU,
-                            "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado,"seller_id":pedido.seller_id})
+            otro_producto = ''
+            razon = None
+            if cantidad_pickeada < int(pedido.Cantidad):
+                razon= st.selectbox('Razon no auditoria', options=noAuditoriaOpt ,key=str(pedido.product_id) + '_select')
+                if razon == 'Llego otro producto':
+                    otro_producto = st.text_input('Producto que ingresó', key=str(pedido.product_id) + '_nuevo_producto')
 
+
+        estados.append(estado)
+        objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
+                            "sku":pedido.SKU,
+                            "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado,"seller_id":pedido.seller_id,"razon": razon, "otro_producto": otro_producto})
+        st.write('---')
     agrupacion=[]
     recolec=[]
     for i in range(len(objArry)):
@@ -159,7 +127,7 @@ def UIDetallePedido(data_deta,idPedido):
     respuesta = False
     if len(agrupacion)==len(objArry):
         banner_text = 'Pedidos por agrupar'
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido #{str(idPedido)} a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
             with st.spinner(f'Actualizando estado del pedido a "Pedidos por agrupar"'):
                 if st.session_state.useremail is not None:
@@ -172,14 +140,14 @@ def UIDetallePedido(data_deta,idPedido):
             st.rerun()
            
     else:
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order_2")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Auditoría", description=f'Enviaremos el pedido #{idPedido} a "{banner_text}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order_2")
         if respuesta:
             with st.spinner(f'Actualizando estado del pedido a "{banner_text}"'):
                 lineasProblemas = []
                 i=0
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
-                        lineasProblemas.append(orderMsjString(objeto))
+                        lineasProblemas.append(orderMsjString(objeto, banner_status))
                 if len(lineasProblemas) > 0:
                     order_notes = "\n".join(lineasProblemas)
                     with st.spinner(f'Actualizano las notas del pedido para auditoria  en las bodegas CDMX'):

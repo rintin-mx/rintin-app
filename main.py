@@ -51,11 +51,8 @@ class MultiApp:
             #     pagina=1
             elif val == 'aurea':
                 menu=['Logout','Confirmación Seller']
-                pagina=1
-            elif val in ('operaciones','santiago','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo',):
-                print('entro')
-                print(val)
-                menu=['Logout','Agrupacion','Confirmación Seller', 'Empaquetado','Pickeo','Recoleccion','Auditoria','Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega']
+            elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
+                menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
             elif val == ' ivan':
                  menu=['Logout','Pickeo','Ordenes de Compra']
