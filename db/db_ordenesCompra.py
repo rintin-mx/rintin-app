@@ -59,6 +59,8 @@ def updateOrdenCompra(order_id, orderInfo, products):
                     # Ejecutar la sentencia SQL
                     cursor.execute(sql, (value['sku'], value['nombre'], value['tipo_producto'], value['costo'] , value['units_per_pack'] , value['img_url'], time.strftime('%Y-%m-%d %H:%M:%S'), int(value['product_id'])))
                     connection.commit()
+            cursor.close()
+            connection.close()
     except Exception as e:
         print("Error al conectar a la base de datos:", e)
         return False

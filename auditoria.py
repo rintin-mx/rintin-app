@@ -10,15 +10,17 @@ def app():
                        st.session_state['current_view'] = 'auditoria'
                 if 'visible' not in st.session_state:
                     st.session_state['visible'] = False
-                if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra'):
-                      st.session_state['current_view'] = 'auditoria'
+                if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv'):
+                    st.session_state['current_view'] = 'auditoria'
 
                 if st.session_state.current_view == 'auditoria':
                     print('auditoria')
 
-                    if st.session_state.useremail is not None:
-                        EventName,EventAction,EventUser='picking','acceso a las vista pick',st.session_state.useremail
-                        event_instert(EventName,EventAction,EventUser)
+                    #if st.session_state.useremail is not None:
+                        #EventName,EventAction,EventUser='picking','acceso a las vista pick',st.session_state.useremail
+                        #event_instert(EventName,EventAction,EventUser)
+                    if 'Order_id_auditoria' in st.session_state:
+                        del st.session_state['Order_id_auditoria']
                     data=get_seller_centro()
                     UITodosLosPedidos(data)      
                 if st.session_state.current_view == 'detalleAuditoria':

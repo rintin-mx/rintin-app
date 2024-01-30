@@ -26,42 +26,53 @@ def ver_detalle(id,pedidos_activos,pedidos_auditados,en_proceso,estado):
     st.session_state.current_view = 'detalleAgrupacion'
     st.rerun()
 
+def rerun():
+    st.rerun()
+
 def UIOrdenesAgrupar(data):
     st.header("Ordenes a agrupar")
     df_data=[]
     df = pd.DataFrame(data)
-    print("df")
-    print(df)
+    default_option = None
+    if 'filtro_agrupacion' in st.session_state:
+        default_option = st.session_state['filtro_agrupacion']
+        del st.session_state['filtro_agrupacion']
+    
     options = st.multiselect(
     'Selecciones el estado',
-     options=df['estado'].unique(),
-     key='centro_padre')
+     options=['Agrupar', 'Faltan Pedidos'],
+     key='centro_padre',
+     default=default_option
+    )
     
     print("options")
     print(options)
     if len(options)>0:
         df_data =df[df['estado'].isin(options)]
+        st.session_state['filtro_agrupacion'] = options
     else:
         df_data = df
-
-    for i, ordenes in df_data.iterrows():
-        st.write("---")
-        with st.container():
-            col1, col3 = st.columns([5, 1])
-            with col1:
-                st.markdown(f"**Orden Padre:** {ordenes.order_id}")
-                st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
-                st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_auditados)}")
-                st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_auditados}')
-                st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
-                st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
-                st.markdown(f"**Estado:** {ordenes.estado}")
-            with col3:
-                if ordenes.estado == 'Agrupar':
-                    if st.button("Agrupación", key=i):
-                        EventName,EventAction,EventUser='agrupacion','Se pulso en botón Iniciar Agrupación',st.session_state.useremail
-                        event_instert(EventName,EventAction,EventUser)
-                        ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
+    if len(df_data) > 0:
+        for i, ordenes in df_data.iterrows():
+            st.write("---")
+            with st.container():
+                col1, col3 = st.columns([5, 1])
+                with col1:
+                    st.markdown(f"**Orden Padre:** {ordenes.order_id}")
+                    st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
+                    st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_auditados)}")
+                    st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_auditados}')
+                    st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
+                    st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
+                    st.markdown(f"**Estado:** {ordenes.estado}")
+                with col3:
+                    if ordenes.estado == 'Agrupar':
+                        if st.button("Agrupación", key=i):
+                            EventName,EventAction,EventUser='agrupacion','Se pulso en botón Iniciar Agrupación',st.session_state.useremail
+                            event_instert(EventName,EventAction,EventUser)
+                            ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
+    else:
+        st.markdown('### No hay ordenes listas para agrupar.')
 
 def UITFinalizarProceso(parentId, childList, childListString):
     if len(childList) == 1:
@@ -144,7 +155,7 @@ def UIOrdenesAgruparDetalle(data,idPedido):
         trigger_btn = ui.button(text="Empaquetar", key="trigger_btn")
         
         agrupado_str = agrupado_str[:-2]
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {idPedido} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de agrupación", description=f'Enviaremos a "Empaquetar" \n Padre: {str(idPedido)} \n Hijos: {agrupado_str}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
 
     
     if respuesta:

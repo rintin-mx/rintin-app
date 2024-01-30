@@ -1,4 +1,3 @@
-
 import streamlit as st
 from streamlit_option_menu import option_menu
 import extra_streamlit_components as stx
@@ -7,8 +6,7 @@ from db.db_UserInteractionEvents import event_instert
 st.set_page_config(
         page_title="Rintin",
 )
-
-import login,picking,confirmacion, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenesCompra,test
+import login,picking,confirmacion, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -51,8 +49,10 @@ class MultiApp:
             # elif val == 'Usuario Recoleccion':
             #     menu=['Logout','Recoleccion']
             #     pagina=1
+            elif val == 'aurea':
+                menu=['Logout','Confirmación Seller']
             elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
-                menu=['Logout','Confirmación Seller', 'Empaquetado','Pickeo','Recoleccion','Auditoria','Agrupacion','Ordenes de Compra', 'Ingreso OC Bodega']
+                menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
             elif val == ' ivan':
                  menu=['Logout','Pickeo','Ordenes de Compra']
@@ -138,4 +138,3 @@ class MultiApp:
             test.app()
 
     run() 
-  
