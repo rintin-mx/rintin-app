@@ -37,7 +37,7 @@ def UIOrdenesEmpaquetar(data):
     print(df)
     options = st.multiselect(
     'Selecciones el estado',
-     options=df['estado'].unique(),
+     options=['Empaquetar', 'Faltan Pedidos'],
      key='centro_padre',
      default=default_option)
     
@@ -68,7 +68,7 @@ def UIOrdenesEmpaquetar(data):
                             event_instert(EventName,EventAction,EventUser)
                             ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_agrupados,ordenes.en_proceso,ordenes.estado) 
     else:
-        st.markdown('### No hay ordenes listas para empaquetar.')
+        st.markdown('### No hay ordenes.')
 
 def UITFinalizarProceso(parentId, childList, childListString):
     if len(childList) == 1:
