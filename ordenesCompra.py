@@ -4,7 +4,7 @@ from interface.UIordenesCompra import UITOrdenesCompra
 from interface.UIordenesCompra import UITAddProduct
 from db.db_UserInteractionEvents import event_instert   
 from db.db_ordenesCompra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info
-from interface.UIordenesCompra import UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
+from interface.UIordenesCompra import UITOrdenesCompraCSV, UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
 
 def app():
     if 'username' in st.session_state:
@@ -29,6 +29,9 @@ def app():
             else:
                 product = None
             UITAddProduct(product)
+        elif st.session_state.current_view == 'ordenesCompraCsv':
+            data = get_live_sellers()
+            UITOrdenesCompraCSV(data)
         elif st.session_state.current_view == 'ordenesCompraMenu':
             if 'ordenCompraId' in st.session_state:
                 del st.session_state['ordenCompraId']

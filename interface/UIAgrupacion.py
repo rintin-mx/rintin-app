@@ -36,9 +36,10 @@ def UIOrdenesAgrupar(data):
     if 'filtro_agrupacion' in st.session_state:
         default_option = st.session_state['filtro_agrupacion']
         del st.session_state['filtro_agrupacion']
+    
     options = st.multiselect(
     'Selecciones el estado',
-     options=df['estado'].unique(),
+     options=['Agrupar', 'Faltan Pedidos'],
      key='centro_padre',
      default=default_option)
     

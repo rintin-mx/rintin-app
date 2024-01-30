@@ -77,7 +77,7 @@ def UIDetallePedido(data_deta,idPedido):
         col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
         with col1:
             if pedido.Imagen is not  None:
-                st.image(pedido.Imagen, use_column_width=True)
+                st.image(pedido.Imagen, use_column_width=True )
             else:
                 st.write("Sin imagen")
 
