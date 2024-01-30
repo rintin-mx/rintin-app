@@ -28,12 +28,18 @@ def UIOrdenesEmpaquetar(data):
     st.header("Ordenes a empaquetar")
     df_data=[]
     df = pd.DataFrame(data)
+    default_option = None
+    if 'filtro_agrupacion' in st.session_state:
+        default_option = st.session_state['filtro_agrupacion']
+        del st.session_state['filtro_agrupacion']
+
     print("df")
     print(df)
     options = st.multiselect(
     'Selecciones el estado',
      options=df['estado'].unique(),
-     key='centro_padre')
+     key='centro_padre',
+     default=default_option)
     
     print("options")
     print(options)
@@ -42,24 +48,27 @@ def UIOrdenesEmpaquetar(data):
     else:
         df_data = df
 
-    for i, ordenes in df_data.iterrows():
-        st.write("---")
-        with st.container():
-            col1, col3 = st.columns([5, 1])
-            with col1:
-                st.markdown(f"**Orden Padre:** {ordenes.order_id}")
-                st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
-                st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_agrupados)}")
-                st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_agrupados}')
-                st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
-                st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
-                st.markdown(f"**Estado:** {ordenes.estado}")
-            with col3:
-                if ordenes.estado == 'Empaquetar':
-                    if st.button("Empaquetado", key=i):
-                        EventName,EventAction,EventUser='empaquetado','Se pulso en botón Iniciar Empaquetado',st.session_state.useremail
-                        event_instert(EventName,EventAction,EventUser)
-                        ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_agrupados,ordenes.en_proceso,ordenes.estado) 
+    if len(df_data) > 0:
+        for i, ordenes in df_data.iterrows():
+            st.write("---")
+            with st.container():
+                col1, col3 = st.columns([5, 1])
+                with col1:
+                    st.markdown(f"**Orden Padre:** {ordenes.order_id}")
+                    st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
+                    st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_agrupados)}")
+                    st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_agrupados}')
+                    st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
+                    st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
+                    st.markdown(f"**Estado:** {ordenes.estado}")
+                with col3:
+                    if ordenes.estado == 'Empaquetar':
+                        if st.button("Empaquetado", key=i):
+                            EventName,EventAction,EventUser='empaquetado','Se pulso en botón Iniciar Empaquetado',st.session_state.useremail
+                            event_instert(EventName,EventAction,EventUser)
+                            ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_agrupados,ordenes.en_proceso,ordenes.estado) 
+    else:
+        st.markdown('### No hay ordenes listas para empaquetar.')
 
 def UITFinalizarProceso(parentId, childList, childListString):
     if len(childList) == 1:

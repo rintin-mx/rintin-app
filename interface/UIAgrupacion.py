@@ -26,6 +26,9 @@ def ver_detalle(id,pedidos_activos,pedidos_auditados,en_proceso,estado):
     st.session_state.current_view = 'detalleAgrupacion'
     st.rerun()
 
+def rerun():
+    st.rerun()
+
 def UIOrdenesAgrupar(data):
     st.header("Ordenes a agrupar")
     df_data=[]
@@ -39,7 +42,8 @@ def UIOrdenesAgrupar(data):
     'Selecciones el estado',
      options=['Agrupar', 'Faltan Pedidos'],
      key='centro_padre',
-     default=default_option)
+     default=default_option
+    )
     
     print("options")
     print(options)
