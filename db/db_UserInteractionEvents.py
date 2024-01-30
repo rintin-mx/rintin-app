@@ -8,7 +8,6 @@ import mysql.connector
 from mysql.connector import Error
 import time
 import datetime
-import json
 
 
 
@@ -31,27 +30,21 @@ def config_db(db='repl') -> dict:
     return config
 
 
-def event_instert(EventName,EventAction,EventUser,EventDetail=''):
+def event_instert(EventName,EventAction,EventUser):
     db = 'prod'
-    datos_json_str=''
-    if EventDetail != '': 
-        print('EventDetail')
-        print(EventDetail)
-        datos_json_str = json.dumps(EventDetail)
-
     config = config_db(db)
     start_time = time.time()
-    connection = mysql.connector.connect(**config)
     try:
+        connection = mysql.connector.connect(**config)
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)
             # Consulta SQL para insertar datos
             insert_query = """
-            INSERT INTO wordpress.UserInteractionEvents  (EventName, EventAction, EventUser,EventDetail) 
-            VALUES (%s, %s, %s,%s)
+            INSERT INTO UserInteractionEvents (EventName, EventAction, EventUser) 
+            VALUES (%s, %s, %s)
             """
             # Datos a insertar
-            event_data = (EventName, EventAction, EventUser,datos_json_str)
+            event_data = (EventName, EventAction, EventUser)
             # Ejecutar la consulta
             cursor.execute(insert_query, event_data)
             # Asegurar los cambios en la base de datos
@@ -111,7 +104,7 @@ def upsert_user_session(user_id, is_logged_in,db):
             print("Conexión a la base de datos cerrada.")
 
 def get_user_session(user_id):
-    config = config_db()
+    config = config_db(db)
     start_time = time.time()
     if login_timestamp is None:
         login_timestamp = datetime.datetime.now()
@@ -122,6 +115,16 @@ def get_user_session(user_id):
         
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)
+
+            # Consulta SQL para insertar datos
+            sql = """
+            INSERT INTO UserSessions (UserID, IsLoggedIn, LoginTimestamp, LogoutTimestamp)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+            IsLoggedIn = VALUES(IsLoggedIn),
+            LoginTimestamp = VALUES(LoginTimestamp),
+            LogoutTimestamp = VALUES(LogoutTimestamp)
+            """
 
                 # Sentencia SQL para obtener la sesión del usuario
             sql = "SELECT * FROM UserSessions WHERE UserID = %s"

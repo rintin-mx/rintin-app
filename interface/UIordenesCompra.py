@@ -334,9 +334,73 @@ def UITOrdenesCompraMenu():
     if st.button('Creación ordenes de compra'):
         st.session_state.current_view = 'ordenesCompra'
         st.rerun()
+    if st.button('Creación ordenes de compra por csv'):
+        st.session_state.current_view = 'ordenesCompraCsv'
+        st.rerun()
     if st.button('Edición ordenes de compra'):
         st.session_state.current_view = 'editOrdenesCompra'
         st.rerun()
+
+def UITOrdenesCompraCSV(data):
+    if st.button('Volver'):
+        st.session_state.current_view = 'ordenesCompraMenu'
+        st.rerun()
+    st.session_state['dictProductos'] = {}
+    st.title('Creación de ordenes de compra por CSV')
+    st.markdown('''
+                <p>
+                    Ingresa la orden de compra en un archivo ".csv". El archivo debe seguir el siguiente <a href="https://rintin-internal-apps.s3.us-east-2.amazonaws.com/example_files/ordenes_compra_template.csv" download="true">formato.</a>
+                </p>''', unsafe_allow_html=True)
+    if 'currentSeller' not in st.session_state:
+        index = None
+    else:
+        index = data['dokan_store_name'].index(st.session_state['currentSeller'])
+    seller = st.selectbox('Seller', data['dokan_store_name'], index=index)
+    if seller is not None:
+        index = data['dokan_store_name'].index(seller)
+        st.session_state['currentSellerId'] = data['user_id'][index]
+        st.session_state['currentSeller'] = seller
+    csv_file = st.file_uploader('Archivo csv', type='.csv', accept_multiple_files=False)
+    button = st.button('Confirmar')
+    if button and csv_file is not None and seller is not None:
+        try:
+            csv_df = pd.read_csv(csv_file)
+            csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete']]
+            csv_dict = csv_df.to_dict(orient='list')
+            print(csv_dict)
+            #'Unidad', 'Paquete'
+            tempArr = []
+            for i in range(len(csv_dict['sku'])):   
+                if csv_dict['piezas_por_paquete'][i] == 1:
+                    tipo_producto = 'Unidad'
+                else:
+                    tipo_producto = 'Paquete'
+                productDict = {
+                    'nombre': csv_dict['nombre'][i],
+                    'sku': csv_dict['sku'][i],
+                    'tipo_producto': tipo_producto,
+                    'cantidad_pack': csv_dict['paquetes'][i],
+                    'units_per_pack': csv_dict['piezas_por_paquete'][i],
+                    'costo': csv_dict['costo_por_paquete'][i],
+                    'img_url': ''
+                }
+                tempArr.append(productDict)
+            st.session_state['dictProductos'][seller] = tempArr
+            st.session_state['current_view'] = 'terminar_orden_compra'
+            st.rerun()
+        except Exception as e:
+            print('error')
+            print(e)
+            st.error('Hubo un error al procesar el archivo, revisa que siga el formato correctamente.')
+    st.write(
+            """<style>
+            [data-testid="stHorizontalBlock"] {
+                align-items: center;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )     
 
 def UITOrdenesCompra(data, products):
     # Título de la página
@@ -350,13 +414,12 @@ def UITOrdenesCompra(data, products):
         st.session_state['oi_changes'] = True
         st.session_state['deletedProducts'] = []
         titleStr = 'Edicion Orden Compra'
-        
-        
     if products is not None and 'initialFetch' not in st.session_state and 'isSaved' not in st.session_state:
         if 'dictProductos' not in st.session_state:
             st.session_state['dictProductos'] = {}
             st.session_state['dictProductos'][st.session_state['currentSeller']] = []
         tempArr = st.session_state['dictProductos'][st.session_state['currentSeller']]
+        
         tipo_producto_list = ['Unidad', 'Paquete']
         for i in range(len(products['nombre_producto'])):
             tipo_product_index = tipo_producto_list.index(products['tipo_producto'][i])
