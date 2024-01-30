@@ -342,7 +342,9 @@ def UITOrdenesCompraMenu():
         st.rerun()
 
 def UITOrdenesCompraCSV(data):
-       
+    if st.button('Volver'):
+        st.session_state.current_view = 'ordenesCompraMenu'
+        st.rerun()
     st.session_state['dictProductos'] = {}
     st.title('Creación de ordenes de compra por CSV')
     st.markdown('''

@@ -30,8 +30,6 @@ def UIOrdenesAgrupar(data):
     st.header("Ordenes a agrupar")
     df_data=[]
     df = pd.DataFrame(data)
-    print("df")
-    print(df)
     default_option = None
     if 'filtro_agrupacion' in st.session_state:
         default_option = st.session_state['filtro_agrupacion']
@@ -50,25 +48,27 @@ def UIOrdenesAgrupar(data):
         st.session_state['filtro_agrupacion'] = options
     else:
         df_data = df
-
-    for i, ordenes in df_data.iterrows():
-        st.write("---")
-        with st.container():
-            col1, col3 = st.columns([5, 1])
-            with col1:
-                st.markdown(f"**Orden Padre:** {ordenes.order_id}")
-                st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
-                st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_auditados)}")
-                st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_auditados}')
-                st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
-                st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
-                st.markdown(f"**Estado:** {ordenes.estado}")
-            with col3:
-                if ordenes.estado == 'Agrupar':
-                    if st.button("Agrupación", key=i):
-                        EventName,EventAction,EventUser='agrupacion','Se pulso en botón Iniciar Agrupación',st.session_state.useremail
-                        event_instert(EventName,EventAction,EventUser)
-                        ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
+    if len(df_data) > 0:
+        for i, ordenes in df_data.iterrows():
+            st.write("---")
+            with st.container():
+                col1, col3 = st.columns([5, 1])
+                with col1:
+                    st.markdown(f"**Orden Padre:** {ordenes.order_id}")
+                    st.markdown(f"**Pedidos Activas:** {int(ordenes.ordenes_activas)}")
+                    st.markdown(f"**Pedidos Agrupados:** {int(ordenes.pedidos_auditados)}")
+                    st.markdown(f'**Hijos Agrupados:** {ordenes.hijos_auditados}')
+                    st.markdown(f"**En proceso:** {int(ordenes.en_proceso)}")
+                    st.markdown(f'**Hijos en proceso:** {ordenes.hijos_en_proceso}')
+                    st.markdown(f"**Estado:** {ordenes.estado}")
+                with col3:
+                    if ordenes.estado == 'Agrupar':
+                        if st.button("Agrupación", key=i):
+                            EventName,EventAction,EventUser='agrupacion','Se pulso en botón Iniciar Agrupación',st.session_state.useremail
+                            event_instert(EventName,EventAction,EventUser)
+                            ver_detalle(ordenes.order_id,ordenes.ordenes_activas,ordenes.pedidos_auditados,ordenes.en_proceso,ordenes.estado) 
+    else:
+        st.markdown('### No hay ordenes listas para agrupar.')
 
 def UITFinalizarProceso(parentId, childList, childListString):
     if len(childList) == 1:
