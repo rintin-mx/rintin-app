@@ -238,7 +238,7 @@ def UITAddProduct(producto):
         nombreVal = ''
         skuVal = ''
         tipo_product_indexVal = 0
-        costoVal = 0
+        costoVal = 0.0
         units_per_packVal = 0
         strBtn = 'Confirmar Creación'
         
@@ -252,7 +252,8 @@ def UITAddProduct(producto):
         units_per_pack = st.number_input('Unidades por paquete', value=units_per_packVal)
     else:
         units_per_pack = 0
-    costo = st.number_input('Costo [Paquete/Unidad]', value=costoVal)
+    costo = st.number_input('Costo [Paquete/Unidad]', value=costoVal, min_value=0.00)
+    print(costo)
     if producto is not None and img_url != '':
         st.image(img_url)
     input_file = st.file_uploader("Agrega la imagen del producto", accept_multiple_files=False)
