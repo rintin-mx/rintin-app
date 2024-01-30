@@ -20,11 +20,14 @@ async def endpoint_update_status_by_order_id(order_id, order_status):
         async with session.put(url, auth=aiohttp.BasicAuth(user, password), json=data) as response:
             if response.status == 200:
                 json_response = await response.json()
-
+                print('json_response')
+                print(json_response)
                 return {"success": True, "message": "Éxito en la actualización del pedido", "response": json_response}
             else:
                 
                 text_response = await response.text()
+                print('text_response')
+                print(text_response)
                 return {"success": False, "message": f"Error en la petición: {response.status} {text_response}"}
 
 

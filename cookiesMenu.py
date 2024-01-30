@@ -6,7 +6,7 @@ st.write("# Cookie Manager")
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
-    return stx.CookieManager(key="cookie_manager_main_menus")
+    return stx.CookieManager()
 
 cookie_manager = get_manager()
 def app():
@@ -32,5 +32,5 @@ def app():
     with c3:
         st.subheader("Delete Cookie:")
         cookie = st.text_input("Cookie", key="2")
-        if st.button("Delete"):
-            cookie_manager.delete(cookie)
+        #if st.button("Delete"):
+        #    cookie_manager.delete(cookie)  cookie_manager.delete(cookie)

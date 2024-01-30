@@ -4,14 +4,14 @@ from interface.UIordenesCompra import UITOrdenesCompra
 from interface.UIordenesCompra import UITAddProduct
 from db.db_UserInteractionEvents import event_instert   
 from db.db_ordenesCompra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info
-from interface.UIordenesCompra import UITOrdenesCompraCSV, UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
+from interface.UIordenesCompra import UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
 
 def app():
     if 'username' in st.session_state:
         data = []
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'ordenesCompraMenu'
-        if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu','auditoria', 'ingresoOrdenesCompra'):
+        if st.session_state.current_view in ('confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'ordenesCompra','auditoria', 'ingresoOrdenesCompra'):
             st.session_state['current_view'] = 'ordenesCompraMenu'
         if st.session_state.current_view == 'ordenesCompra':
             orderProducts = None
@@ -29,9 +29,6 @@ def app():
             else:
                 product = None
             UITAddProduct(product)
-        elif st.session_state.current_view == 'ordenesCompraCsv':
-            data = get_live_sellers()
-            UITOrdenesCompraCSV(data)
         elif st.session_state.current_view == 'ordenesCompraMenu':
             if 'ordenCompraId' in st.session_state:
                 del st.session_state['ordenCompraId']

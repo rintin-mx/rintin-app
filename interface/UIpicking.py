@@ -101,7 +101,41 @@ def UITodosLosPedidos(data):
 
 def UIDetallePedido(data_deta,idPedido):
     #estilos en los textos
-
+    st.markdown("""
+        <style>
+        .flex-container {
+            display: flex;
+            align-items: center; /* Alinea los items verticalmente */
+            justify-content: space-between; /* Espacio entre los elementos */
+        }
+        .nombre-producto {
+            font-size:12px !important; 
+            font-weight: bold; 
+        }
+        .sku-producto {
+            font-size:12px !important;
+            font-weight: bold; 
+        }
+        .cantidad{
+            font-size:20px !important;
+            font-weight: bold; 
+        }
+        .number-input-container > div {
+            margin-top: 0px; /* Ajusta este valor según sea necesario */
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    components.html(
+                """
+            <script>
+            const elements = window.parent.document.querySelectorAll('.stNumberInput div[data-baseweb="input"] > div')
+            console.log(elements)
+            elements[1].display: none;
+            </script>
+            """,
+                height=0,
+                width=0,
+            )
 
     # Título de la tabla
     st.subheader(f"Nombre del Seller: {st.session_state.nombreSeller}")
@@ -118,10 +152,16 @@ def UIDetallePedido(data_deta,idPedido):
 
     df = pd.DataFrame(data_deta)
     objArry=[]
+    header_col1, header_col2, header_col3, header_col4,header_col5 = st.columns([2, 3, 1, 1, 2])
+    header_col1.write("")
+    header_col2.write("**Producto**")
+    header_col3.write("**Cantidad de orden**")
+    header_col4.write("**Cantidad pickeada**") 
+    header_col5.write("**Estado**") 
     for i, pedido in df.iterrows():
         print(pedido.Imagen)
         #col1, col2, col3, col4, col5 = st.columns(5)
-        col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 2])
+        col1, col2, col3, col4, col5 = st.columns([2, 3, 1, 1, 2])
 
         with col1:
             if pedido.Imagen is not  None:
@@ -130,15 +170,17 @@ def UIDetallePedido(data_deta,idPedido):
                 st.write("Sin imagen")
 
         with col2:
-            st.markdown(f'##### Nombre: {pedido.Producto}')
-            st.markdown(f'##### SKU: {pedido.SKU}')
-            st.markdown(f'##### Unidades: {pedido.units_per_pack}')            
+            st.markdown(f'<div class="flex-container"><div class="nombre-producto">Nombre: {pedido.Producto}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="flex-container"><div class="sku-producto">SKU: {pedido.SKU}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="flex-container"><div class="sku-producto">{pedido.units_per_pack}</div></div>', unsafe_allow_html=True)            
         with col3:
-            st.markdown(f'##### Cantidad: {pedido.Cantidad}')
+            st.markdown(f'<div class="flex-container"><div class="cantidad">{pedido.Cantidad}</div></div>', unsafe_allow_html=True)
             st.write("")  # Espacio extra
 
         with col4:
-            cantidad_pickeada = st.number_input(f"Cantidad pickeada", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad))
+            st.markdown('<div class="number-input-container">', unsafe_allow_html=True)
+            cantidad_pickeada = st.number_input(f"", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad))
+            st.markdown('</div>', unsafe_allow_html=True)
         with col5:
             # Comparar si la cantidad ingresada es igual a la cantidad requerida
             if cantidad_pickeada == int(pedido.Cantidad):
@@ -155,7 +197,7 @@ def UIDetallePedido(data_deta,idPedido):
             objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
                             "sku":pedido.SKU,
                             "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado})
-        st.write('---')
+
     auditoria=[]
     validacion=[]
     for i in range(len(objArry)):
@@ -177,7 +219,7 @@ def UIDetallePedido(data_deta,idPedido):
     respuesta_auditoria=False
     respuesta_validacion=False
     if len(auditoria)==len(objArry):
-        respuesta_auditoria=ui.alert_dialog(show=trigger_btn, title="Confirmemos el pickeo", description=f'Enviaremos el pedido #{str(idPedido)} a "Pedidos por auditar"\nConfirma si es lo que quisieras', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_auditoria")
+        respuesta_auditoria=ui.alert_dialog(show=trigger_btn, title="Confirmemos el pickeo", description='Enviaremos el pedido a "Pedidos por auditar"\nConfirma si es lo que quisieras', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_auditoria")
         if respuesta_auditoria:
             if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='picking','Se envio el pedido a "Pedidos por auditar"',st.session_state.useremail
@@ -192,7 +234,7 @@ def UIDetallePedido(data_deta,idPedido):
                 st.session_state.current_view = 'pick'
                 st.rerun()
     else:
-        respuesta_validacion=ui.alert_dialog(show=trigger_btn, title="Confirmemos el pickeo", description=f'Enviaremos el pedido #{str(idPedido)} a "Validacion de Stock"\nConfirma si es lo que quisieras', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_validacion")
+        respuesta_validacion=ui.alert_dialog(show=trigger_btn, title="Confirmemos el pickeo", description='Enviaremos el pedido a "Validacion de Stock"\nConfirma si es lo que quisieras', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_validacion")
         if respuesta_validacion:
             if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='picking','Se envio el pedido a "Validacion de Stock"',st.session_state.useremail
@@ -205,7 +247,7 @@ def UIDetallePedido(data_deta,idPedido):
                         fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
                         fuente='picking'
                         #descomentar para guardar en la base de datos
-                        insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente, st.session_state.useremail, 'wc-recolectar-2', 'wc-stock-2', 'No hay stock')
+                        insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente, st.session_state.useremail)
                         update_order_product_status(objeto['producto_id'],'validacion')
                         linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe pickeo {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
                         lineasTest.append(linea)
