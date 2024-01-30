@@ -45,7 +45,7 @@ def orderDetail(products):
             number = st.number_input('Ingresados', key=str(products['product_id'][i]) + '_number', step=1)
             razon = None
             if number != products['line_paquetes'][i]:
-                razon= st.selectbox('Ingresados', options=noIngresioOpt ,key=str(products['product_id'][i]) + '_select')
+                razon= st.selectbox('Razón no ingreso', options=noIngresioOpt ,key=str(products['product_id'][i]) + '_select')
         with col5:
             if number != products['line_paquetes'][i]:
                 st.error('Validacion')
@@ -61,7 +61,7 @@ def orderDetail(products):
                 'razon': objArry[i]['razon'],
                 'qty': objArry[i]['original_qty'] - objArry[i]['qty']
             })
-    trigger_btn = ui.button(text="Confirmar Pickeo", key="trigger_btn")
+    trigger_btn = ui.button(text="Confirmar Ingreso", key="trigger_btn")
     respuesta = False
     if len(products_validacion) > 0:
         respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description='Enviaremos la orden de compra a "Ingresado a bodega con faltantes"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
