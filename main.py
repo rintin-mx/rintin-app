@@ -6,7 +6,7 @@ from db.db_UserInteractionEvents import event_instert
 st.set_page_config(
         page_title="Rintin",
 )
-import login,picking,confirmacion, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
+import login,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -52,14 +52,14 @@ class MultiApp:
             elif val == 'aurea':
                 menu=['Logout','Confirmación Seller']
             elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
-                menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega']
+                menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
             elif val == ' ivan':
                  menu=['Logout','Pickeo','Ordenes de Compra']
             # elif val == 'ismael':
             #     menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
-                menu=['Logout','Register','Pickeo','Confirmación Seller','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
+                menu=['Logout','Register','Pickeo','Confirmación Seller','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
             else:
                 menu=['Login']
             app = option_menu(
@@ -88,6 +88,11 @@ class MultiApp:
             empaquetado.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción empaquetado',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Números de Guía':
+            numerosGuia.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción numeros de guia',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == 'Confirmación Seller':
             confirmacion.app()
