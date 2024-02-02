@@ -44,7 +44,7 @@ class MultiApp:
             #     menu=['Logout','Pickeo', 'Ingreso OC Bodega']
             #     pagina=1
             if val == 'picker_oaxaca':
-                menu=['Logout','Pickeo']
+                menu=['Logout','Pickeo', 'Picking Pickups']
                 pagina=1
             # elif val == 'Usuario Recoleccion':
             #     menu=['Logout','Recoleccion']
@@ -55,7 +55,7 @@ class MultiApp:
                 menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
             elif val == ' ivan':
-                 menu=['Logout','Pickeo','Ordenes de Compra']
+                 menu=['Logout','Pickeo','Ordenes de Compra', 'Picking Pickups']
             # elif val == 'ismael':
             #     menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
