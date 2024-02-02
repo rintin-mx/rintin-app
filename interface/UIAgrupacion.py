@@ -12,6 +12,7 @@ from db.db_productosValidados import update_order_product_status
 from db.db_order import insert_order_metadata
 from st_mui_dialog import st_mui_dialog
 
+
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
     return result

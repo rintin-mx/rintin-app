@@ -6,7 +6,7 @@ from db.db_UserInteractionEvents import event_instert
 st.set_page_config(
         page_title="Rintin",
 )
-import login,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
+import login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -44,7 +44,7 @@ class MultiApp:
             #     menu=['Logout','Pickeo', 'Ingreso OC Bodega']
             #     pagina=1
             if val == 'picker_oaxaca':
-                menu=['Logout','Pickeo']
+                menu=['Logout','Pickeo', 'Picking Pickups']
                 pagina=1
             # elif val == 'Usuario Recoleccion':
             #     menu=['Logout','Recoleccion']
@@ -55,11 +55,11 @@ class MultiApp:
                 menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega']
                 pagina=1
             elif val == ' ivan':
-                 menu=['Logout','Pickeo','Ordenes de Compra']
+                 menu=['Logout','Pickeo','Ordenes de Compra', 'Picking Pickups']
             # elif val == 'ismael':
             #     menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
-                menu=['Logout','Register','Pickeo','Confirmación Seller','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
+                menu=['Logout','Register','Pickeo','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
             else:
                 menu=['Login']
             app = option_menu(
@@ -84,6 +84,12 @@ class MultiApp:
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción picking',valEmail
                 event_instert(EventName,EventAction,EventUser)
+        if app == 'Picking Pickups':
+            picking_pickups.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción picking pickups',valEmail
+                event_instert(EventName,EventAction,EventUser)
+
         if app == 'Empaquetado':
             empaquetado.app()
             if valEmail is not None:
