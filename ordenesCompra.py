@@ -19,7 +19,6 @@ def app():
                 EventName,EventAction,EventUser='picking','acceso a las vista ordenesCompra',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
             if 'ordenCompraId' in st.session_state:
-                print('entro al fetch products')
                 orderProducts = get_products(st.session_state['ordenCompraId'])
             data = get_live_sellers()
             UITOrdenesCompra(data, orderProducts)

@@ -34,8 +34,6 @@ def app():
                     st.session_state.mostrar_elemento=True
                     data=get_order(st.session_state.orderId)
                     length = len(data)
-                    print("length")
-                    print(length)
                     #if length>0:
                     UIDetallePedido(data,st.session_state.orderId)
                     #else:

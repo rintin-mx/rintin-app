@@ -54,7 +54,6 @@ async def endpoint_update_order_meta_data(order_id, meta_data):
     data = {
         "meta_data": meta_data
     }
-    print(data)
     async with aiohttp.ClientSession() as session:
         async with session.post(url, auth=aiohttp.BasicAuth(user, password), json=data) as response:
             if response.status == 200:

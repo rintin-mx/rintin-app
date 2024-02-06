@@ -14,12 +14,6 @@ def app():
         if st.session_state.current_view == 'recolect':
 
             total_pedidos, total_paquetes , total_registros, data =get_seller_recollection()
-            print("total_pedidos")
-            print(total_pedidos)
-            print("total_paquetes")
-            print(total_paquetes)
-            print("total_registros")
-            print(total_registros)
             UIpendienteRecoleccion(total_pedidos, total_paquetes , total_registros, data)
               
         elif st.session_state.current_view == 'recoleccion':
