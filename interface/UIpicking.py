@@ -42,11 +42,6 @@ def UITodosLosPedidos(data):
     
     if "disabledUIP" not in st.session_state:
         st.session_state['disabledUIP']=False
-
-
-    print("st.session_state['estadoUIP']")
-    print(st.session_state['estadoUIP'])
-
     
     if st.session_state.disabledUIP == False:
         option = st.selectbox(
@@ -78,24 +73,27 @@ def UITodosLosPedidos(data):
             st.session_state.disabledUIP = False
             st.session_state['optionsPickear']="Todos los seller"
             st.rerun()
-    #print("options")
-    #print(options)
-    #if len(unique_values_list)==0:
-    #    st.session_state.filterOptions = options
     for i in range(len(df_data)):
         st.write("---")
         with st.container():
-            col1, col2 = st.columns([4, 1])
+            col1, col2, col3 = st.columns([4, 1, 4])
             # Usar la primera columna para mostrar la información
             with col1:
                 st.markdown(f"**Order_id:** {df_data.iloc[i, 0]}")
                 st.markdown(f"**Seller:** {df_data.iloc[i, 1]}")
                 st.markdown(f"**Estado:** {df_data.iloc[i, 2]}")
             with col2:
+                if df_data.iloc[i, 3] > 0:
+                    st.warning('Pedido pasó por recolección con problema')
+                if df_data.iloc[i, 4] > 0:
+                    st.warning('Pedido pasó por validación de stock')
+            with col3:
                 if st.button("Pickear", key=i):
                      EventName,EventAction,EventUser='picking','Se pulso en botón Pickear',st.session_state.useremail
                      event_instert(EventName,EventAction,EventUser)
                      ver_detalle(df_data.iloc[i, 0],df_data.iloc[i, 1],df_data.iloc[i, 2])
+                
+                    
 
 
 
