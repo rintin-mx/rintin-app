@@ -2,7 +2,9 @@ import streamlit as st
 import pandas as pd
 from db.db_roles import obtener_todos_los_roles
 from db.db_pemrisos import obtener_todos_los_permisos
+from streamlit_extras.dataframe_explorer import dataframe_explorer
 from db.db_rolesPermisos import insertar_rol_permiso, eliminar_rol_permiso, actualizar_rol_permiso, obtener_todos_los_roles_permisos
+from st_aggrid import AgGrid
 
 def anadir_fila(rol,permiso):
     st.session_state.tabla = st.session_state.tabla.append({'Rol': rol, 'Permiso': permiso}, ignore_index=True)
@@ -59,6 +61,9 @@ def rolespermisos():
     print(lista_roles_permisos)
     print('******************')
     if lista_roles_permisos:
-        #rol_id_fk|permiso_id_fk|
-        df_roles_permisos = pd.DataFrame(lista_roles_permisos, columns=['rol_id_fk', 'permiso_id_fk'])
-        st.dataframe(df_roles_permisos) 
+        #rp.rol_id_fk ,rp.permiso_id_fk,r.nombre_rol, p.nombre_permiso
+        df_roles_permisos = pd.DataFrame(lista_roles_permisos, columns=['rol_id_fk', 'permiso_id_fk','nombre_rol','nombre_permiso'])
+        #AgGrid(df_roles_permisos)
+        filtered_df = dataframe_explorer(df_roles_permisos, case=True)
+        st.dataframe(filtered_df, use_container_width=True)
+        #st.dataframe(df_roles_permisos,hide_index=True,column_order=['rol_id_fk', 'nombre_rol','permiso_id_fk','nombre_permiso']) 
