@@ -189,7 +189,6 @@ def UITodosLosPedidos(data):
         df_data=[]
         selected_value = ''
         if 'visible' not in st.session_state:
-            print("visible")
             st.session_state['visible'] = True
             st.rerun()
         if 'Order_id_auditoria' not in st.session_state:
@@ -199,14 +198,11 @@ def UITodosLosPedidos(data):
         # function with list of labels
         def search_orderid(searchterm: str) -> List[any]:
             df_filtrado = df[df['ID'].str.contains(searchterm)|(df['Seller'].str.contains(searchterm))]
-            print(df_filtrado)
             st.session_state['visible']=False
     
             return df_filtrado['ID'] if searchterm else []
 
         # pass search function to searchbox
-        print("selected_value")
-        print(selected_value)
         selected_value = st_searchbox(
             label='Buscar por ID o Seller',
             search_function=search_orderid,

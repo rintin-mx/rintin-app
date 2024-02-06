@@ -24,27 +24,21 @@ def ver_detalle(id,pedidos_activos,pedidos_agrupados,en_proceso,estado):
     st.session_state.current_view = 'detalleEmpaquetado'
     st.rerun()
 
-def UIOrdenesEmpaquetar(data):
+def UIOrdenesEmpaquetar(data, orders_for_filter):
     st.header("Ordenes a empaquetar")
     df_data=[]
     df = pd.DataFrame(data)
-    default_option = None
-    if 'filtro_agrupacion' in st.session_state:
-        default_option = st.session_state['filtro_agrupacion']
-        del st.session_state['filtro_agrupacion']
 
     print("df")
     print(df)
-    options = st.multiselect(
-    'Selecciones el estado',
-     options=['Empaquetar', 'Faltan Pedidos'],
+    filter_value = st.selectbox(
+    'Selecciona el número de orden',
+     options=orders_for_filter,
      key='centro_padre',
-     default=default_option)
-    
-    print("options")
-    print(options)
-    if len(options)>0:
-        df_data =df[df['estado'].isin(options)]
+     index=None)
+
+    if filter_value is not None:
+        df_data = df[(df['order_id'] == int(filter_value)) | (df['hijos_agrupados'].str.contains(filter_value)) | (df['hijos_en_proceso'].str.contains(filter_value))]
     else:
         df_data = df
 

@@ -38,66 +38,89 @@ def get_seller(db='repl') -> dict:
         cursor = conexion.cursor(dictionary=True)
         wp_seller_sql ="""
         WITH orders AS (
-            SELECT
-                wp_posts.id,
-                wp_posts.post_status,
-                wp_dokan_orders.seller_id
-            FROM
-                wp_posts
-                left join wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
-            WHERE
-                post_status = 'wc-recolectar-2'
-            ),
-            ordermeta AS(
-            SELECT
-                post_id AS order_id,
-                post_status,
-                max(
-                CASE
-                    WHEN `meta_key` = '_dokan_vendor_id' THEN `meta_value`
-                    ELSE orders.seller_id
-                END
-                ) AS `dokan_vendor_id`
-            FROM
-                wp_postmeta
-                INNER JOIN orders ON orders.id = post_id
-            GROUP BY
-                post_id,
-                post_status
-            ),
-            users AS (
-            SELECT
-                user_id,
-                max(
-                CASE
-                    WHEN `meta_key` = 'dokan_store_name' THEN `meta_value`
-                    ELSE NULL
-                END
-                ) AS `dokan_store_name`,
-                max(
-                CASE
-                    WHEN `meta_key` = 'bodega' THEN `meta_value`
-                    ELSE NULL
-                END
-                ) AS `bodega`
-            FROM
-                wp_usermeta
-                INNER JOIN ordermeta ON ordermeta.dokan_vendor_id = user_id
-            GROUP BY
-                user_id
-            )
-            SELECT
-            order_id,
-            dokan_vendor_id AS seller_id,
-            dokan_store_name AS seller_name,
-            post_status AS estado
-            FROM
-            ordermeta
-            INNER JOIN users ON users.user_id = ordermeta.dokan_vendor_id
-                WHERE
-                bodega IN ('centro_cdmx', 'aj_cdmx', 'oaxaca')
-            ORDER BY
-            order_id ASC
+SELECT
+	wp_posts.id,
+	wp_posts.post_status,
+	wp_dokan_orders.seller_id
+FROM
+	wp_posts
+	left join wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
+WHERE
+	post_status = 'wc-recolectar-2'
+),
+order_comments as(
+	select
+		id,
+        case
+			when comment_content like '%a Recolec c/problema%' then 1 else 0
+		end as recoleccion_c_problemas,
+        case
+			when comment_content like '%Validacion stock%' then 1 else 0
+		end as validacion_stock
+	from wp_comments
+    inner join orders on comment_post_id = id
+),
+order_comments_grouped as(
+	select
+		id,
+		sum(recoleccion_c_problemas) as recoleccion_c_problemas,
+        sum(validacion_stock) as validacion_stock
+	from order_comments
+    group by id
+),
+ordermeta AS(
+SELECT
+	post_id AS order_id,
+	post_status,
+	max(
+	CASE
+		WHEN `meta_key` = '_dokan_vendor_id' THEN `meta_value`
+		ELSE orders.seller_id
+	END
+	) AS `dokan_vendor_id`
+FROM
+	wp_postmeta
+	INNER JOIN orders ON orders.id = post_id
+GROUP BY
+	post_id,
+	post_status
+),
+users AS (
+SELECT
+	user_id,
+	max(
+	CASE
+		WHEN `meta_key` = 'dokan_store_name' THEN `meta_value`
+		ELSE NULL
+	END
+	) AS `dokan_store_name`,
+	max(
+	CASE
+		WHEN `meta_key` = 'bodega' THEN `meta_value`
+		ELSE NULL
+	END
+	) AS `bodega`
+FROM
+	wp_usermeta
+	INNER JOIN ordermeta ON ordermeta.dokan_vendor_id = user_id
+GROUP BY
+	user_id
+)
+SELECT
+order_id,
+dokan_vendor_id AS seller_id,
+dokan_store_name AS seller_name,
+post_status AS estado,
+recoleccion_c_problemas,
+validacion_stock
+FROM
+ordermeta
+INNER JOIN users ON users.user_id = ordermeta.dokan_vendor_id
+inner join order_comments_grouped on order_comments_grouped.id = ordermeta.order_id
+	WHERE
+	bodega IN ('centro_cdmx', 'aj_cdmx', 'oaxaca')
+ORDER BY
+order_id ASC
         """
 
         # Ejecutar la primera consulta
@@ -122,8 +145,8 @@ def get_seller(db='repl') -> dict:
         minutes = int(duration // 60)
         seconds = int(duration % 60)
         # Nueva lista de nombres de columnas
-        wp_seller=wp_seller[['order_id', 'seller_name','estado']]
-        wp_seller.columns = ['order_id', 'Seller','estado']
+        wp_seller=wp_seller[['order_id', 'seller_name','estado', 'recoleccion_c_problemas', 'validacion_stock']]
+        wp_seller.columns = ['order_id', 'Seller','estado', 'recoleccion_c_problemas', 'validacion_stock']
         wp_seller_general_dict = wp_seller.to_dict(orient='list')
         return wp_seller_general_dict
 

@@ -14,7 +14,6 @@ def app():
                     st.session_state['current_view'] = 'auditoria'
 
                 if st.session_state.current_view == 'auditoria':
-                    print('auditoria')
 
                     #if st.session_state.useremail is not None:
                         #EventName,EventAction,EventUser='picking','acceso a las vista pick',st.session_state.useremail
@@ -27,8 +26,6 @@ def app():
                       if st.session_state.useremail is not None:
                         EventName,EventAction,EventUser='picking','acceso a las vista pick',st.session_state.useremail
                         event_instert(EventName,EventAction,EventUser)  
-                        print("st.session_state['Order_id_auditoria']")
-                        print(st.session_state['Order_id_auditoria'])
                         data=get_order_auditoria(int(st.session_state['Order_id_auditoria'])) 
                         UIDetallePedido(data,int(st.session_state['Order_id_auditoria']))
                 if st.session_state.current_view == 'finalProceso':
