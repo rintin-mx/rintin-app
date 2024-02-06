@@ -14,8 +14,6 @@ def app():
                       st.session_state['current_view'] = 'confirmacion'
 
                 if st.session_state.current_view == 'confirmacion':
-                    print('confirmacion')
-
                     if st.session_state.useremail is not None:
                         EventName,EventAction,EventUser='confirmacion','acceso a las vista confirmacion',st.session_state.useremail
                         event_instert(EventName,EventAction,EventUser)
@@ -25,8 +23,6 @@ def app():
                       if st.session_state.useremail is not None:
                         EventName,EventAction,EventUser='confirmacion','acceso a las vista detalleConfirmacion',st.session_state.useremail
                         event_instert(EventName,EventAction,EventUser)  
-                        print("st.session_state['Order_id_confirmacion']")
-                        print(st.session_state['Order_id_confirmacion'])
                         data=get_order_auditoria(int(st.session_state['Order_id_confirmacion'])) 
                         UIDetallePedido(data,int(st.session_state['Order_id_confirmacion']))
                 if st.session_state.current_view == 'finalProcesoConfirmacion':

@@ -30,7 +30,7 @@ def ver_detalle(id,pedidos_activos,pedidos_auditados,en_proceso,estado):
 def rerun():
     st.rerun()
 
-def UIOrdenesAgrupar(data):
+def UIOrdenesAgrupar(data, orders_for_filter):
     st.header("Ordenes a agrupar")
     df_data=[]
     df = pd.DataFrame(data)
@@ -42,17 +42,27 @@ def UIOrdenesAgrupar(data):
     options = st.multiselect(
     'Selecciones el estado',
      options=['Agrupar', 'Faltan Pedidos'],
-     key='centro_padre',
+     key='order_status_filter',
      default=default_option
     )
     
-    print("options")
-    print(options)
+    filter_value = st.selectbox(
+    'Selecciona el número de orden',
+     options=orders_for_filter,
+     key='order_ids_filter',
+     index=None)
+
     if len(options)>0:
         df_data =df[df['estado'].isin(options)]
         st.session_state['filtro_agrupacion'] = options
     else:
         df_data = df
+    
+    if filter_value is not None:
+        df_data = df_data[(df['order_id'] == int(filter_value)) | (df_data['hijos_auditados'].str.contains(filter_value)) | (df_data['hijos_en_proceso'].str.contains(filter_value))]
+    else:
+        df_data = df_data
+    
     if len(df_data) > 0:
         for i, ordenes in df_data.iterrows():
             st.write("---")
@@ -119,7 +129,6 @@ def UIOrdenesAgruparDetalle(data,idPedido):
     estadoSeleccion=''
     for i, pedido in df.iterrows():
         col1, col2, col4, col5 = st.columns([2, 2, 3, 2])
-        print(pedido)
         with col1:
             st.write("**Pedido**")
             st.write(pedido.order_id)
@@ -173,8 +182,6 @@ def UIOrdenesAgruparDetalle(data,idPedido):
             st.session_state.current_view = 'finalProcesoAgrupacion'
             st.rerun()
         else:
-            print('+++++++++++++++++++++++++++++++++++++++')
-            print('No se encontraron pedidos para agrupar')
-            print('+++++++++++++++++++++++++++++++++++++++')  
+
             st.warning('No a agrupado ningun pedido, por esta razon no se actualizo el estatus del pedido a wc-embarque')
 
