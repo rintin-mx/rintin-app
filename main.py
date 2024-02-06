@@ -34,9 +34,6 @@ class MultiApp:
             pagina=0
             cookies = cookie_manager.get_all(key="cookie_manager_login:get_all") 
             val=cookie_manager.get(cookie="username")
-            print('*****')
-            print(val)
-            print('*****')
             valEmail=cookie_manager.get(cookie="useremail")
             st.session_state.username=val
             st.session_state.useremail=valEmail

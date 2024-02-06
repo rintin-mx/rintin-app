@@ -38,10 +38,6 @@ def initialise_st_state_vars():
 
 def login(email):
     user = auth.get_user_by_email(email)
-    print("user.uid")
-    print(user.uid)
-    print("user")
-    print(user)
     cookie_manager.set("username", user.uid,key="username")
     cookie_manager.set("useremail", user.email,key="useremail")
     cookie_manager.set("authenticated", True,key="authenticated")

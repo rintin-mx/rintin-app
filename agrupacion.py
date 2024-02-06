@@ -10,7 +10,6 @@ def app():
         
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'agrupacion'
-        print(st.session_state.current_view)
         if st.session_state.current_view in ('final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups', 'generar_guias', 'generar_guias_final','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv'):
             st.session_state['current_view'] = 'agrupacion'
         if st.session_state.current_view == 'agrupacion':
@@ -19,49 +18,19 @@ def app():
                 event_instert(EventName,EventAction,EventUser)
             
             data=get_seller_centro_padre()
+            order_parents_string = [str(element) for element in data['order_id']]
+            order_ids_temp_list = order_parents_string
+            complete_array = data['hijos_auditados'] + data['hijos_en_proceso']
+            for orders in complete_array:
+                if orders is not None and orders != 'N/A':
+                    order_ids_temp_list = order_ids_temp_list + (orders.split(', '))
         
-            print(data)
             if len(data)>0:
-                UIOrdenesAgrupar(data)
+                UIOrdenesAgrupar(data, order_ids_temp_list)
             else:
                 st.header('Agrupar pedidos', divider='rainbow')
                 st.header('No hay ordenes para agrupar :blue[en este momento] :sunglasses:')
-                '''
-                data=[
-                    {
-                        "order_id": 217024,
-                        "ordenes_activas": 5,
-                        "pedidos_auditados": 3,
-                        "en_proceso": 2,
-                        "estado": "Faltan Pedidos"
-                    },
-                    {
-                        "order_id": 217419,
-                        "ordenes_activas": 4,
-                        "pedidos_auditados": 4,
-                        "en_proceso": 0,
-                        "estado": "Agrupar"
-                    },
-                    {
-                        "order_id": 217426,
-                        "ordenes_activas": 6,
-                        "pedidos_auditados": 1,
-                        "en_proceso": 5,
-                        "estado": "Faltan Pedidos"
-                    },
-                    {
-                        "order_id": 253637,
-                        "ordenes_activas": 2,
-                        "pedidos_auditados": 2,
-                        "en_proceso": 0,
-                        "estado": "Agrupar"
-                    }
-                ]
-                UIOrdenesAgrupar(data)
-                '''
         if st.session_state.current_view == 'detalleAgrupacion':
-            print(st.session_state.orderId)
-            print(st.session_state.pedidos_activos)
             if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='picking','acceso a las vista detalleAgrupacion',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)

@@ -130,8 +130,6 @@ from final_helper2
 
         # Convertir los resultados a un DataFrame de pandas
         wp_seller = pd.DataFrame(resultados_wp_seller_sql)
-        print("wp_seller")
-        print(wp_seller)
 
     finally:
         # Cerrar el cursor y la conexión
@@ -286,5 +284,4 @@ group by order_id, seller_name
         return wp_pickeo_general_dict
     else:
         return {}
-
 
