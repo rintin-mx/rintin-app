@@ -18,13 +18,13 @@ def app():
                 event_instert(EventName,EventAction,EventUser)
             
             data=get_seller_centro_padre()
-            order_parents_string = [str(element) for element in data['order_id']]
-            order_ids_temp_list = order_parents_string
-            complete_array = data['hijos_agrupados'] + data['hijos_en_proceso']
-            for orders in complete_array:
-                if orders is not None and orders != 'N/A':
-                    order_ids_temp_list = order_ids_temp_list + (orders.split(', '))
-            if len(data)>0:
+            if data:
+                order_parents_string = [str(element) for element in data['order_id']]
+                order_ids_temp_list = order_parents_string
+                complete_array = data['hijos_agrupados'] + data['hijos_en_proceso']
+                for orders in complete_array:
+                    if orders is not None and orders != 'N/A':
+                        order_ids_temp_list = order_ids_temp_list + (orders.split(', '))
                 UIOrdenesEmpaquetar(data,order_ids_temp_list)
             else:
                 st.header('Empaquetar pedidos', divider='rainbow')
