@@ -47,6 +47,8 @@ async def endpoint_write_order_note(order_id, order_notes):
 
 
 async def endpoint_update_order_meta_data(order_id, meta_data):
+    print('order_id')
+    print(order_id)
     url = f"https://rintin.mx/wp-json/wc/v3/orders/{order_id}"
     # Credenciales para la autenticación Basic Auth
     user = USER_WOOCOMMERCE
@@ -55,10 +57,12 @@ async def endpoint_update_order_meta_data(order_id, meta_data):
         "meta_data": meta_data
     }
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, auth=aiohttp.BasicAuth(user, password), json=data) as response:
+        async with session.put(url, auth=aiohttp.BasicAuth(user, password), json=data) as response:
+            json_response = await response.json()
+            print(json_response)
             if response.status == 200:
                 json_response = await response.json()
-                return {"success": True, "message": "Nota añadida con éxito", "response": json_response}
+                return {"success": True, "message": "Orden actualizada con éxito", "response": json_response}
             else:
                 text_response = await response.text()
                 return {"success": False, "message": f"Error en la petición: {response.status} {text_response}"}
