@@ -27,7 +27,7 @@ def config_db(db='repl') -> dict:
         }
     return config
 
-def get_order_detalle(id,db='repl') -> dict:
+def get_orders(db='repl') -> dict:
     config = config_db(db)
     # Registrar el tiempo de inicio
     start_time = time.time()
@@ -36,104 +36,110 @@ def get_order_detalle(id,db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_pickeo_sql = f"""
-           with orders_helper as (
-	select
-		id, 
-        post_status, 
-        post_parent
-	from
-		wp_posts
-	where
-		post_status NOT IN ('wc-empaquetar','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
-	union 
-	select
-		id, 
-		post_status, 
-		id as post_parent
-	from 
-		wp_posts
+           with cps as (
+select
+        distinct codigos_postales.codigo_postal AS codigo_postal
+    from
+        (
+            (
+                codigos_postales
+                join cobertura on(
+                    codigos_postales.id = cobertura.fk_id_codigo_postal
+                )
+            )
+            join zonas_entrega on(
+                cobertura.fk_id_zonas_entrega = zonas_entrega.id
+            )
+        )
     where
-		post_status NOT IN ('wc-empaquetar','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'contracargo-ganad', 'contra-cargo', 'refunded', 'reembolso-parcial')
-		and id not in (select distinct post_parent from wp_posts where post_type = 'shop_order')
-        and post_type = 'shop_order'
+        zonas_entrega.zona_entrega like '%pickup%'
 ),
-orders as(
-	select * from orders_helper where post_parent = {id}
-),
-ordermeta as(
-	select
-		post_id as order_id,
-		max(
+ordermeta_helper as(
+    select
+        post_id as order_id,
+        max(
+            case
+                when `meta_key` = '_dokan_vendor_id' then `meta_value`
+                else NULL
+            end
+        ) AS `dokan_vendor_id`,
+         max(
 			case
-				when `meta_key` = '_dokan_vendor_id' then `meta_value`
+				when meta_key = '_shipping_postcode' then meta_value
 				else NULL
 			end
-		) AS `dokan_vendor_id`
-	from
-		wp_postmeta inner join orders on orders.id = post_id
-	group by post_id
-),users as (
-select 
-	user_id,
-	max(
-		case
-			when `meta_key` = '_zone' then `meta_value`
-			else NULL
-		end
-	) AS `zone`,
-	max(
-		case
-			when `meta_key` = 'dokan_store_name' then `meta_value`
-			else NULL
-		end
-	) AS `dokan_store_name`
-from wp_usermeta
-inner join ordermeta on ordermeta.dokan_vendor_id = user_id
-group by user_id
- having zone = 'centro'
+		) AS postcode
+    from
+        wp_postmeta
+        inner join wp_posts on wp_posts.id = post_id
+	where post_status = 'wc-parcel'
+    group by
+        post_id, post_status
+	having dokan_vendor_id is not null
+),
+ordermeta as (
+	select 
+		order_id,
+        dokan_vendor_id,
+        meta_value as seller_name
+	from ordermeta_helper
+    inner join cps on postcode = codigo_postal
+    inner join wp_usermeta on dokan_vendor_id = user_id and meta_key = 'dokan_store_name'
 ),
 order_items as(
-	select order_item_id, ordermeta.order_id, order_item_name,dokan_vendor_id
-	from wp_woocommerce_order_items
-	inner join ordermeta on wp_woocommerce_order_items.order_id = ordermeta.order_id
-	where order_item_type = 'line_item'
+    select
+        order_item_id,
+        order_id
+    from
+        wp_woocommerce_order_items
+        inner join wp_posts on wp_posts.id = order_id
+    where
+        order_item_type = 'line_item'
+        and post_status = 'wc-parcel'
 ),
 order_item_meta as (
-	select
-		`wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-		max(
-			case
-				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-				else NULL
-			end
-		) AS `line_qty`
-		
-	from
-		`wp_woocommerce_order_itemmeta`
-		inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-	group by
-		`wp_woocommerce_order_itemmeta`.`order_item_id`
+    select
+        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
+        order_id,
+        max(
+            case
+                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
+                else NULL
+            end
+        ) AS `line_qty`
+    from
+        `wp_woocommerce_order_itemmeta`
+        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
+    group by
+        `wp_woocommerce_order_itemmeta`.`order_item_id`, order_id
 ),
-final as(
-select
-	order_items.order_id,
-    post_status,
-	users.dokan_store_name as seller_name,
-	line_qty as num_paquetes
-from 
-	order_items
-	inner join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
-	inner join ordermeta on ordermeta.order_id=order_items.order_id
-	inner join users on users.user_id = ordermeta.dokan_vendor_id
-	inner join orders on orders.id=  ordermeta.order_id
+final as (
+	select
+		id as order_id,
+        dokan_vendor_id,
+        seller_name,
+        post_status,
+        case when post_parent = 0 then id else post_parent end as post_parent,
+        line_qty as num_paquetes
+	from wp_posts
+    inner join ordermeta on ordermeta.order_id = wp_posts.id
+    inner join order_item_meta on order_item_meta.order_id = wp_posts.id
 )
-select 
-	order_id,
+select
+    order_id,
     seller_name,
     post_status,
+    post_parent,
     sum(num_paquetes) as num_paquetes
-from final
-group by order_id, seller_name
+from
+    final
+group by
+    order_id,
+    seller_name,
+    post_status,
+    post_parent
+
+
         """
         # Ejecutar la primera consulta
         cursor.execute(wp_pickeo_sql)
@@ -160,9 +166,9 @@ group by order_id, seller_name
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_pickeo) > 0:
-        wp_pickeo = wp_pickeo[['order_id','seller_name', 'post_status', 'num_paquetes']]
+        wp_pickeo = wp_pickeo[['order_id','seller_name', 'post_status', 'post_parent', 'num_paquetes']]
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
-        return wp_pickeo_general_dict
+        return wp_pickeo
     else:
         return {}
 
