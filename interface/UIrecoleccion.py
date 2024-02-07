@@ -109,6 +109,15 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
         st.session_state.current_view = 'recolect'
         st.rerun()
 
+def UIrecoleccionFinal(childList, childListString):
+    if len(childList) == 1:
+        st.markdown(f'## Se actualizó el pedido #{childListString} al estado "Auditoria"')
+    elif len(childList) > 1:
+        st.markdown(f'## Se actualizaron los pedidos con número {childListString} al estado "Auditoria"')
+    st.write('---')
+    if st.button('Regresar'):
+        st.session_state['current_view'] = 'recolect'
+        st.rerun()
 
 def UIagrerPedidoSellerSeleccion(data):
     j=0
@@ -131,6 +140,7 @@ def UIagrerPedidoSellerSeleccion(data):
     col1 = st.columns(1)[0]
     col1.write('Información de orden')
     recoTotal=[]
+    recoString = ''
     noReco=[]
     # Iterar a través del DataFrame para crear la interfaz
     for index, row in df.iterrows():
@@ -146,6 +156,7 @@ def UIagrerPedidoSellerSeleccion(data):
             if recolectado:
                 st.session_state.recolectado=False
                 recoTotal.append({'order_id':row.order_id,"seller_name":row.seller_name, "num_pedidos":row.num_pedidos, "num_paquetes":row.num_paquetes,"recolectado":recolectado})
+                recoString = recoString + str(row.order_id) + ', '
             else:
                 st.session_state.recolectado=True
             
@@ -163,10 +174,11 @@ def UIagrerPedidoSellerSeleccion(data):
         EventName,EventAction,EventUser='picking','Se pulso en botón Continuar',st.session_state.useremail
         event_instert(EventName,EventAction,EventUser)
         if len(recoTotal)>0:
-             print("entre recoTotal")
-             with st.spinner(f'Actualizando estatus del pedido Auditoria'):
-                 order_status='rec_ped_aud'
-                 for i,pedido in enumerate(recoTotal):
+            recoString = recoString[:-2]
+            print("entre recoTotal")
+            with st.spinner(f'Actualizando estatus del pedido Auditoria'):
+                order_status='rec_ped_aud'
+                for i,pedido in enumerate(recoTotal):
                     print(pedido)
                     #print(pedido['order_id'])
                         #idPedido
@@ -175,7 +187,10 @@ def UIagrerPedidoSellerSeleccion(data):
                     print(r)
                     EventName,EventAction,EventUser='picking','Se ejecuto endpoint_update_status_by_order_id',st.session_state.useremail
                     event_instert(EventName,EventAction,EventUser)
-                    st.session_state.flag = True
+            st.session_state['orderList'] = recoTotal
+            st.session_state['orderStr'] = recoString
+            st.session_state.current_view = 'recoleccionFinal'
+            st.rerun()
         if len(noReco)>0:
             print("entre noReco")
             with st.spinner(f'Actualizando estatus del pedido Auditoria no recolectados'):
