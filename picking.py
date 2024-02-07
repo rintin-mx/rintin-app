@@ -1,5 +1,5 @@
 import streamlit as st
-from interface.UIpicking import UITodosLosPedidos,UIDetallePedido
+from interface.UIpicking import UITodosLosPedidos,UIDetallePedido,pickFinal
 from db.db_order import get_order,get_seller
 from db.db_UserInteractionEvents import event_instert
 
@@ -10,7 +10,7 @@ def app():
                 if 'current_view' not in st.session_state:
                     st.session_state['current_view'] = 'pick'
                 
-                if st.session_state.current_view in ('ingresoPickup', 'ingresoPickupFinal','final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups', 'generar_guias', 'generar_guias_final','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv'):
+                if st.session_state.current_view in ('recoleccionFinal', 'ingresoPickup', 'ingresoPickupFinal','final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups', 'generar_guias', 'generar_guias_final','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv'):
                     st.session_state['current_view'] = 'recolect'
 
                 if st.session_state.current_view== 'recolect' or st.session_state.current_view== 'recoleccion' or st.session_state.current_view== 'pendiente' or st.session_state.current_view== 'detalle' :
@@ -38,6 +38,10 @@ def app():
                     UIDetallePedido(data,st.session_state.orderId)
                     #else:
                     #    st.header("No se encontraron productos asosciados a la orden")
+                elif st.session_state.current_view == 'pickFinal':
+                    orderId = st.session_state['currentOrderId']
+                    status = st.session_state['currentStatus']
+                    pickFinal(orderId, status)
                
         else:
                 st.image("imagen/logo_imagen_no_loguado.png", width=300)
