@@ -144,7 +144,7 @@ select
             )
         )
     where
-        zonas_entrega.zona_entrega not like '%pickup%'
+        zonas_entrega.zona_entrega like '%pickup%'
 )
 select 
 	order_id,
@@ -156,8 +156,7 @@ select
 	ordenes_activas,
 	num_hijos_guia
 from ordermeta 
-inner join cps on cps.codigo_postal = ordermeta.postcode
-
+where postcode not in (select codigo_postal from cps)
 
         """
         cursor.execute(wp_ordenes_query)
