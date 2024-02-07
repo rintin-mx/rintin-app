@@ -7,7 +7,8 @@ from db.db_rolesPermisos import insertar_rol_permiso, eliminar_rol_permiso, actu
 
 
 def anadir_fila(rol,permiso):
-    st.session_state.tabla = st.session_state.tabla.append({'Rol': rol, 'Permiso': permiso}, ignore_index=True)
+    st.session_state.tabla = pd.concat([st.session_state.tabla, pd.DataFrame([{'Rol': rol, 'Permiso': permiso}])], ignore_index=True)
+    #st.session_state.tabla = st.session_state.tabla.append({'Rol': rol, 'Permiso': permiso}, ignore_index=True)
     #st.experimental_rerun()
 
 # Función para eliminar una fila de la tabla
