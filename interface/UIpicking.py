@@ -187,7 +187,9 @@ def UIDetallePedido(data_deta,idPedido):
                 r = asyncio.run(update_status_wordpress(idPedido, order_status))
                 print("r")
                 print(r)
-                st.session_state.current_view = 'pick'
+                st.session_state.current_view = 'pickFinal'
+                st.session_state['currentOrderId'] = idPedido
+                st.session_state['currentStatus'] = 'Pedidos por auditar'
                 st.rerun()
     else:
         respuesta_validacion=ui.alert_dialog(show=trigger_btn, title="Confirmemos el pickeo", description=f'Enviaremos el pedido #{str(idPedido)} a "Validacion de Stock"\nConfirma si es lo que quisieras', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_validacion")
@@ -220,8 +222,17 @@ def UIDetallePedido(data_deta,idPedido):
                 #para test '281660'
                 asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                 st.snow()
-                st.session_state.current_view = 'pick'
+                st.session_state.current_view = 'pickFinal'
+                st.session_state['currentOrderId'] = idPedido
+                st.session_state['currentStatus'] = 'Validacion de Stock'
                 st.rerun()
-        
+
+def pickFinal(orderId, status):
+    st.markdown(f'## Se actualizó el pedido #{orderId} al estado "{status}"')
+    st.write('---')
+    if st.button('Regresar'):
+        st.session_state['current_view'] = 'pick'
+        st.rerun()
+
 
     
