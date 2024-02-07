@@ -4,7 +4,7 @@ from db.db_roles import obtener_todos_los_roles
 from db.db_pemrisos import obtener_todos_los_permisos
 from streamlit_extras.dataframe_explorer import dataframe_explorer
 from db.db_rolesPermisos import insertar_rol_permiso, eliminar_rol_permiso, actualizar_rol_permiso, obtener_todos_los_roles_permisos
-from st_aggrid import AgGrid
+
 
 def anadir_fila(rol,permiso):
     st.session_state.tabla = st.session_state.tabla.append({'Rol': rol, 'Permiso': permiso}, ignore_index=True)
