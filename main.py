@@ -74,7 +74,7 @@ class MultiApp:
             else:
                 #persona con permisos consedidos por el administrador
                 #y le modulo de permisos
-                menu=lista_permisos
+                menu=['Login']
             app = option_menu(
                 menu_title='Operaciones',
                 options=menu,
