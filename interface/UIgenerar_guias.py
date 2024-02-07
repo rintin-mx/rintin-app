@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_order_meta_data, endpoint_update_status_by_order_id
+from db.db_numerosGuia import update_order_metadata
 
 operadores_list = [
     'estafeta',
@@ -43,6 +44,7 @@ def UIgenerar_guias(data):
     with col5:
         st.write('**Número de guía**')
     st.write('---')
+    print(data)
     for i in range(len(data['order_id'])):
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
@@ -62,12 +64,15 @@ def UIgenerar_guias(data):
             num_guia = st.text_input('Número de guía', label_visibility='collapsed', key=str(i)+'_num_guia', value=num_guia_value)
         if (paqueteria != data['logis_op'][i] or num_guia != data['numero_guia'][i]):
             order_id_string += str(data['order_id'][i]) + ', '
-            new_data.append({"order_id": data['order_id'][i], "numero_guia": num_guia, "paqueteria": paqueteria})
+            new_data.append({"order_id": data['order_id'][i], "numero_guia": num_guia, "paqueteria": paqueteria, "childs": data['hijos_guia'][i]})
+        if(data['ordenes_activas'][i] != data['num_hijos_guia'][i]):
+            st.warning('No todos los hijos estan en el estado "Generar numeros de guia"')
         st.write('---')
     
     if len(new_data) > 0:
         print(new_data)
         order_id_string = order_id_string[:-2]
+        respuesta = False
         trigger_btn = ui.button(text="Actualizar", key="trigger_btn")
         respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de actualización para los pedidos", description=order_id_string, confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
@@ -77,8 +82,17 @@ def UIgenerar_guias(data):
                         {"key": '_numero_guia', "value": value['numero_guia']},
                         {"key": '_logis_op', "value": value['paqueteria']}
                     ]
-                    r = asyncio.run(endpoint_update_order_meta_data(value['order_id'], temp_arr))
-                    r2 = asyncio.run(endpoint_update_status_by_order_id(value['order_id'], 'embarque'))
+                    update_order_metadata(str(value['order_id']), value['numero_guia'], value['paqueteria'])
+                    if value['childs'] is None:
+                        print('hola')
+                        r2 = asyncio.run(endpoint_update_status_by_order_id(value['order_id'], 'embarque'))
+                    else:
+                        childs_array = value['childs'].split(', ')
+                        if len(childs_array) > 1:
+                            for order_id in childs_array:
+                                print(int(order_id))
+                                update_order_metadata(order_id, value['numero_guia'], value['paqueteria'])
+                                r2 = asyncio.run(endpoint_update_status_by_order_id(int(order_id), 'embarque'))
             st.session_state['orders_string'] = order_id_string
             st.session_state['child_list'] = new_data
             st.session_state['current_view'] = 'generar_guias_final'
