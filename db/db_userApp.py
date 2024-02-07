@@ -10,6 +10,7 @@ import numpy as np
 import time
 import bcrypt
 from mysql.connector import Error
+import datetime
 
 
 def config_db(db='repl') -> dict:
@@ -36,6 +37,7 @@ def insert_user(db,userName, password):
     conexion = mysql.connector.connect(**config)
     # Registrar el tiempo de inicio
     start_time = time.time()
+    user_id = None
     try:
         if conexion.is_connected():
             cursor = conexion.cursor()
@@ -48,6 +50,7 @@ def insert_user(db,userName, password):
             print(valores)
             cursor.execute(query, valores)
             conexion.commit()
+            user_id = cursor.lastrowid
             print("Usuario insertado exitosamente.")
              # Registrar el tiempo de finalización
             end_time = time.time()
@@ -64,6 +67,7 @@ def insert_user(db,userName, password):
         if conexion.is_connected():
             cursor.close()
             conexion.close()
+    return user_id
 
 def validate_user(db,userName, password):
     print("validate_user")
@@ -106,7 +110,99 @@ def validate_user(db,userName, password):
             cursor.close()
             conexion.close()
     return False
+def get_user_permissions(user_id):
+    db='repl'
+    config = config_db(db)
+    start_time = time.time()
+    connection = mysql.connector.connect(**config)
+    try:
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
 
+            # Consulta SQL para insertar datos
+            sql = """
+            SELECT u.email, p.nombre_permiso
+                FROM userApp u
+                JOIN usuarios_roles ur ON u.id = ur.usuario_id_fk
+                JOIN roles r ON ur.rol_id_fk = r.rol_id
+                JOIN roles_permisos rp ON r.rol_id = rp.rol_id_fk
+                JOIN permisos p ON rp.permiso_id_fk = p.permiso_id
+                WHERE u.id = %s;
 
+            """
+            # Ejecutar la consulta
+            cursor.execute(sql, (user_id,))
+            result = cursor.fetchall()
+            return result
 
+    except Error as e:
+        print("Error al conectar a la base de datos:", e)
 
+    finally:
+        # Cerrar la conexión y el cursor
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Conexión a la base de datos cerrada.")
+
+def get_user_permissions_by_email(email):
+    db='repl'
+    config = config_db(db)
+    start_time = time.time()
+    connection = mysql.connector.connect(**config)
+    try:
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+
+            # Consulta SQL para insertar datos
+            sql = """
+            SELECT p.nombre_permiso
+                FROM userApp u
+                JOIN usuarios_roles ur ON u.id = ur.usuario_id_fk
+                JOIN roles r ON ur.rol_id_fk = r.rol_id
+                JOIN roles_permisos rp ON r.rol_id = rp.rol_id_fk
+                JOIN permisos p ON rp.permiso_id_fk = p.permiso_id
+                WHERE u.email = %s;
+
+            """
+            # Ejecutar la consulta
+            cursor.execute(sql, (email,))
+            result = cursor.fetchall()
+            return result
+
+    except Error as e:
+        print("Error al conectar a la base de datos:", e)
+
+    finally:
+        # Cerrar la conexión y el cursor
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Conexión a la base de datos cerrada.")
+
+def get_all_user():
+    db='repl'
+    config = config_db(db)
+    start_time = time.time()
+    connection = mysql.connector.connect(**config)
+    try:
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+
+            # Consulta SQL para insertar datos
+            sql = """
+               SELECT id, email  FROM wordpress.userApp 
+            """
+            # Ejecutar la consulta
+            cursor.execute(sql,)
+            users = cursor.fetchall()
+            return users
+
+    except Error as e:
+        print("Error al conectar a la base de datos:", e)
+    finally:
+        # Cerrar la conexión y el cursor
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Conexión a la base de datos cerrada.")

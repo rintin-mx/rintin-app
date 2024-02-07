@@ -2,6 +2,8 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import extra_streamlit_components as stx
 from db.db_UserInteractionEvents import event_instert
+from db.db_userApp import get_user_permissions_by_email
+import numpy as np
 
 st.set_page_config(
         page_title="Rintin",
@@ -35,11 +37,22 @@ class MultiApp:
             cookies = cookie_manager.get_all(key="cookie_manager_login:get_all") 
             val=cookie_manager.get(cookie="username")
             valEmail=cookie_manager.get(cookie="useremail")
+            lista_permisos = []
+            permisos={}
+            if valEmail is not None:
+                permisos=get_user_permissions_by_email(valEmail)
+                lista_permisos = [dic['nombre_permiso'] for dic in permisos]
+
+            print(permisos)
+            print('************')
+            print(lista_permisos)
+            print('************')
             st.session_state.username=val
             st.session_state.useremail=valEmail
             # if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
             #     menu=['Logout','Pickeo', 'Ingreso OC Bodega']
             #     pagina=1
+
             if val == 'picker_oaxaca':
                 menu=['Logout','Pickeo', 'Picking Pickups']
                 pagina=1
@@ -57,8 +70,11 @@ class MultiApp:
             #     menu=['Logout','Auditoria','Agrupacion']
             elif val in ('francisco', 'JuanMa'):
                 menu=['Logout','Register','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
+
             else:
-                menu=['Login']
+                #persona con permisos consedidos por el administrador
+                #y le modulo de permisos
+                menu=lista_permisos
             app = option_menu(
                 menu_title='Operaciones',
                 options=menu,
