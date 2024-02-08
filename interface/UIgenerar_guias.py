@@ -88,7 +88,7 @@ def UIgenerar_guias(data):
                         r2 = asyncio.run(endpoint_update_status_by_order_id(value['order_id'], 'embarque'))
                     else:
                         childs_array = value['childs'].split(', ')
-                        if len(childs_array) > 1:
+                        if len(childs_array) > 0:
                             for order_id in childs_array:
                                 print(int(order_id))
                                 update_order_metadata(order_id, value['numero_guia'], value['paqueteria'])
