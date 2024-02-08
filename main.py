@@ -47,12 +47,14 @@ class MultiApp:
             print('************')
             print(lista_permisos)
             print('************')
+            default_index=1
             st.session_state.username=val
             st.session_state.useremail=valEmail
             st.session_state.pagina=1
             # if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
             #     menu=['Logout','Pickeo', 'Ingreso OC Bodega']
             #     pagina=1
+            menu=['Login']
             if len(lista_permisos)==0:
                 if val == 'picker_oaxaca':
                     menu=['Logout','Pickeo', 'Picking Pickups']
