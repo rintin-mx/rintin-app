@@ -14,7 +14,7 @@ def app():
             if data is not None:
                 UIgenerar_guias(data)
             else:
-                st.header('Generar guías para pedidos pedidos', divider='rainbow')
+                st.header('Generar guías para pedidos', divider='rainbow')
                 st.header('No hay ordenes en paquetería :blue[en este momento] :sunglasses:')
                 
         elif st.session_state['current_view'] == 'generar_guias_final':
