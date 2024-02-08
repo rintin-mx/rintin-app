@@ -11,7 +11,12 @@ def app():
             st.session_state['current_view'] = 'generar_guias'
         if st.session_state['current_view'] == 'generar_guias':
             data = get_ordenes_generar_guia()
-            UIgenerar_guias(data)
+            if data is not None:
+                UIgenerar_guias(data)
+            else:
+                st.header('Generar guías para pedidos', divider='rainbow')
+                st.header('No hay ordenes en paquetería :blue[en este momento] :sunglasses:')
+                
         elif st.session_state['current_view'] == 'generar_guias_final':
             order_string = st.session_state['orders_string']
             child_list = st.session_state['child_list']
