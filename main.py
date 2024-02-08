@@ -49,13 +49,14 @@ class MultiApp:
             print('************')
             st.session_state.username=val
             st.session_state.useremail=valEmail
+            st.session_state.pagina=1
             # if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
             #     menu=['Logout','Pickeo', 'Ingreso OC Bodega']
             #     pagina=1
             if len(lista_permisos)==0:
                 if val == 'picker_oaxaca':
                     menu=['Logout','Pickeo', 'Picking Pickups']
-                    pagina=1
+                    pagina=st.session_state.pagina=1
                 # elif val == 'Usuario Recoleccion':
                 #     menu=['Logout','Recoleccion']
                 #     pagina=1
@@ -63,7 +64,7 @@ class MultiApp:
                     menu=['Logout','Confirmación Seller']
                 elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
                     menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega']
-                    pagina=1
+                    pagina=st.session_state.pagina=1
                 elif val == ' ivan':
                     menu=['Logout','Pickeo','Ordenes de Compra', 'Picking Pickups']
                 # elif val == 'ismael':
@@ -75,6 +76,7 @@ class MultiApp:
                 #persona con permisos consedidos por el administrador
                 #y le modulo de permisos
                 menu=lista_permisos
+                st.session_state.pagina=1
             app = option_menu(
                 menu_title='Operaciones',
                 options=menu,

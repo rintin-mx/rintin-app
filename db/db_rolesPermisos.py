@@ -66,7 +66,7 @@ def eliminar_rol_permiso(rol_id, permiso_id,db='prod'):
     start_time = time.time()
     try:
         cursor = conexion.cursor()
-        sql = "DELETE FROM roles_permisos WHERE rol_id = %s and permiso_id = %s"
+        sql = "DELETE FROM roles_permisos WHERE rol_id_fk = %s and permiso_id_fk = %s"
         valores = (rol_id,permiso_id)
         cursor.execute(sql, valores)
         conexion.commit()

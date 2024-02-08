@@ -12,18 +12,21 @@ def anadir_fila(rol,permiso):
     #st.experimental_rerun()
 
 # Función para eliminar una fila de la tabla
-def eliminar_fila(index):
+def eliminar_fila_crear(index):
     st.session_state.tabla = st.session_state.tabla.drop(index).reset_index(drop=True)
     #st.experimental_rerun()
 
-# Función para eliminar una fila de la tabla
-def editar_fila(index):
-    st.session_state.tabla = st.session_state.tabla.drop(index).reset_index(drop=True)
-    #st.experimental_rerun()
+# Función para xeliminar una fila de la tabla
+def eliminar_fila(rol_id_fk,permiso_id_fk):
+    eliminar_rol_permiso(rol_id_fk,permiso_id_fk)
+
+
 
 
 def rolespermisos():
     st.title("Gestión de Roles y Permisos")
+    if 'pagina' not in st.session_state:
+            st.session_state.pagina = 4
     with st.expander("Insertar nueva relación de roles y permisos"):
         if 'tabla' not in st.session_state:
             st.session_state.tabla = pd.DataFrame(columns=['Rol', 'Permiso'])
@@ -38,7 +41,7 @@ def rolespermisos():
         # Botón para añadir una fila
         if st.button('Añadir a la tabla', key='add_row'):
             anadir_fila(rol_id_fk,permiso_id_fk)
-            st.rerun()
+            #st.rerun()
         # Mostrar la tabla
         for index, row in st.session_state.tabla.iterrows():
             cols = st.columns([1, 1, 1])
@@ -47,19 +50,17 @@ def rolespermisos():
             with cols[1]:
                 st.write(row['Permiso'])
             with cols[2]:
-                st.button('Eliminar', key=f'del_{index}', on_click=lambda idx=index: eliminar_fila(idx))
-        if st.button('Crear'):
-            for index, row in st.session_state.tabla.iterrows():
-                id_fk_rol_clean=row['Rol'].split('-')[0]
-                id_fk_permiso_clean=row['Permiso'].split('-')[0]
-                print(id_fk_rol_clean)
-                print(id_fk_permiso_clean)
-                insertar_rol_permiso(id_fk_rol_clean,id_fk_permiso_clean)
-                st.session_state.tabla = pd.DataFrame(columns=['Rol', 'Permiso'])
-
-            st.success('The relationship was successfully created!')
-            st.balloons()
-            st.rerun()
+                st.button('Eliminar', key=f'del_{index}', on_click=lambda idx=index: eliminar_fila_crear(idx))
+            if st.button('Crear'):
+                for index, row in st.session_state.tabla.iterrows():
+                    id_fk_rol_clean=row['Rol'].split('-')[0]
+                    id_fk_permiso_clean=row['Permiso'].split('-')[0]
+                    insertar_rol_permiso(id_fk_rol_clean,id_fk_permiso_clean)
+                    st.session_state.tabla = pd.DataFrame(columns=['Rol', 'Permiso'])
+                
+                st.success('The relationship was successfully created!')
+                st.balloons()
+                st.rerun()
     # Mostrar la lista de permisos
     st.subheader("Lista de la realción de roles y permisos")
     
@@ -83,7 +84,7 @@ def rolespermisos():
         else:
             df_filtrado = df_roles_permisos
         for index, row in df_filtrado.iterrows():
-            cols = st.columns([1, 1, 1,1,2])
+            cols = st.columns([1, 1, 2,2,2])
             with cols[0]:
                 st.write(row['rol_id_fk'])
             with cols[1]:
@@ -93,9 +94,9 @@ def rolespermisos():
             with cols[3]:
                 st.write(row['nombre_permiso'])
             with cols[4]:
-                st.button('Editar', key=f'deleop_{index}', on_click=lambda idx=index: editar_fila(idx))
-            with cols[4]:
-                st.button('Eliminar', key=f'editop_{index}', on_click=lambda idx=index: eliminar_fila(idx))
+                eliminar_callback = lambda idx=index, rol_id_fk=row['rol_id_fk'], permiso_id_fk=row['permiso_id_fk']: eliminar_fila(rol_id_fk, permiso_id_fk)
+                st.button('Eliminar', key=f'eliminar_{index}', on_click=eliminar_callback)
+                #st.button('Eliminar', key=f'eliminar_{index}', on_click=lambda idx=index: eliminar_fila(row['rol_id_fk'],row['permiso_id_fk']))
             print(row)
         #AgGrid(df_roles_permisos)
         #filtered_df = dataframe_explorer(df_roles_permisos, case=True)
