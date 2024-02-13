@@ -13,7 +13,7 @@ def orderDetail(products):
         st.session_state['current_view'] = 'ingresoOrdenesCompra'
         st.rerun()
     ordenCompra = st.session_state['currentOrder']
-    noIngresioOpt = ['No llego', 'Fallas']
+    noIngresioOpt = ['No llego', 'Fallas', 'Llegara en otro envío']
     st.markdown('### Orden de Compra #' + str(ordenCompra['id_orden_compra']))
     st.markdown('### Seller: ' + str(ordenCompra['seller_name']))
     st.markdown('### Fecha de Creación: ' + str(ordenCompra['fecha_creacion']))
@@ -53,17 +53,33 @@ def orderDetail(products):
                 st.success('OK')
             objArry.append({'product_id': products['product_id'][i], 'validacion': number != products['line_paquetes'][i], 'qty': number, 'original_qty': products['line_paquetes'][i], 'razon': razon})
     products_validacion = []
+    products_pendientes=[]
     print(objArry)
     for i in range(len(objArry)):
-        if objArry[i]['validacion']:
+        if objArry[i]['validacion'] and objArry[i]['razon'] != 'Llegara en otro envío':
             products_validacion.append({
+                'product_id': objArry[i]['product_id'],
+                'razon': objArry[i]['razon'],
+                'qty': objArry[i]['original_qty'] - objArry[i]['qty']
+            })
+        elif objArry[i]['validacion'] and objArry[i]['razon'] == 'Llegara en otro envío':
+            products_pendientes.append({
                 'product_id': objArry[i]['product_id'],
                 'razon': objArry[i]['razon'],
                 'qty': objArry[i]['original_qty'] - objArry[i]['qty']
             })
     trigger_btn = ui.button(text="Confirmar Ingreso", key="trigger_btn")
     respuesta = False
-    if len(products_validacion) > 0:
+    if len(products_pendientes) > 0:
+        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description='Enviaremos la orden de compra a "Ingresado a bodega con pendientes"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+        if respuesta:
+            with st.spinner(f'Actualizando estado'):
+                updateOrdenCompraStatus('ingresado_bodega_pendientes', ordenCompra['id_orden_compra'])
+                insertFaults(products_validacion, ordenCompra['id_orden_compra'])
+                st.session_state['current_view'] = 'ingresoOrdenesCompra'
+                st.rerun()
+
+    elif len(products_validacion) > 0:
         respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description='Enviaremos la orden de compra a "Ingresado a bodega con faltantes"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
             with st.spinner(f'Actualizando estado'):
