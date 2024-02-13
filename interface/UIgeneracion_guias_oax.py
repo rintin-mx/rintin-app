@@ -16,7 +16,8 @@ operadores_list = [
     'ogramak',
     'redpack',
     'fedex',
-    'tiui'
+    'tiui',
+    'chavobus'
 ]
 
 def UIgeneracion_guias_oax(data, order_filter, zone_filter):
