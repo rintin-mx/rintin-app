@@ -18,6 +18,10 @@ def app():
                         order_ids_temp_list = order_ids_temp_list + (orders.split(', '))
                 zone_filter = set(order_list['zona_entrega'])
                 UIgeneracion_guias_oax(order_list, order_ids_temp_list, zone_filter)
+            else:
+                st.header('Generar numeros de guia Oaxaca', divider='rainbow')
+                st.header('No hay ordenes :blue[en este momento] :sunglasses:')
+
         elif st.session_state.current_view == 'generar_guias_oax_final':
             order_string = st.session_state['orders_string']
             child_list = st.session_state['child_list']

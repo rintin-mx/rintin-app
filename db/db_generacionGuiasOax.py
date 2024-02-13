@@ -149,6 +149,7 @@ select
 select 
 	order_id,
     case when hijos_guia = order_id then null else hijos_guia end as hijos_guia,
+    postcode,
     state,
 	case when numero_guia is null then '' else numero_guia end as numero_guia, 
     case when logis_op = '' then null when logis_op = 'none' then null else logis_op end as logis_op,
