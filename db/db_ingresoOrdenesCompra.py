@@ -126,6 +126,42 @@ def insertFaults(product_list, order_id):
         print("Error al conectar a la base de datos:", e)
         return False
 
+def get_pending_products(id, db='repl') -> dict:
+    config = config_db(db)
+    start_time = time.time()
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        wp_products_ordenes_compra =f"""
+            select producto_orden_compra.id_producto_orden_compra as product_id, line_paquetes, line_cost, sku_producto_wp, nombre_producto, tipo_producto, cost_of_goods, units_per_pack, foto from orden_compra_detalle_producto inner join producto_orden_compra on orden_compra_detalle_producto.id_producto_orden_compra = producto_orden_compra.id_producto_orden_compra where id_orden_compra = {id}
+        """
+        cursor.execute(wp_products_ordenes_compra)
+
+        # Obtener los resultados de la primera consulta
+        resultados_wp_products_ordenes_compra = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        wp_products = pd.DataFrame(resultados_wp_products_ordenes_compra)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+        # Registrar el tiempo de finalización
+        end_time = time.time()
+
+        # Calcular la duración
+        duration = end_time - start_time
+
+        # Convertir a minutos y segundos
+        minutes = int(duration // 60)
+        seconds = int(duration % 60)
+        # Nueva lista de nombres de columnas
+        #wp_seller=wp_seller[['user_id' 'dokan_store_name']]
+        wp_products.columns = ['product_id', 'line_paquetes', 'line_cost', 'sku_producto_wp', 'nombre_producto', 'tipo_producto', 'cost_of_goods', 'units_per_pack', 'foto']
+        wp_products_general_dict = wp_products.to_dict(orient='list')
+        return wp_products_general_dict
+
 def get_products(id, db='repl') -> dict:
     config = config_db(db)
     start_time = time.time()

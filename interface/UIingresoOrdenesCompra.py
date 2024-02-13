@@ -13,7 +13,7 @@ def orderDetail(products):
         st.session_state['current_view'] = 'ingresoOrdenesCompra'
         st.rerun()
     ordenCompra = st.session_state['currentOrder']
-    noIngresioOpt = ['No llego', 'Fallas', 'Llegara en otro envío']
+    noIngresioOpt = ['No llego', 'Fallas', 'Llegara en otro envio']
     st.markdown('### Orden de Compra #' + str(ordenCompra['id_orden_compra']))
     st.markdown('### Seller: ' + str(ordenCompra['seller_name']))
     st.markdown('### Fecha de Creación: ' + str(ordenCompra['fecha_creacion']))
