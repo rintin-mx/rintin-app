@@ -49,7 +49,7 @@ def orderDetail(products):
         with col3:
             st.markdown(f"### {products['line_paquetes'][i]}")
         with col4:
-            number = st.number_input('Ingresados', key=str(products['product_id'][i]) + '_number', step=1, max_value=int(products['line_paquetes'][i]))
+            number = st.number_input('Ingresados', key=str(products['product_id'][i]) + '_number', step=1)
             razon = 'Ingresado correctamente'
             if number < products['line_paquetes'][i]:
                 razon= st.selectbox('Razón no ingreso', options=noIngresioOpt ,key=str(products['product_id'][i]) + '_select')
