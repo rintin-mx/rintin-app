@@ -1,5 +1,5 @@
 import streamlit as st
-from db.db_ingresoOrdenesCompra import get_live_sellers, get_products
+from db.db_ingresoOrdenesCompra import get_live_sellers, get_products, get_pending_products
 from interface.UIingresoOrdenesCompra import orderSelector, orderDetail
 
 def app():
@@ -16,7 +16,10 @@ def app():
                 sellers = sellers['seller_name']
             orderSelector(sellers)
         if st.session_state['current_view'] == 'ingresoOrdenesDetalle':
-            products = get_products(str(st.session_state['currentOrder']['id_orden_compra']))
+            if st.session_state['currentOrder']['estado'] == 'ingresado_bodega_pendientes':
+                products = get_pending_products(str(st.session_state['currentOrder']['id_orden_compra']))
+            else:
+                products = get_products(str(st.session_state['currentOrder']['id_orden_compra']))
             orderDetail(products)
             
         

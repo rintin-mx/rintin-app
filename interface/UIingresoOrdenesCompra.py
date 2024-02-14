@@ -4,16 +4,23 @@ sys.path.append('..')
 
 import streamlit as st
 import streamlit_shadcn_ui as ui
-from db.db_ingresoOrdenesCompra import get_ordenes_compra, updateOrdenCompraStatus, insertFaults
+from db.db_ingresoOrdenesCompra import get_ordenes_compra, updateOrdenCompraStatus, insertOCItems
 
 
 def orderDetail(products):
+    # 0 -> Ingreso completo
+    # 1 -> Ingreso con pendientes
+    # 2 -> Ingreso con faltantes
+    ingresos_ok = 0
+    ingresos_pendientes = 0
+    ingresos_faltantes = 0
+    excedentes = 0
     objArry=[]
     if st.button('Volver'):
         st.session_state['current_view'] = 'ingresoOrdenesCompra'
         st.rerun()
     ordenCompra = st.session_state['currentOrder']
-    noIngresioOpt = ['No llego', 'Fallas']
+    noIngresioOpt = ['No llego', 'Fallas', 'Llegara en otro envio']
     st.markdown('### Orden de Compra #' + str(ordenCompra['id_orden_compra']))
     st.markdown('### Seller: ' + str(ordenCompra['seller_name']))
     st.markdown('### Fecha de Creación: ' + str(ordenCompra['fecha_creacion']))
@@ -42,46 +49,47 @@ def orderDetail(products):
         with col3:
             st.markdown(f"### {products['line_paquetes'][i]}")
         with col4:
-            number = st.number_input('Ingresados', key=str(products['product_id'][i]) + '_number', step=1)
-            razon = None
-            if number != products['line_paquetes'][i]:
+            number = st.number_input('Ingresados', key=str(products['product_id'][i]) + '_number', step=1, max_value=int(products['line_paquetes'][i]))
+            razon = 'Ingresado correctamente'
+            if number < products['line_paquetes'][i]:
                 razon= st.selectbox('Razón no ingreso', options=noIngresioOpt ,key=str(products['product_id'][i]) + '_select')
+            elif number > products['line_paquetes'][i]:
+                razon = 'Excedente'
         with col5:
             if number != products['line_paquetes'][i]:
                 st.error('Validacion')
             else:
                 st.success('OK')
-            objArry.append({'product_id': products['product_id'][i], 'validacion': number != products['line_paquetes'][i], 'qty': number, 'original_qty': products['line_paquetes'][i], 'razon': razon})
-    products_validacion = []
+        objArry.append({'product_id': products['product_id'][i], 'ingreso': number, 'no_ingreso': products['line_paquetes'][i] - number, 'razon': razon})
+        if razon == 'Ingresado correctamente':
+            ingresos_ok += 1
+        elif razon == 'Llegara en otro envio':
+            ingresos_pendientes += 1
+        else:
+            ingresos_faltantes += 1
     print(objArry)
-    for i in range(len(objArry)):
-        if objArry[i]['validacion']:
-            products_validacion.append({
-                'product_id': objArry[i]['product_id'],
-                'razon': objArry[i]['razon'],
-                'qty': objArry[i]['original_qty'] - objArry[i]['qty']
-            })
+    
+    if ingresos_pendientes > 0:
+        msg = 'Ingresado a bodega con pendientes'
+    elif ingresos_faltantes > 0:
+        msg = 'Ingresado a bodega con faltantes'
+    else:
+        msg = 'Ingresado a bodega'
     trigger_btn = ui.button(text="Confirmar Ingreso", key="trigger_btn")
     respuesta = False
-    if len(products_validacion) > 0:
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description='Enviaremos la orden de compra a "Ingresado a bodega con faltantes"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
-        if respuesta:
-            with st.spinner(f'Actualizando estado'):
+    respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description=f'Enviaremos la orden de compra a "{msg}"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
+    if respuesta:
+        with st.spinner(f'Actualizando estado'):            
+            if ingresos_pendientes > 0:
+                updateOrdenCompraStatus('ingresado_bodega_pendientes', ordenCompra['id_orden_compra'])
+            elif ingresos_faltantes > 0:
                 updateOrdenCompraStatus('ingresado_bodega_faltantes', ordenCompra['id_orden_compra'])
-                insertFaults(products_validacion, ordenCompra['id_orden_compra'])
-                st.session_state['current_view'] = 'ingresoOrdenesCompra'
-                st.rerun()
-
-    else:
-        respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Ingreso", description='Enviaremos la orden de compra a "Ingresado a bodega"', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
-        if respuesta:
-            with st.spinner(f'Actualizando estado'):
+            else:
                 updateOrdenCompraStatus('ingresado_bodega', ordenCompra['id_orden_compra'])
-                st.session_state['current_view'] = 'ingresoOrdenesCompra'
-                st.rerun()
-
-
-        
+            insertOCItems(objArry, ordenCompra['id_orden_compra'], st.session_state['username'])
+        st.session_state['current_view'] = 'ingresoOrdenesCompra'
+        st.rerun()
+            
     st.write(
             """<style>
             [data-testid="stHorizontalBlock"] {
@@ -120,7 +128,8 @@ def orderSelector(sellers):
                         'seller_name': orders['seller_name'][i],
                         'fecha_creacion': orders['fecha_creacion'][i],
                         'total_cost': orders['total_cost'][i],
-                        'total_paquetes': orders['total_paquetes'][i]
+                        'total_paquetes': orders['total_paquetes'][i],
+                        'estado': orders['estado'][i]
                     }
                     st.session_state['currentOrder'] = tempOrder
                     st.session_state['current_view'] = 'ingresoOrdenesDetalle'

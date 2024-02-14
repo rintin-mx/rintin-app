@@ -28,6 +28,12 @@ def app():
             
             dataBase_df = pd.DataFrame(dataBase)
             data_df = pd.DataFrame(data)
+            print('seller name')
+            print(st.session_state.Seller_name)
+            print('dataBase_df')
+            print(dataBase_df)
+            print('data_df')
+            print(data_df)
             # Realizamos el inner join
             df_merged = pd.merge(dataBase_df, data_df, left_on='Seller', right_on='seller_name')
             df_final=df_merged[["Seller","#Pedidos","num_paquetes","recolectado","order_id"]]
