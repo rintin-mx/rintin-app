@@ -176,9 +176,11 @@ def get_data_seller_by_name(name,db='repl') -> dict:
         wp_seller_by_name_recolection_sql="""
         with orders as (
                     select
-                        id
+                        wp_posts.id,
+                        wp_dokan_orders.seller_id
                     from
                         wp_posts
+					LEFT JOIN wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
                     where
                         post_status = 'wc-recolectar-2'
                         
@@ -189,7 +191,7 @@ def get_data_seller_by_name(name,db='repl') -> dict:
                         max(
                             case
                                 when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                                else NULL
+                                else seller_id
                             end
                         ) AS `dokan_vendor_id`
                     from
