@@ -24,10 +24,10 @@ def UIgeneracion_guias_oax(data, order_filter, zone_filter):
     order_list = pd.DataFrame(data)
     st.write('## Pedidos a ingresar en guia Pickup')
     filter_col1, filter_col2 = st.columns(2)
-    today = datetime.today()
     objArray= []
-    formatted_date = today.strftime("%d%m%Y")
+
     order_id_string = ''
+    
     print(order_list)
     with filter_col1:
         order_filter_input = st.selectbox('Busqueda por orden', options=order_filter, index= None)
@@ -51,9 +51,12 @@ def UIgeneracion_guias_oax(data, order_filter, zone_filter):
         origin = st.selectbox('Origen', options=['CDMX', 'OAX', 'MIAH'], index=None)
     with guia_col2:
         destiny = st.selectbox('Destino', options=['CDMX', 'OAX', 'MIAH'], index=None)
+    day = st.date_input('Ingresa la fecha de envío', format="DD.MM.YYYY")
+    print(day)
+    formatted_day = str(day).replace('-', '')
     if origin is not None and destiny is not None:
-        numero_guia = f'{origin}-{destiny}-{formatted_date}'
-        st.write(f'**GUIA:** {origin}-{destiny}-{formatted_date}')
+        numero_guia = f'{origin}-{destiny}-{day}'
+        st.write(f'**GUIA:** {origin}-{destiny}-{formatted_day}')
     sender = st.selectbox('Paqueteria interna', options=operadores_list)
     header_col1, header_col2, header_col3, header_col4 = st.columns(4)
     with header_col1:
