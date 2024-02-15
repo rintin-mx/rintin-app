@@ -77,12 +77,17 @@ def get_ordenes_generar_guia(db='repl') -> dict:
         wp_ordenes_query =f"""
 with orders as (
 	select
-		id,
-		case when post_parent = 0 then id else post_parent end as post_parent,
-		post_status
+		wp_posts.id,
+		case when post_parent = 0 then wp_posts.id else post_parent end as post_parent,
+		post_status,
+        case when meta_value is null then wp_dokan_orders.seller_id else meta_value end as seller_id
 	from wp_posts 
+    left join wp_dokan_orders on order_id = wp_posts.id
+    left join wp_postmeta on post_id = wp_posts.id
 	where post_type = 'shop_order' and post_status NOT IN ('wc-pendientes_ograma','wc-failed', 'wc-caducado','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial')
-    and id not in (select distinct post_parent from wp_posts)
+    and wp_posts.id not in (select distinct post_parent from wp_posts)
+    and meta_key = '_dokan_vendor_id'
+    having seller_id != 2705
 ),
 grouped_orders as(
 select 
