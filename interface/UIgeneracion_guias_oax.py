@@ -51,10 +51,11 @@ def UIgeneracion_guias_oax(data, order_filter, zone_filter):
         origin = st.selectbox('Origen', options=['CDMX', 'OAX', 'MIAH'], index=None)
     with guia_col2:
         destiny = st.selectbox('Destino', options=['CDMX', 'OAX', 'MIAH'], index=None)
-    day = st.date_input('Ingresa la fecha de envío', format="DD.MM.YYYY")
-    print(day)
-    formatted_day = str(day).replace('-', '')
-    if origin is not None and destiny is not None:
+    day = st.date_input('Ingresa la fecha de envío', format="DD/MM/YYYY")
+
+    if origin is not None and destiny is not None and day is not None:
+        date = datetime.strptime(str(day), "%Y-%m-%d")
+        formatted_day = date.strftime("%d%m%Y")
         numero_guia = f'{origin}-{destiny}-{day}'
         st.write(f'**GUIA:** {origin}-{destiny}-{formatted_day}')
     sender = st.selectbox('Paqueteria interna', options=operadores_list)
