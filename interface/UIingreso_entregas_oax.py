@@ -70,7 +70,7 @@ def UIorder_detail(data, id_ruta):
                 razon = st.text_input('Razón diferencia', key=f"text_{i}")
             else:
                 st.success('OK')
-                razon = 'NULL'
+                razon = ''
         ordenes.append({"order_id": data['order_id'][i], "total": data['total_recibido'][i], "ingresado": ingresado, "razon": razon})
     confirm = st.button('Recibir')
     respuesta = ui.alert_dialog(show=confirm, title="Confirmación de ingreso", description=f'Se ingresará la ruta {id_ruta}.', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
