@@ -17,6 +17,10 @@ NEXT_STATUS_DICT = {
 	"Intento 3": "Fallido"
 }
 
+async def update_status_wordpress(order_id, order_status):
+    result = await endpoint_update_status_by_order_id(order_id, order_status)
+    return result
+
 def UIentregas_oax(data):
 	respuesta = False
 	st.markdown('''<style>
@@ -61,6 +65,8 @@ def UIentregas_oax(data):
 			st.write(f'{data["address"][i]}')
 			st.write('#### Número de paquetes:')
 			st.write(f'{int(data["num_paquetes"][i])}')
+			st.write('### Zona de entrega:')
+			st.write(f'{data["zona_entrega"][i]}')
 			checked = st.checkbox('Ingresar a ruta', key=i)
 			if checked:
 				orders_for_route_list.append({
@@ -101,12 +107,12 @@ def UIroute_orders(data, route_id):
 				st.session_state['current_order'] = {
 					"name": data["name"][i],
 					"order_id": data["order_id"][i],
-					"id_orden_ruta": data['id_orden_ruta'][i],
 					"number_unified": data["number_unified"][i],
 					"address": data["address"][i],
 					"total": data['order_total'][i],
 					"estado": data["estado"][i]
 				}
+				st.session_state.route_id = route_id
 				st.session_state.current_view = 'entrega_order_detail'
 				st.rerun()
 	else:
@@ -114,11 +120,15 @@ def UIroute_orders(data, route_id):
 	button = st.button('Terminar ruta')
 	respuesta = ui.alert_dialog(show=button, title="Confirmación de terminación de ruta", description=f'¿Estas seguro que deseas terminar la ruta?', confirm_label="Confirmar", cancel_label="Volver", key="respuesta_terminar")
 	if respuesta:
-		update_route_status(route_id, 'Entregado')
+		update_route_status(route_id, 'Finalizado')
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
 
-def order_detail(order_id, number_unified, address, total, order_items, id_orden_ruta, estado):
+def order_detail(order_id, number_unified, address, total, order_items, route_id, estado):
+	if st.button('Regresar'):
+		st.session_state.current_view = 'entregas_oax'
+		st.rerun()
+	orders_dict = {}
 	respuesta = False
 	st.write(f'### Pedido: {order_id}')
 	st.write(f'### Telefono cliente: {number_unified}')
@@ -129,7 +139,7 @@ def order_detail(order_id, number_unified, address, total, order_items, id_orden
 	razon_no_entrega = st.selectbox('Razon de no entrega', options=NO_ENTREGA_REASON, index=None)
 	no_entregue_btn = st.button('No se entregó el pedido')
 	if no_entregue_btn and razon_no_entrega != None:
-		update_route_order_status(id_orden_ruta, order_id, NEXT_STATUS_DICT[estado], razon_no_entrega)
+		update_route_order_status(route_id, order_id, NEXT_STATUS_DICT[estado], razon_no_entrega)
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
 	st.write('---')
@@ -155,6 +165,10 @@ def order_detail(order_id, number_unified, address, total, order_items, id_orden
 		else:
 			reason = ''
 			st.success('OK')
+		if order_items['order_id'][i] in orders_dict:
+			orders_dict[order_items['order_id'][i]] += recieved
+		else:
+			orders_dict[order_items['order_id'][i]] = recieved
 	st.write('---')
 	st.write(f'Total a cobrar: ${total}')
 	value = st.number_input('Total recibido: ', min_value=0.00, step=0.01)
@@ -164,9 +178,15 @@ def order_detail(order_id, number_unified, address, total, order_items, id_orden
 	respuesta = ui.alert_dialog(show=button, title="Confirmación de entrega de orden", description=f'Se entrego la orden {order_id}', confirm_label="Confirmar", cancel_label="Volver", key="respuesta_entrega")
 	if respuesta:
 		for product in order_items_con_falla:
-			insert_product_problem(id_orden_ruta, product)
-		update_route_order_status(id_orden_ruta, order_id, 'Entregado', razon_no_entrega)
-		update_recieved_money(id_orden_ruta, value)
+			insert_product_problem(route_id, product)
+		update_route_order_status(route_id, order_id, 'Entregado', razon_no_entrega)
+		update_recieved_money(order_id, value)
+		for order in orders_dict:
+			if orders_dict[order] == 0:
+				r = asyncio.run(update_status_wordpress(order, 'devolucion_proces'))
+		for order in orders_dict:
+			if orders_dict[order] != 0:
+				r = asyncio.run(update_status_wordpress(order, 'delivered'))
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
 	
