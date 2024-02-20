@@ -8,7 +8,7 @@ import numpy as np
 st.set_page_config(
         page_title="Rintin",
 )
-import numerosGuiaOax, ingresoPickup,login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
+import ingreso_entregador, entregas_oax, numerosGuiaOax, ingresoPickup,login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -72,7 +72,7 @@ class MultiApp:
                 # elif val == 'ismael':
                 #     menu=['Logout','Auditoria','Agrupacion']
                 elif val in ('francisco', 'JuanMa'):
-                    menu=['Logout','Register','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
+                    menu=['Logout','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
 
             else:
                 #persona con permisos consedidos por el administrador
@@ -113,6 +113,10 @@ class MultiApp:
                 event_instert(EventName,EventAction,EventUser)
         if app == 'Números de Guía Oaxaca':
             numerosGuiaOax.app()
+        if app == 'Entregas Oaxaca':
+            entregas_oax.app()
+        if app == 'Ingreso Entregas Oaxaca':
+            ingreso_entregador.app()
         if app == 'Empaquetado':
             empaquetado.app()
             if valEmail is not None:
