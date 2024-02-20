@@ -126,7 +126,7 @@ def update_route(route_id, order_list, estado):
 			sql = f"UPDATE rutas_envios SET estado = '{estado}' WHERE id_ruta = {route_id}"
 			cursor.execute(sql)
 			for order in order_list:
-				sql = f"INSERT INTO ingreso_entrega_ordenes (order_id, total_a_recibir, total_recibido, razon_diferencia) VALUES ({order['order_id']}, {order['total']}, {order['ingresado']}, {order['razon']})"
+				sql = f"INSERT IGNORE INTO ingreso_entrega_ordenes (order_id, total_a_recibir, total_recibido, razon_diferencia) VALUES ({order['order_id']}, {order['total']}, {order['ingresado']}, {order['razon']})"
 				print(sql)
 				cursor.execute(sql)
 			connection.commit()
