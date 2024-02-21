@@ -28,7 +28,6 @@ async def endpoint_update_status_by_order_id(order_id, order_status):
                 return {"success": False, "message": f"Error en la petición: {response.status} {text_response}"}
 
 
-
 async def endpoint_write_order_note(order_id, order_notes):
     url = f"https://rintin.mx/wp-json/wc/v3/orders/{order_id}/notes"
     # Credenciales para la autenticación Basic Auth
