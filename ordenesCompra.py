@@ -3,7 +3,7 @@ import streamlit as st
 from interface.UIordenesCompra import UITOrdenesCompra
 from interface.UIordenesCompra import UITAddProduct
 from db.db_UserInteractionEvents import event_instert   
-from db.db_ordenesCompra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info
+from db.db_ordenesCompra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info, get_brands, get_fabricantes, get_proveedores
 from interface.UIordenesCompra import UITOrdenesCompraCSV, UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
 
 def app():
@@ -27,7 +27,12 @@ def app():
                 product = st.session_state['editProduct']
             else:
                 product = None
-            UITAddProduct(product)
+            marcas = get_brands()
+            if 'marcas' not in st.session_state:
+                st.session_state['marcas'] = marcas['meta_value']
+            fabricantes = get_fabricantes()
+            proveedores = get_proveedores()
+            UITAddProduct(product, fabricantes, proveedores)
         elif st.session_state.current_view == 'ordenesCompraCsv':
             data = get_live_sellers()
             UITOrdenesCompraCSV(data)
@@ -46,6 +51,8 @@ def app():
                 del st.session_state['initialFetch']
             if 'deletedProducts' in st.session_state:
                 del st.session_state['deletedProducts']
+            if 'marcas' in st.session_state:
+                del st.session_state['marcas']
             UITOrdenesCompraMenu()
         elif st.session_state.current_view == 'editOrdenesCompra':
             data = get_ordenes_compra()
@@ -56,7 +63,6 @@ def app():
             UITOrdenesCompraEdit(data)
         elif st.session_state.current_view == 'terminar_orden_compra':
             data = get_parent_orders()
-            
             if 'ordenCompraId' in st.session_state:
                 orderData = get_order_info(st.session_state['ordenCompraId'])
             else:

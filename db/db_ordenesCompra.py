@@ -82,8 +82,8 @@ def insertOrdenCompra(orderInfo, products):
             connection.commit()
             insertedId = cursor.lastrowid
             for value in products:
-                sql = "INSERT INTO producto_orden_compra (sku_producto_wp, nombre_producto, tipo_producto, cost_of_goods, units_per_pack, foto, fecha_creacion, fecha_edicion) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-                cursor.execute(sql, (value['sku'], value['nombre'], value['tipo_producto'], value['costo'], value['units_per_pack'], value['img_url'], orderInfo['fecha_creacion'], orderInfo['fecha_edicion']))
+                sql = "INSERT INTO producto_orden_compra (sku_producto_wp, nombre_producto, tipo_producto, cost_of_goods, units_per_pack, foto, marca, fabricante, proveedor, fecha_creacion, fecha_edicion) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                cursor.execute(sql, (value['sku'], value['nombre'], value['tipo_producto'], value['costo'], value['units_per_pack'], value['img_url'], value['marca'], value['fabricante'], value['proveedor'], orderInfo['fecha_creacion'], orderInfo['fecha_edicion']))
                 connection.commit()
                 insertedProductId = cursor.lastrowid
                 sql = "INSERT INTO orden_compra_detalle_producto (id_producto_orden_compra, id_orden_compra, line_paquetes, line_cost, fecha_creacion, fecha_edicion) VALUES (%s, %s, %s, %s, %s, %s)"
@@ -207,6 +207,119 @@ def get_products(id, db='repl') -> dict:
         wp_products.columns = ['product_id', 'line_paquetes', 'line_cost', 'sku_producto_wp', 'nombre_producto', 'tipo_producto', 'cost_of_goods', 'units_per_pack', 'foto']
         wp_products_general_dict = wp_products.to_dict(orient='list')
         return wp_products_general_dict
+
+def get_proveedores(db='repl'):
+    config = config_db(db)
+    start_time = time.time()
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        sql ="""
+select dos.user_id, dos.meta_value from wp_usermeta as uno inner join wp_usermeta as dos on uno.user_id = dos.user_id where uno.meta_value like '%seller%' and dos.meta_key = 'dokan_store_name' and uno.meta_key = 'wp_capabilities'        """
+        cursor.execute(sql)
+
+        # Obtener los resultados de la primera consulta
+        results = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        proveedores = pd.DataFrame(results)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+        # Registrar el tiempo de finalización
+        end_time = time.time()
+
+        # Calcular la duración
+        duration = end_time - start_time
+
+        # Convertir a minutos y segundos
+        minutes = int(duration // 60)
+        seconds = int(duration % 60)
+        # Nueva lista de nombres de columnas
+        #wp_seller=wp_seller[['user_id' 'dokan_store_name']]
+        proveedores.columns = ['user_id', 'meta_value']
+        wp_order_general_dict = proveedores.to_dict(orient='list')
+        return wp_order_general_dict
+    
+def get_fabricantes(db='repl'):
+    config = config_db(db)
+    start_time = time.time()
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        sql ="""
+            select wp_usermeta.user_id, dos.meta_value from wp_usermeta inner join wp_usermeta as dos on dos.user_id =wp_usermeta.user_id  where wp_usermeta.meta_key = '_is_dueno_producto' and wp_usermeta.meta_value = 1 and dos.meta_key = 'dokan_store_name'
+        """
+        cursor.execute(sql)
+
+        # Obtener los resultados de la primera consulta
+        results = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        fabricantes = pd.DataFrame(results)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+        # Registrar el tiempo de finalización
+        end_time = time.time()
+
+        # Calcular la duración
+        duration = end_time - start_time
+
+        # Convertir a minutos y segundos
+        minutes = int(duration // 60)
+        seconds = int(duration % 60)
+        # Nueva lista de nombres de columnas
+        #wp_seller=wp_seller[['user_id' 'dokan_store_name']]
+        fabricantes.columns = ['user_id', 'meta_value']
+        wp_order_general_dict = fabricantes.to_dict(orient='list')
+        return wp_order_general_dict
+
+def get_brands(db='repl'):
+    config = config_db(db)
+    start_time = time.time()
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        sql ="""
+                with uno as (
+select distinct meta_value from wp_postmeta where meta_key = '_brand'
+union
+select distinct marca as meta_value from producto_orden_compra where marca is not null
+)
+select distinct meta_value from uno
+
+        """
+        cursor.execute(sql)
+
+        # Obtener los resultados de la primera consulta
+        results = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        marcas = pd.DataFrame(results)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+        # Registrar el tiempo de finalización
+        end_time = time.time()
+
+        # Calcular la duración
+        duration = end_time - start_time
+
+        # Convertir a minutos y segundos
+        minutes = int(duration // 60)
+        seconds = int(duration % 60)
+        # Nueva lista de nombres de columnas
+        #wp_seller=wp_seller[['user_id' 'dokan_store_name']]
+        marcas.columns = ['meta_value']
+        wp_order_general_dict = marcas.to_dict(orient='list')
+        return wp_order_general_dict
 
 def get_ordenes_compra(db='repl') -> dict:
     config = config_db(db)
