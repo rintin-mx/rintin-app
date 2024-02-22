@@ -58,7 +58,7 @@ ordermeta as (
 		) AS state,
 		max(
 			case
-				when meta_key = '_shipping_address_1' then meta_value
+				when meta_key = '_shipping_address_index' then meta_value
 				else NULL
 			end
 		) as address,
@@ -226,17 +226,20 @@ group by
 			return orders_dict
 		return None
 
-
 def has_active_route(user_id, db='repl'):
 	config = config_db(db)
 	try:
 		connection = mysql.connector.connect(**config)
 		cursor = connection.cursor(dictionary=True)
 		sql = f"SELECT * FROM wordpress.rutas_envios where responsable = '{user_id}' and estado = 'En ruta';"
+		print(sql)
 		cursor.execute(sql)
 		results = cursor.fetchone()
-	finally:
+		print('results')
+		print(results)
 		cursor.close()
+	finally:
+
 		connection.close()
 		if results is None:
 			return 0
@@ -259,7 +262,7 @@ def insert_route(responsable, order_list):
 			print('inserted_id')
 			print(inserted_id)
 			for order in order_list:
-				sql = f"INSERT INTO ordenes_de_ruta (id_ruta, order_id, estado) VALUES ({inserted_id}, {order['order_id']}, 'pending')"
+				sql = f"INSERT INTO ordenes_de_ruta (id_ruta, order_id, estado, fecha_modificacion) VALUES ({inserted_id}, {order['order_id']}, 'pending', '{current_date}')"
 				print(sql)
 				cursor.execute(sql)
 				sql = f"INSERT IGNORE INTO entrega_ordenes (order_id, total_a_recibir, total_recibido, estado) VALUES ({order['order_id']}, {order['total']}, 0, 'Pendiente entrega')"
@@ -274,17 +277,37 @@ def insert_route(responsable, order_list):
 		cursor.close()
 		connection.close()
 		print('Error al realizar la inserción:', e)
-		return False		
+		return False
 
-def insert_product_problem(id_ruta, product):
+def insert_product_problem(product):
 	db = 'prod'
 	config = config_db(db)
+	current_date = time.strftime('%Y-%m-%d %H:%M:%S')
 	try:
 		connection = mysql.connector.connect(**config)
 		if connection.is_connected():
 			cursor = connection.cursor(dictionary=True)
-			sql = "INSERT INTO inconvenientes_entregas (id_ruta, order_item_id, cantidad_entregada, razon_no_entrega) VALUES (%s, %s, %s, %s)"
-			cursor.execute(sql, (id_ruta, product['order_item_id'], product['cantidad_entregada'], product['razon_no_entrega']))
+			sql = "INSERT INTO inconvenientes_unitarios_entregas (order_item_id, cantidad_no_entrega, razon_no_entrega, fecha) VALUES (%s, %s, %s, %s)"
+			cursor.execute(sql, (product['order_item_id'], product['cantidad_entregada'], product['razon_no_entrega'], current_date))
+			connection.commit()
+			cursor.close()
+			connection.close()
+			return True
+		return False
+	except Exception as e:
+		print('Error al realizar la inserción:', e)
+		return False
+
+def insert_item_problem(product):
+	db = 'prod'
+	config = config_db(db)
+	current_date = time.strftime('%Y-%m-%d %H:%M:%S')
+	try:
+		connection = mysql.connector.connect(**config)
+		if connection.is_connected():
+			cursor = connection.cursor(dictionary=True)
+			sql = "INSERT INTO inconvenientes_entregas (id_ruta, order_item_id, cantidad_entregada, razon_no_entrega, fecha) VALUES (%s, %s, %s, %s)"
+			cursor.execute(sql, (product['order_item_id'], product['cantidad_entregada'], product['razon_no_entrega'], current_date))
 			connection.commit()
 			cursor.close()
 			connection.close()
@@ -297,6 +320,7 @@ def insert_product_problem(id_ruta, product):
 def update_route_order_status(route_id, order_id, status, reason):
 	db = 'prod'
 	config = config_db(db)
+	current_date = time.strftime('%Y-%m-%d %H:%M:%S')
 	try:
 		connection = mysql.connector.connect(**config)
 		if connection.is_connected():
@@ -311,6 +335,8 @@ def update_route_order_status(route_id, order_id, status, reason):
 				sql = f"UPDATE wp_postmeta SET meta_value = '{reason}' WHERE post_id = {order_id} and meta_key = '_razon_no_entrega'"
 				cursor.execute(sql)
 			sql = f"UPDATE ordenes_de_ruta SET estado = '{status_for_route_order}' WHERE order_id = {order_id} and id_ruta = {route_id}"
+			cursor.execute(sql)
+			sql = f"UPDATE ordenes_de_ruta SET fecha_modificacion = '{current_date}' WHERE order_id = {order_id} and id_ruta = {route_id}"
 			cursor.execute(sql)
 			connection.commit()
 			cursor.close()
@@ -412,7 +438,7 @@ ordermeta as (
 		) AS state,
 		max(
 			case
-				when meta_key = '_shipping_address_1' then meta_value
+				when meta_key = '_shipping_address_index' then meta_value
 				else NULL
 			end
 		) as address,
@@ -619,6 +645,7 @@ order_items as(
 	inner join orders on wp_woocommerce_order_items.order_id = orders.order_id
 	where order_item_type = 'line_item'
 ),
+
 order_item_meta as (
 	select
 		`wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
@@ -633,7 +660,14 @@ order_item_meta as (
 				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
 				else NULL
 			end
-		) AS `product_id`
+		) AS `product_id`,
+        max(
+			case
+				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_line_total' then `wp_woocommerce_order_itemmeta`.`meta_value`
+				else NULL
+			end
+		) AS `line_total`
+		
 		
 	from
 		`wp_woocommerce_order_itemmeta`
@@ -672,7 +706,8 @@ select
 	line_qty,
 	sku,
 	replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
-    order_items.order_id
+    order_items.order_id,
+    line_total / line_qty as line_total
 from 
 	order_items
 	left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
@@ -695,7 +730,7 @@ from
 		# Nueva lista de nombres de columnas
 		#wp_seller=wp_seller[['user_id' 'dokan_store_name']]
 		if len(order_items) > 0:
-			order_items.columns = ['order_item_id', 'order_item_name', 'line_qty' , 'sku', 'img_url', 'order_id']
+			order_items.columns = ['order_item_id', 'order_item_name', 'line_qty' , 'sku', 'img_url', 'order_id', 'line_total']
 			wp_order_general_dict = order_items.to_dict(orient='list')
 			return wp_order_general_dict
 		return None

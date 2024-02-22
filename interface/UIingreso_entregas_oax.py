@@ -43,34 +43,38 @@ def UIorder_detail(data, id_ruta):
         st.rerun()
     st.write('## Pendientes Ingreso')
     ordenes = []
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     with col1:
         st.write('**Cliente**')
     with col2:
         st.write('**Pedido**')
     with col3:
-        st.write('**Dinero a recibir**')
+        st.write('**Total del pedido**')
     with col4:
-        st.write('**Dinero recibido**')
+        st.write('**Dinero a recibir**')
     with col5:
+        st.write('**Dinero recibido**')
+    with col6:
         st.write('**Status**')
     for i in range(len(data['order_id'])):
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
         with col1:
             st.write(f"{data['name'][i]}")
         with col2:
             st.write(f"{data['order_id'][i]}")
         with col3:
-            st.write(f"{data['total_recibido'][i]}")
+            st.write(f"{data['order_total'][i]}")
         with col4:
-            ingresado = st.number_input('', min_value=0.00, label_visibility="collapsed", key=f"number_{i}")
+            st.write(f"{data['total_recibido'][i]}")
         with col5:
+            ingresado = st.number_input('', min_value=0.00, label_visibility="collapsed", key=f"number_{i}")
+        with col6:
             if float(data['total_recibido'][i]) != ingresado:
                 st.error('Validacion')
                 razon = st.text_input('Razón diferencia', key=f"text_{i}")
             else:
                 st.success('OK')
-                razon = 'NULL'
+                razon = ''
         ordenes.append({"order_id": data['order_id'][i], "total": data['total_recibido'][i], "ingresado": ingresado, "razon": razon})
     confirm = st.button('Recibir')
     respuesta = ui.alert_dialog(show=confirm, title="Confirmación de ingreso", description=f'Se ingresará la ruta {id_ruta}.', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")

@@ -10,14 +10,15 @@ def app():
         if st.session_state.current_view in ('ingreso_entregador_oax', 'route_order_detail', 'confirmacion_route_order', 'generar_guias_oax', 'generar_guias_oax_final','pickFinal', 'recoleccionFinal', 'ingresoPickup', 'ingresoPickupFinal', 'final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups','generar_guias', 'generar_guias_final','confirmacion','ingresoOrdenesDetalle','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv'):
             st.session_state['current_view'] = 'entregas_oax'
         if st.session_state.current_view == 'entregas_oax':
-            route_id = has_active_route(st.session_state.username)
+            print(st.session_state.useremail)
+            route_id = has_active_route(st.session_state.useremail)
             if route_id != 0:
                 data = get_route_orders(route_id)
                 UIroute_orders(data, route_id)
             else:
                 data = get_orders()
                 if data:
-                    UIentregas_oax(data)
+                    UIentregas_oax(data, data['order_id'], set(data['zona_entrega']))
                 else:
                     st.header('No hay ordenes para entregar', divider='rainbow')
                     st.header('No hay ordenes para entregar :blue[en este momento] :sunglasses:')
@@ -29,4 +30,4 @@ def app():
             total = st.session_state.current_order['total']
             estado = st.session_state.current_order['estado']
             order_items = get_order_items(order_id)
-            order_detail(order_id, number_unified, address, total, order_items, route_id, estado)
+            order_detail(order_id, number_unified, address, order_items, route_id, estado)

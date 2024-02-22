@@ -84,7 +84,13 @@ ordermeta as (
 				when meta_key = '_billing_last_name' then meta_value
 				else NULL
 			end
-		) as last_name
+		) as last_name,
+        max(
+			case
+				when meta_key = '_order_total' then meta_value
+				else NULL
+			end
+		) as order_total
 		
 	from wp_postmeta inner join orders on orders.order_id = wp_postmeta.post_id
 	group by post_id, total_recibido
@@ -93,14 +99,16 @@ final as(
 	select 
 		concat(first_name, ' ', last_name) as name,
 		order_id,
-		ordermeta.total_recibido
+		ordermeta.total_recibido,
+        order_total
 	from ordermeta 
 
 )
 select
 	order_id,
 	name,
-	total_recibido
+	total_recibido,
+    order_total
 from final
 
 		"""
@@ -111,7 +119,7 @@ from final
 		cursor.close()
 		connection.close()
 		if len(orders) > 0:
-			orders.columns = ['order_id', 'name', 'total_recibido']
+			orders.columns = ['order_id', 'name', 'total_recibido', 'order_total']
 			orders_dict = orders.to_dict(orient='list')
 			return orders_dict
 		return None
@@ -126,9 +134,10 @@ def update_route(route_id, order_list, estado):
 			sql = f"UPDATE rutas_envios SET estado = '{estado}' WHERE id_ruta = {route_id}"
 			cursor.execute(sql)
 			for order in order_list:
-				sql = f"INSERT IGNORE INTO ingreso_entrega_ordenes (order_id, total_a_recibir, total_recibido, razon_diferencia) VALUES ({order['order_id']}, {order['total']}, {order['ingresado']}, {order['razon']})"
-				print(sql)
-				cursor.execute(sql)
+				if int(order['total']) != 0:
+					sql = f"INSERT IGNORE INTO ingreso_entrega_ordenes (order_id, total_a_recibir, total_recibido, razon_diferencia) VALUES ({order['order_id']}, {order['total']}, {order['ingresado']}, '{order['razon']}')"
+					print(sql)
+					cursor.execute(sql)
 			connection.commit()
 			cursor.close()
 			connection.close()
