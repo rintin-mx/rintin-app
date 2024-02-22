@@ -28,9 +28,11 @@ def app():
             else:
                 product = None
             marcas = get_brands()
+            if 'marcas' not in st.session_state:
+                st.session_state['marcas'] = marcas['meta_value']
             fabricantes = get_fabricantes()
             proveedores = get_proveedores()
-            UITAddProduct(product, marcas, fabricantes, proveedores)
+            UITAddProduct(product, fabricantes, proveedores)
         elif st.session_state.current_view == 'ordenesCompraCsv':
             data = get_live_sellers()
             UITOrdenesCompraCSV(data)

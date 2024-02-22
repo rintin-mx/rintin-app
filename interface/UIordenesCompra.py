@@ -156,27 +156,27 @@ def UITTerminarOrdenCompra(parents, order_data):
             pdf.ln()
             pdf.ln()
             pdf.cell(21, 10, 'Nombre', 1, align='C')
-            pdf.cell(21, 10, 'SKU', 1, align='C')
-            pdf.cell(21, 10, 'Marca', 1, align='C')
-            pdf.cell(21, 10, 'Fabricante', 1, align='C')
-            pdf.cell(21, 10, 'Proveedor', 1, align='C')
+            pdf.cell(15, 10, 'SKU', 1, align='C')
+            pdf.cell(18, 10, 'Marca', 1, align='C')
+            pdf.cell(32, 10, 'Fabricante', 1, align='C')
+            pdf.cell(32, 10, 'Proveedor', 1, align='C')
             pdf.cell(21, 10, 'Tipo', 1, align='C')
-            pdf.cell(21, 10, 'Costo', 1, align='C')
-            pdf.cell(21, 10, 'Cantidad', 1, align='C')
-            pdf.cell(21, 10, 'Total', 1, align='C')
+            pdf.cell(15, 10, 'Costo', 1, align='C')
+            pdf.cell(15, 10, 'Cantidad', 1, align='C')
+            pdf.cell(18, 10, 'Total', 1, align='C')
             pdf.ln()
             pdf.set_font('Arial', '', 6)
             for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
                 pdf.cell(21, 10, str(value['nombre']), 1, align='C')
-                pdf.cell(21, 10, str(value['sku']), 1, align='C')
-                pdf.cell(21, 10, str(value['marca']), 1, align='C')
-                pdf.cell(21, 10, str(value['fabricante']), 1, align='C')
-                pdf.cell(21, 10, str(value['proveedor']), 1, align='C')
+                pdf.cell(15, 10, str(value['sku']), 1, align='C')
+                pdf.cell(18, 10, str(value['marca']), 1, align='C')
+                pdf.cell(32, 10, f"{value['fabricante_name']}_{value['fabricante']}", 1, align='C')
+                pdf.cell(32, 10, f"{value['proveedor_name']}_{value['proveedor']}", 1, align='C')
                 pdf.cell(21, 10, str(value['tipo_producto']), 1, align='C')
-                pdf.cell(21, 10, str(value['costo']), 1, align='C')
-                pdf.cell(21, 10, str(value['cantidad_pack']), 1, align='C')
+                pdf.cell(15, 10, str(value['costo']), 1, align='C')
+                pdf.cell(15, 10, str(value['cantidad_pack']), 1, align='C')
                 total = value['cantidad_pack'] * value['costo']
-                pdf.cell(21, 10, str(f"${round(total,2):,}"), 1, align='C')
+                pdf.cell(18, 10, str(f"${round(total,2):,}"), 1, align='C')
                 pdf.ln()
             html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'orden_de_compra_' + str(st.session_state['ordenCompraId']))
             st.markdown(html, unsafe_allow_html=True)
@@ -227,8 +227,11 @@ def UITTerminarOrdenCompra(parents, order_data):
             st.rerun()
         
 # Vista de creación de producto
-def UITAddProduct(producto, marcas, fabricante, proveedores):
+def UITAddProduct(producto, fabricante, proveedores):
+    marcas = st.session_state.marcas
+    st.title('Producto Nuevo')
     print(producto)
+    # Get product info
     if (producto is not None):
         nombreVal = producto['nombre']
         skuVal = producto['sku']
@@ -244,25 +247,56 @@ def UITAddProduct(producto, marcas, fabricante, proveedores):
         if 'product_id' in producto:
             product_id = producto['product_id']
     else:
+        print('producto no esta declarado')
         nombreVal = ''
         skuVal = ''
         tipo_product_indexVal = 0
-        marcasIndex = 0
-        proveedoresIndex = 0
-        fabricanteIndex = 0
+        marcasIndex = None
+        proveedoresIndex = None
+        fabricanteIndex = None
         costoVal = 0.0
         units_per_packVal = 0
         strBtn = 'Confirmar Creación'
-        
-    st.title('Producto Nuevo')
+
+    # Inputs
     nombre = st.text_input('Nombre del producto', value=nombreVal)
     sku = st.text_input('Codigo Producto Seller', value=skuVal)
-    marca = st.selectbox('Marca', options=marcas['meta_value'], index=marcasIndex)
+    
+    # Select inputs
+    
+    marca_text = None
+    disabled = False
+    if st.checkbox('Otra marca'):
+        marca_text = st.text_input('Marca Nueva')
+        marcasIndex = None
+        disabled = True
+    marca = st.selectbox('Marca', options=marcas, index=marcasIndex, disabled=disabled)
+    print('marca select value')
+    print(marca)
+    # Is new brand
+    
+    if marca is not None:
+        print('marcas is not none para generar index')
+        print('marca')
+        print(marca)
+        marcasIndex = marcas.index(marca)
+        print('marca index')
+        print(marcasIndex)
+    else:
+        print('marcas es none')
+        marcasIndex = None
+        st.session_state.current_marca_index = marcasIndex
+    
     dueno_producto = st.selectbox('Dueño de producto', options=fabricante['meta_value'], index=fabricanteIndex)
+    if dueno_producto is not None:
+        fabricanteIndex = fabricante['meta_value'].index(dueno_producto)
+    else:
+        fabricanteIndex = None
     proveedor = st.selectbox('Proveedor', options=proveedores['meta_value'], index=proveedoresIndex)
-    marcasIndex = marcas['meta_value'].index(marca)
-    fabricanteIndex = fabricante['meta_value'].index(dueno_producto)
-    proveedoresIndex = proveedores['meta_value'].index(proveedor)
+    if proveedor is not None:
+        proveedoresIndex = proveedores['meta_value'].index(proveedor)
+    else:
+        proveedoresIndex = None
     tipo_producto_list = ['Unidad', 'Paquete']
     tipo_producto = st.selectbox('Tipo de producto', tipo_producto_list, index=tipo_product_indexVal)
     tipo_product_index = tipo_producto_list.index(tipo_producto)
@@ -277,6 +311,10 @@ def UITAddProduct(producto, marcas, fabricante, proveedores):
     input_file = st.file_uploader("Agrega la imagen del producto", accept_multiple_files=False)
     if st.button(strBtn):
         if nombre != '' and sku != '' and costo != 0:
+            if marca_text is not None:
+                marca = marca_text
+                marcas.append(marca_text)
+                st.session_state.marcas = marcas
             productoDict = {
                 'nombre': nombre,
                 'sku': sku,
@@ -288,8 +326,10 @@ def UITAddProduct(producto, marcas, fabricante, proveedores):
                 'marcas_index': marcasIndex,
                 'fabricante': fabricante['user_id'][fabricanteIndex],
                 'fabricante_index': fabricanteIndex,
+                'fabricante_name': fabricante['meta_value'][fabricanteIndex],
                 'proveedor': proveedores['user_id'][proveedoresIndex],
-                'proveedores_index': proveedoresIndex
+                'proveedores_index': proveedoresIndex,
+                'proveedor_name': proveedores['meta_value'][proveedoresIndex]
             }
             if producto is not None:
                 if input_file is not None:

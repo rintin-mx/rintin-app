@@ -251,7 +251,7 @@ def get_fabricantes(db='repl'):
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         sql ="""
-            select wp_usermeta.user_id, dos.meta_value from wp_usermeta inner join wp_usermeta as dos on dos.user_id =wp_usermeta.user_id  where wp_usermeta.meta_key = '_is_dueno_producto' and wp_usermeta.meta_value = 0 and dos.meta_key = 'dokan_store_name'
+            select wp_usermeta.user_id, dos.meta_value from wp_usermeta inner join wp_usermeta as dos on dos.user_id =wp_usermeta.user_id  where wp_usermeta.meta_key = '_is_dueno_producto' and wp_usermeta.meta_value = 1 and dos.meta_key = 'dokan_store_name'
         """
         cursor.execute(sql)
 
@@ -287,7 +287,13 @@ def get_brands(db='repl'):
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         sql ="""
-                select distinct meta_value from wp_postmeta where meta_key = '_brand'
+                with uno as (
+select distinct meta_value from wp_postmeta where meta_key = '_brand'
+union
+select distinct marca as meta_value from producto_orden_compra where marca is not null
+)
+select distinct meta_value from uno
+
         """
         cursor.execute(sql)
 
