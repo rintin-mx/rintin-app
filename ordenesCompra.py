@@ -51,6 +51,8 @@ def app():
                 del st.session_state['initialFetch']
             if 'deletedProducts' in st.session_state:
                 del st.session_state['deletedProducts']
+            if 'marcas' in st.session_state:
+                del st.session_state['marcas']
             UITOrdenesCompraMenu()
         elif st.session_state.current_view == 'editOrdenesCompra':
             data = get_ordenes_compra()
