@@ -7,6 +7,7 @@ import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from db.db_entregas_oax import insert_route, update_route_order_status, insert_item_problem, update_recieved_money, update_route_status, insert_product_problem
+from integration.endpoint_WATI import send_post_request_to_api
 
 DIFF_REASONS = ['Producto faltante', 'Producto con falla', 'Cliente sin dinero']
 PROBLEM_REASONS = ['Producto faltante', 'Producto con falla']
@@ -19,11 +20,15 @@ NEXT_STATUS_DICT = {
 }
 
 async def update_status_wordpress(order_id, order_status):
-    result = await endpoint_update_status_by_order_id(order_id, order_status)
-    return result
+	result = await endpoint_update_status_by_order_id(order_id, order_status)
+	return result
 
-def UIentregas_oax(data):
+def UIentregas_oax(data, order_ids, zonas):
+	if 'current_selected' not in st.session_state:
+		st.session_state.current_selected = {}
 	respuesta = False
+	data_frame = pd.DataFrame(data)
+	
 	st.markdown('''<style>
 		.block-container{
 			padding-top: 0
@@ -33,7 +38,7 @@ def UIentregas_oax(data):
 			padding-bottom: 20px;
 		}
 		div[data-testid="stVerticalBlock"]:has(div.container_2){
-			margin-top: 30px;
+			margin-top: 120px;
 		}
 		div:has( >.element-container div.floating) {
 			display: flex;
@@ -50,40 +55,73 @@ def UIentregas_oax(data):
 	with container:
 		st.write('<div class="floating"></div>', unsafe_allow_html=True)
 		st.write('# Pedidos a entregar')
+		options = st.multiselect(
+			'ID ordenes',
+			options=order_ids,
+			key='id_filter',
+			default=None
+		)
+		zonas_entrega = st.multiselect(
+			'Zonas de entrega',
+			options=zonas,
+			key='zona_filter',
+			default=None
+		)
 		button = st.button('Generar ruta')
-
+	if len(options)>0:
+		df_data =data_frame[data_frame['order_id'].isin(options)]
+	else:
+		df_data = data_frame
+	if len(zonas_entrega)>0:
+		df_data =df_data[data_frame['zona_entrega'].isin(zonas_entrega)]
+	else:
+		df_data = df_data
+	print(df_data)
 	container2 = st.container()
 	with container2:
 		st.write('<div class="container_2"></div>', unsafe_allow_html=True)
 		orders_for_route_list = []
-		for i in range(len(data["order_id"])):
+		for i, ordenes in df_data.iterrows():
+			if data["order_id"][i] in st.session_state.current_selected:
+				value = True
+			else:
+				value = False
 			st.write('#### Cliente:')
-			st.write(f'{data["name"][i]}')
+			st.write(f'{ordenes["name"]}')
 			st.write('#### Número de pedido:')
-			st.write(f'{data["order_id"][i]}')
+			st.write(f'{ordenes["order_id"]}')
 			st.write('#### Número de contacto:')
-			st.write(f'{data["number_unified"][i]}')
+			st.write(f'{ordenes["number_unified"]}')
 			st.write('#### Dirección:')
-			st.write(f'{data["address"][i]}')
+			st.write(f'{ordenes["address"]}')
 			st.write('#### Número de paquetes:')
-			st.write(f'{int(data["num_paquetes"][i])}')
+			st.write(f'{int(ordenes["num_paquetes"])}')
 			st.write('### Zona de entrega:')
-			st.write(f'{data["zona_entrega"][i]}')
-			checked = st.checkbox('Ingresar a ruta', key=i)
+			st.write(f'{ordenes["zona_entrega"]}')
+			checked = st.checkbox('Ingresar a ruta', key=i, value=value)
 			if checked:
+				st.session_state.current_selected[data["order_id"][i]] = True
 				orders_for_route_list.append({
-					"order_id": data["order_id"][i],
-					"name": data["name"][i],
-					"number_unified": data["number_unified"][i],
-					"address": data["address"][i],
-					'total': data['order_total'][i]
+					"order_id": ordenes["order_id"],
+					"name": ordenes["name"],
+					"number_unified": ordenes["number_unified"],
+					"address": ordenes["address"],
+					'total': ordenes['order_total']
 				})
 			st.write('---')
 	respuesta = ui.alert_dialog(show=button, title="Confirmación de ruta", description=f'Se creará una ruta con {len(orders_for_route_list)} ordenes distintas.', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
 	if respuesta:
 		insert_route(st.session_state.useremail, orders_for_route_list)
+		for order in orders_for_route_list:
+			params = [
+				{'name': 'name', 'value': order["name"]},
+				{'name': 'orden_padre_en_camino_pickup', 'value': order["order_id"]},
+				{'name': 'pickup_en_camino', 'value': 'Oaxaca (JP García)'},
+			]
+			send_post_request_to_api('03_pedido_en_camino_pickup_v1', params, f'521{order["number_unified"]}')
 		print('dentro')
 		st.session_state['current_view'] = 'entregas_oax'
+		del st.session_state.current_selected
 		st.rerun()
 		
 def UIroute_orders(data, route_id):

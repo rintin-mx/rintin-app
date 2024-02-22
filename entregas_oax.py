@@ -18,7 +18,7 @@ def app():
             else:
                 data = get_orders()
                 if data:
-                    UIentregas_oax(data)
+                    UIentregas_oax(data, data['order_id'], set(data['zona_entrega']))
                 else:
                     st.header('No hay ordenes para entregar', divider='rainbow')
                     st.header('No hay ordenes para entregar :blue[en este momento] :sunglasses:')

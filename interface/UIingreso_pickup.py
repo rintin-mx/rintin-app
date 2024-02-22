@@ -67,4 +67,4 @@ def finalizarProceso(parentId, childList, childListString):
     if st.button('Regresar'):
         st.session_state['current_view'] = 'ingresoPickup'
         st.rerun()
-            
+
