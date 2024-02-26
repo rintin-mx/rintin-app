@@ -714,6 +714,7 @@ from
 	left join product_meta on order_item_meta.product_id = product_meta.product_id
 	left join wp_posts on wp_posts.id = product_meta.image_id
 
+
 		"""
 		cursor.execute(sql)
 

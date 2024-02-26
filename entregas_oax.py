@@ -30,4 +30,5 @@ def app():
             total = st.session_state.current_order['total']
             estado = st.session_state.current_order['estado']
             order_items = get_order_items(order_id)
-            order_detail(order_id, number_unified, address, order_items, route_id, estado)
+            child_order_list = set(order_items['order_id'])
+            order_detail(order_id, number_unified, address, order_items, route_id, estado, child_order_list)
