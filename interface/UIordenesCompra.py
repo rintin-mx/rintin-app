@@ -158,7 +158,7 @@ def UITTerminarOrdenCompra(parents, order_data):
             pdf.cell(21, 10, 'Nombre', 1, align='C')
             pdf.cell(15, 10, 'SKU', 1, align='C')
             pdf.cell(18, 10, 'Marca', 1, align='C')
-            pdf.cell(32, 10, 'Fabricante', 1, align='C')
+            pdf.cell(32, 10, 'Dueño Producto', 1, align='C')
             pdf.cell(32, 10, 'Proveedor', 1, align='C')
             pdf.cell(21, 10, 'Tipo', 1, align='C')
             pdf.cell(15, 10, 'Costo', 1, align='C')
@@ -406,7 +406,7 @@ def UITOrdenesCompraMenu():
         st.session_state.current_view = 'editOrdenesCompra'
         st.rerun()
 
-def UITOrdenesCompraCSV(data):
+def UITOrdenesCompraCSV(data, fabricante, proveedores):
     if st.button('Volver'):
         st.session_state.current_view = 'ordenesCompraMenu'
         st.rerun()
@@ -430,7 +430,7 @@ def UITOrdenesCompraCSV(data):
     if button and csv_file is not None and seller is not None:
         try:
             csv_df = pd.read_csv(csv_file)
-            csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete', 'marca', 'fabricante', 'proveedor']]
+            csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete', 'marca', 'dueno_producto', 'proveedor']]
             csv_dict = csv_df.to_dict(orient='list')
             print(csv_dict)
             #'Unidad', 'Paquete'
@@ -440,6 +440,11 @@ def UITOrdenesCompraCSV(data):
                     tipo_producto = 'Unidad'
                 else:
                     tipo_producto = 'Paquete'
+                print(fabricante['user_id'])
+                fabricanteIndex = fabricante['user_id'].index(csv_dict['dueno_producto'][i])
+                fabricante_name = fabricante['meta_value'][fabricanteIndex]
+                proveedorIndex = proveedores['user_id'].index(csv_dict['proveedor'][i])
+                proveedor_name = proveedores['meta_value'][proveedorIndex]
                 productDict = {
                     'nombre': csv_dict['nombre'][i],
                     'sku': csv_dict['sku'][i],
@@ -449,8 +454,10 @@ def UITOrdenesCompraCSV(data):
                     'costo': csv_dict['costo_por_paquete'][i],
                     'img_url': '',
                     'marca': csv_dict['marca'][i],
-                    'fabricante': csv_dict['fabricante'][i],
+                    'fabricante': csv_dict['dueno_producto'][i],
+                    'fabricante_name': fabricante_name,
                     'proveedor': csv_dict['proveedor'][i],
+                    'proveedor_name': proveedor_name
                 }
                 tempArr.append(productDict)
             st.session_state['dictProductos'][seller] = tempArr
