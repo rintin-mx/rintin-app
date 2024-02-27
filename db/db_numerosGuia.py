@@ -81,8 +81,14 @@ with orders as (
 		case when post_parent = 0 then id else post_parent end as post_parent,
 		post_status
 	from wp_posts 
+    left join wp_woocommerce_order_items on order_id = id
 	where post_type = 'shop_order' and post_status NOT IN ('wc-pendientes_ograma','wc-failed', 'wc-caducado','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial')
     and id not in (select distinct post_parent from wp_posts)
+),
+order_shipping as (
+	select 
+		distinct order_id
+	from wp_woocommerce_order_items where order_item_type = 'shipping' and order_item_name like '%oax%'
 ),
 grouped_orders as(
 select 
@@ -156,7 +162,7 @@ select
 	ordenes_activas,
 	num_hijos_guia
 from ordermeta 
-where postcode not in (select codigo_postal from cps)
+where (postcode not in (select codigo_postal from cps) or order_id not in (select order_id from order_shipping))
 
         """
         cursor.execute(wp_ordenes_query)
