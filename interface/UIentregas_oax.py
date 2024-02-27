@@ -165,7 +165,7 @@ def UIroute_orders(data, route_id):
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
 
-def order_detail(order_id, number_unified, address, order_items, route_id, estado):
+def order_detail(order_id, number_unified, address, order_items, route_id, estado, child_order_id):
 	if st.button('Regresar'):
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
@@ -183,6 +183,9 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
 	no_entregue_btn = st.button('No se entregó el pedido')
 	if no_entregue_btn and razon_no_entrega != None:
 		update_route_order_status(route_id, order_id, NEXT_STATUS_DICT[estado], razon_no_entrega)
+		if NEXT_STATUS_DICT[estado] == 'Fallido':
+			for order in child_order_id:
+				asyncio.run(update_status_wordpress(order, 'devolucion_proces'))
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
 	st.write('---')
@@ -229,6 +232,8 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
 		st.write('---')
 	print('order_items_con_falla')
 	print(order_items_con_falla)
+	print('hijos')
+	print(child_order_id)
 	st.write('---')
 	st.write(f'Total calculado a cobrar: ${calculated_total}')
 	st.write(f'Total a cobrar: ${total}')
