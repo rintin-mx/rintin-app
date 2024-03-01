@@ -250,6 +250,7 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
 	st.write('---')
 	if metodo_pago != 'cheque':
 		total = 0
+		calculated_total = 0
 	st.write(f'Total calculado a cobrar: ${calculated_total}')
 	st.write(f'Total a cobrar: ${total}')
 	value = st.number_input('Total recibido: ', min_value=0.00, step=0.01)
