@@ -248,7 +248,7 @@ with orders as (
 	from
 		wp_posts
 	where
-		post_status = 'wc-recolectar-2' and id=302295
+		post_status = 'wc-recolectar-2' and id={id}
 		
 ),
 ordermeta as(
