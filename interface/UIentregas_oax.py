@@ -19,6 +19,11 @@ NEXT_STATUS_DICT = {
 	"Intento 3": "Fallido"
 }
 
+PAGOS_DICT = {
+	'woo-mercado-pago-basic': 'Pre-pagado',
+	'cheque': 'Pago contra-entrega'
+}
+
 async def update_status_wordpress(order_id, order_status):
 	result = await endpoint_update_status_by_order_id(order_id, order_status)
 	return result
@@ -151,7 +156,8 @@ def UIroute_orders(data, route_id):
 					"number_unified": data["number_unified"][i],
 					"address": data["address"][i],
 					"total": data['order_total'][i],
-					"estado": data["estado"][i]
+					"estado": data["estado"][i],
+					'metodo_pago': data['metodo_pago'][i]
 				}
 				st.session_state.route_id = route_id
 				st.session_state.current_view = 'entrega_order_detail'
@@ -165,7 +171,7 @@ def UIroute_orders(data, route_id):
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
 
-def order_detail(order_id, number_unified, address, order_items, route_id, estado, child_order_id):
+def order_detail(order_id, number_unified, address, order_items, route_id, estado, child_order_id, metodo_pago):
 	if st.button('Regresar'):
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
@@ -173,11 +179,64 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
 	calculated_total = 0
 	total = 0
 	respuesta = False
+	validacion = True
 	st.write(f'### Pedido: {order_id}')
 	st.write(f'### Telefono cliente: {number_unified}')
 	st.write(f'### Dirección:')
 	st.write(address)
-	st.write('---')
+	st.write('### Método de pago:')
+	st.write(PAGOS_DICT[metodo_pago])
+	st.write('#### Productos de la orden')
+	order_items_con_falla = []
+	for i in range(len(order_items['order_item_id'])):
+		if order_items['order_item_type'][i] == 'line_item':
+			st.image(order_items['img_url'][i])
+			st.write('#### Nombre de producto:')
+			st.write(order_items['order_item_name'][i])
+			st.write('#### SKU:')
+			st.write(order_items['sku'][i])
+			st.write('#### Cantidad:')
+			st.write(int(order_items['line_qty'][i]))
+			st.write('#### Precio:')
+			st.write(f"{(order_items['line_total'][i])}")
+			total += (int(order_items['line_qty'][i]) * int(float(order_items['line_total'][i])))
+			recieved = st.number_input('Cantidad recibida', min_value=0, max_value=int(order_items['line_qty'][i]), step=1, key=f'amount_{i}')
+			calculated_total += (recieved * int(float(order_items['line_total'][i])))
+			if recieved != int(order_items['line_qty'][i]):
+				reason = st.selectbox('Razón diferencia', options=DIFF_REASONS, key=f'select_{i}', index=None)
+				if reason is None:
+					validacion = validacion and False
+				st.error('Validación')
+				order_items_con_falla.append({
+					"order_item_id": order_items['order_item_id'][i],
+					"cantidad_entregada": recieved,
+					"razon_no_entrega": reason,
+					"tipo": 0
+				})
+			else:
+				reason = ''
+				st.success('OK')
+			if st.checkbox('Paquete con problema', key=f'paquet_{i}'):
+				units_with_problem = st.number_input('Cantidad con problema', min_value=0, max_value=int(order_items['line_qty'][i]), key=f'cantidad_{i}')
+				problem_reason = st.selectbox('Razón problema', options=PROBLEM_REASONS, key=f'problem_{i}')
+				order_items_con_falla.append({
+					"order_item_id": order_items['order_item_id'][i],
+					"cantidad_entregada": units_with_problem,
+					"razon_no_entrega": problem_reason,
+					"tipo": 1
+				})
+		else:
+			st.write('### Envío: ' )
+			st.write(order_items['order_item_name'][i])
+			st.write('### Precio:')
+			st.write(order_items['line_total'][i])
+			total += int(order_items['line_total'][i])
+			calculated_total += int(order_items['line_total'][i])
+		if order_items['order_id'][i] in orders_dict:
+			orders_dict[order_items['order_id'][i]] += recieved
+		else:
+			orders_dict[order_items['order_id'][i]] = recieved
+		st.write('---')
 	st.write('En caso de no haber entregado el pedido:')
 	razon_no_entrega = st.selectbox('Razon de no entrega', options=NO_ENTREGA_REASON, index=None)
 	no_entregue_btn = st.button('No se entregó el pedido')
@@ -189,59 +248,18 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
 		st.session_state.current_view = 'entregas_oax'
 		st.rerun()
 	st.write('---')
-	st.write('#### Productos de la orden')
-	order_items_con_falla = []
-	for i in range(len(order_items['order_item_id'])):
-		st.image(order_items['img_url'][i])
-		st.write('#### Nombre de producto:')
-		st.write(order_items['order_item_name'][i])
-		st.write('#### SKU:')
-		st.write(order_items['sku'][i])
-		st.write('#### Cantidad:')
-		st.write(int(order_items['line_qty'][i]))
-		st.write('#### Precio:')
-		st.write(int(order_items['line_total'][i]))
-		total += (int(order_items['line_qty'][i]) * int(order_items['line_total'][i]))
-		recieved = st.number_input('Cantidad recibida', min_value=0, max_value=int(order_items['line_qty'][i]), step=1, key=f'amount_{i}')
-		calculated_total += (recieved * order_items['line_total'][i])
-		if recieved != int(order_items['line_qty'][i]):
-			reason = st.selectbox('Razón diferencia', options=DIFF_REASONS, key=f'select_{i}')
-			st.error('Validación')
-			order_items_con_falla.append({
-				"order_item_id": order_items['order_item_id'][i],
-				"cantidad_entregada": recieved,
-				"razon_no_entrega": reason,
-				"tipo": 0
-			})
-		else:
-			reason = ''
-			st.success('OK')
-		if st.checkbox('Paquete con problema', key=f'paquet_{i}'):
-			units_with_problem = st.number_input('Cantidad con problema', min_value=0, max_value=int(order_items['line_qty'][i]), key=f'cantidad_{i}')
-			problem_reason = st.selectbox('Razón problema', options=PROBLEM_REASONS, key=f'problem_{i}')
-			order_items_con_falla.append({
-				"order_item_id": order_items['order_item_id'][i],
-				"cantidad_entregada": units_with_problem,
-				"razon_no_entrega": problem_reason,
-				"tipo": 1
-			})
-		if order_items['order_id'][i] in orders_dict:
-			orders_dict[order_items['order_id'][i]] += recieved
-		else:
-			orders_dict[order_items['order_id'][i]] = recieved
-		st.write('---')
-	print('order_items_con_falla')
-	print(order_items_con_falla)
-	print('hijos')
-	print(child_order_id)
-	st.write('---')
+	if metodo_pago != 'cheque':
+		total = 0
 	st.write(f'Total calculado a cobrar: ${calculated_total}')
 	st.write(f'Total a cobrar: ${total}')
 	value = st.number_input('Total recibido: ', min_value=0.00, step=0.01)
-	if value != float(total):
+	if value != float(total) and value != 0:
 		st.error('Validacion')
 	button = st.button('Confirmar entrega')
-	respuesta = ui.alert_dialog(show=button, title="Confirmación de entrega de orden", description=f'Se entrego la orden {order_id}', confirm_label="Confirmar", cancel_label="Volver", key="respuesta_entrega")
+	if validacion:
+		respuesta = ui.alert_dialog(show=button, title="Confirmación de entrega de orden", description=f'Se entrego la orden {order_id}', confirm_label="Confirmar", cancel_label="Volver", key="respuesta_entrega")
+	else:
+		st.error('Se deben seleccionar todas las razones de no entrega en los productos')
 	if respuesta:
 		for product in order_items_con_falla:
 			if product['tipo'] == 0:

@@ -30,11 +30,11 @@ def ver_detalle(id,nombre,estado):
     st.session_state.disabledUIP = True
     st.rerun()
 
-def UITodosLosPedidos(data):
+def UITodosLosPedidos(data, proveedores):
     df = pd.DataFrame(data)
+    unique_proveedores_list = proveedores
     unique_values = df['Seller'].unique()
     unique_values_list = unique_values.tolist()
-    unique_values_list.insert(0, "Todos los seller")
     
 
     if "estadoUIP" not in st.session_state:
@@ -45,34 +45,43 @@ def UITodosLosPedidos(data):
     
     if st.session_state.disabledUIP == False:
         option = st.selectbox(
-                "How would you like to be contacted?",
+                "Seller",
                 unique_values_list,
-                label_visibility="hidden",
-                disabled=st.session_state.disabledUIP,
-                key="selectboxPckerar"
+                key="selectboxOption",
+                index=None
             )
+        proveedor_select = st.selectbox(
+                "Proveedor",
+                unique_proveedores_list,
+                key="selectboxPckerar",
+                index=None
+            )
+        
+        
     if "optionsPickear" not in st.session_state:
-        st.session_state['optionsPickear']="Todos los seller"
+        st.session_state['optionsPickear']=None
+    if "sellersPickear" not in st.session_state:
+        st.session_state['sellersPickear'] = None
+    if proveedor_select is not None:
+        st.session_state['optionsPickear'] = proveedor_select
     else:
-        if st.session_state['estadoUIP']==False:
-            st.session_state['optionsPickear']=option
-        else:
-            if st.session_state['estadoUIP']==True:
-                option=st.session_state['optionsPickear']
-    if st.session_state['optionsPickear']=="Todos los seller" and st.session_state['estadoUIP']==False:
-        st.session_state['optionsPickear']="Todos los seller"
+        st.session_state['optionsPickear'] = None
+    if option is not None:
+        st.session_state['sellersPickear'] = option
+    else:
+        st.session_state['sellersPickear'] = None
+    
+    if st.session_state['sellersPickear'] is None:
         df_data = df
     else:
-        options=[st.session_state['optionsPickear']]
-        df_data = df[df['Seller'].isin([st.session_state['optionsPickear']])]
-    
-    st.header("Detalle ordenenes por Seller: "+st.session_state['optionsPickear'])
-    if st.session_state.disabledUIP == True:
-        if st.button("Limpiar Filtro", key="habilitarOpcionesAuditoria"):
-            st.session_state['estadoUIP']=False
-            st.session_state.disabledUIP = False
-            st.session_state['optionsPickear']="Todos los seller"
-            st.rerun()
+        df_data = df[df['Seller'].isin([st.session_state['sellersPickear']])]
+        
+    if st.session_state['optionsPickear'] is None:
+        df_data = df_data
+    else:
+        df_data = df_data[df_data['proveedor'].str.contains(str(st.session_state['optionsPickear']))]
+
+    print(df_data)
     for i in range(len(df_data)):
         st.write("---")
         with st.container():
@@ -80,12 +89,13 @@ def UITodosLosPedidos(data):
             # Usar la primera columna para mostrar la información
             with col1:
                 st.markdown(f"**Order_id:** {df_data.iloc[i, 0]}")
+                st.markdown(f"**Proveedor:** {df_data.iloc[i, 2]}")
                 st.markdown(f"**Seller:** {df_data.iloc[i, 1]}")
-                st.markdown(f"**Estado:** {df_data.iloc[i, 2]}")
+                st.markdown(f"**Estado:** {df_data.iloc[i, 3]}")
             with col2:
-                if df_data.iloc[i, 3] > 0:
-                    st.warning('Pedido pasó por recolección con problema')
                 if df_data.iloc[i, 4] > 0:
+                    st.warning('Pedido pasó por recolección con problema')
+                if df_data.iloc[i, 5] > 0:
                     st.warning('Pedido pasó por validación de stock')
             with col3:
                 if st.button("Pickear", key=i):
@@ -102,7 +112,7 @@ def UIDetallePedido(data_deta,idPedido):
 
 
     # Título de la tabla
-    st.subheader(f"Nombre del Seller: {st.session_state.nombreSeller}")
+    st.subheader(f"Nombre del seller: {st.session_state.nombreSeller}")
     # Botón para finalizar la recolección
     if st.button("Regresar la lista de pedidos"):
         #del st.session_state['data_deta']
@@ -117,10 +127,10 @@ def UIDetallePedido(data_deta,idPedido):
     df = pd.DataFrame(data_deta)
     objArry=[]
     for i, pedido in df.iterrows():
+        st.write(f'### Proveedor: {pedido.proveedor}')
         print(pedido.Imagen)
         #col1, col2, col3, col4, col5 = st.columns(5)
         col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 2])
-
         with col1:
             if pedido.Imagen is not  None:
                 st.image(pedido.Imagen, use_column_width=True)

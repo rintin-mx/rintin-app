@@ -28,6 +28,40 @@ def config_db(db='repl') -> dict:
         }
     return config
 
+def get_proveedores(db='repl'):
+    config = config_db(db)
+    try:
+        conexion = mysql.connector.connect(**config)
+        cursor = conexion.cursor(dictionary=True)
+        sql = """
+            with proveedores as (
+select distinct meta_value  as proveedores
+from wp_postmeta 
+where meta_key = '_proveedor'
+),
+sellers as(
+	select user_id, meta_value
+    from wp_usermeta
+    where meta_key = 'dokan_store_name'
+)
+select meta_value as proveedor from proveedores inner join sellers on user_id = proveedores
+        """
+    # Ejecutar la primera consulta
+        cursor.execute(sql)
+
+        # Obtener los resultados de la primera consulta
+        results = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        wp_proveedores = pd.DataFrame(results)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+        wp_proveedores.columns = ['proveedor']
+        results_dict = wp_proveedores.to_dict(orient='list')
+        return results_dict
+
 def get_seller(db='repl') -> dict:
     # Registrar el tiempo de inicio
     config = config_db(db)
@@ -37,7 +71,8 @@ def get_seller(db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_seller_sql ="""
-        WITH orders AS (
+        
+with orders AS (
 SELECT
 	wp_posts.id,
 	wp_posts.post_status,
@@ -46,7 +81,12 @@ FROM
 	wp_posts
 	left join wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
 WHERE
-	post_status = 'wc-recolectar-2'
+	post_status = 'wc-recolectar-2' 
+),
+proveedores as (
+select distinct meta_value  as proveedores
+from wp_postmeta 
+where meta_key = '_proveedor'
 ),
 order_comments as(
 	select
@@ -68,22 +108,43 @@ order_comments_grouped as(
 	from order_comments
     group by id
 ),
-ordermeta AS(
-SELECT
-	post_id AS order_id,
-	post_status,
+ordermeta as (
+	select
+		post_id,
+        post_status,
+        max(
+			CASE
+		WHEN `meta_key` = '_dokan_vendor_id' THEN `meta_value`
+		ELSE NULL
+	END
+        ) as seller_id
+        from wp_postmeta inner join orders on id = post_id
+        group by post_id, post_status
+),
+order_items as(
+	select
+		wp_woocommerce_order_items.order_item_id,
+        om.meta_value as product_id,
+        order_id
+	from wp_woocommerce_order_items
+    inner join wp_woocommerce_order_itemmeta om on om.order_item_id = wp_woocommerce_order_items.order_item_id
+    inner join orders on id = order_id
+    where om.meta_key = '_product_id'
+),
+proveedoresmeta as(
+	select
+    user_id,
 	max(
 	CASE
-		WHEN `meta_key` = '_dokan_vendor_id' THEN `meta_value`
-		ELSE orders.seller_id
+		WHEN `meta_key` = 'dokan_store_name' THEN `meta_value`
+		ELSE NULL
 	END
-	) AS `dokan_vendor_id`
-FROM
-	wp_postmeta
-	INNER JOIN orders ON orders.id = post_id
+	) AS `dokan_store_name`
+    FROM
+	wp_usermeta
+	INNER JOIN proveedores ON proveedores = user_id
 GROUP BY
-	post_id,
-	post_status
+	user_id
 ),
 users AS (
 SELECT
@@ -102,25 +163,46 @@ SELECT
 	) AS `bodega`
 FROM
 	wp_usermeta
-	INNER JOIN ordermeta ON ordermeta.dokan_vendor_id = user_id
+	INNER JOIN orders ON orders.seller_id = user_id
 GROUP BY
 	user_id
+),
+product_meta_helper as(
+	select
+		order_id,
+        meta_value,
+        case when u1.dokan_store_name is null then 'Sin proveedor' else u1.dokan_store_name end as proveedor
+	from wp_postmeta
+    inner join order_items on product_id = post_id
+    inner join wp_posts on id = post_id
+    left join proveedoresmeta u1 on meta_value = u1.user_id
+    where meta_key = '_proveedor'
+),
+product_meta as(
+	select
+		order_id,
+        group_concat(distinct proveedor) as proveedor
+	from product_meta_helper
+    group by order_id
 )
+
 SELECT
-order_id,
-dokan_vendor_id AS seller_id,
-dokan_store_name AS seller_name,
+wp_posts.id as order_id,
+dokan_store_name as seller_name,
+proveedor AS proveedor,
 post_status AS estado,
 recoleccion_c_problemas,
 validacion_stock
 FROM
-ordermeta
-INNER JOIN users ON users.user_id = ordermeta.dokan_vendor_id
-inner join order_comments_grouped on order_comments_grouped.id = ordermeta.order_id
+wp_posts
+inner join product_meta on product_meta.order_id = wp_posts.id
+inner join order_comments_grouped on order_comments_grouped.id = wp_posts.id
+inner join wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
+inner join users on users.user_id = seller_id
 	WHERE
-	bodega IN ('centro_cdmx', 'aj_cdmx', 'oaxaca')
+	users.bodega IN ('centro_cdmx', 'aj_cdmx', 'oaxaca')
 ORDER BY
-order_id ASC
+wp_posts.id ASC
         """
 
         # Ejecutar la primera consulta
@@ -145,8 +227,8 @@ order_id ASC
         minutes = int(duration // 60)
         seconds = int(duration % 60)
         # Nueva lista de nombres de columnas
-        wp_seller=wp_seller[['order_id', 'seller_name','estado', 'recoleccion_c_problemas', 'validacion_stock']]
-        wp_seller.columns = ['order_id', 'Seller','estado', 'recoleccion_c_problemas', 'validacion_stock']
+        wp_seller=wp_seller[['order_id', 'seller_name','proveedor','estado', 'recoleccion_c_problemas', 'validacion_stock']]
+        wp_seller.columns = ['order_id', 'Seller', 'proveedor','estado', 'recoleccion_c_problemas', 'validacion_stock']
         wp_seller_general_dict = wp_seller.to_dict(orient='list')
         return wp_seller_general_dict
 
@@ -160,95 +242,108 @@ def get_order(id,db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_pickeo_sql = f"""
-           with orders as (
-                    select
-                        id
-                    from
-                        wp_posts
-                    where
-                        post_status = 'wc-recolectar-2' and id={id}
-                        
-                ),
-                ordermeta as(
-                    select
-                        post_id as order_id,
-                        max(
-                            case
-                                when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `dokan_vendor_id`
-                    from
-                        wp_postmeta inner join orders on orders.id = post_id
-                    group by post_id
-                    #having dokan_vendor_id in ('3587', '998', '1352', '2636', '3759', '2751', '2166', '1663', '2705', '7180', '7201', '7202', '3465', '5894')
-                ),
-                order_items as(
-                    select order_item_id, ordermeta.order_id, order_item_name
-                    from wp_woocommerce_order_items
-                    inner join ordermeta on wp_woocommerce_order_items.order_id = ordermeta.order_id
-                    where order_item_type = 'line_item'
-                ),
-                order_item_meta as (
-                    select
-                        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `line_qty`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `product_id`
-                        
-                    from
-                        `wp_woocommerce_order_itemmeta`
-                        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-                    group by
-                        `wp_woocommerce_order_itemmeta`.`order_item_id`
-                ),
-                product_meta as(
-                    select
-                        post_id as product_id, 
-                        max(
-                            case
-                                when `wp_postmeta`.`meta_key` = '_sku' then `wp_postmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `sku`,
-                        max(
-                            case
-                                when `wp_postmeta`.`meta_key` = '_thumbnail_id' then `wp_postmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `image_id`,
-                        max(
-                            case
-                                when `wp_postmeta`.`meta_key` = '_units_per_pack' then `wp_postmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `units_per_pack`
-                    from wp_postmeta
-                    inner join order_item_meta on order_item_meta.product_id = post_id
-                    group by post_id
-                )
-                select
-                    order_items.order_id,
-                    product_meta.product_id,
-                    order_items.order_item_name,
-                    line_qty,
-                    sku,
-                    units_per_pack,
-                    replace(wp_posts.guid, 'http://dev.', 'https://') as img_url
-                from 
-                    order_items
-                    left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
-                    left join product_meta on order_item_meta.product_id = product_meta.product_id
-                    left join wp_posts on wp_posts.id = product_meta.image_id  
+with orders as (
+	select
+		id
+	from
+		wp_posts
+	where
+		post_status = 'wc-recolectar-2' and id=302295
+		
+),
+ordermeta as(
+	select
+		post_id as order_id,
+		max(
+			case
+				when `meta_key` = '_dokan_vendor_id' then `meta_value`
+				else NULL
+			end
+		) AS `dokan_vendor_id`
+	from
+		wp_postmeta inner join orders on orders.id = post_id
+	group by post_id
+),
+order_items as(
+	select order_item_id, ordermeta.order_id, order_item_name
+	from wp_woocommerce_order_items
+	inner join ordermeta on wp_woocommerce_order_items.order_id = ordermeta.order_id
+	where order_item_type = 'line_item'
+),
+order_item_meta as (
+	select
+		`wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
+		max(
+			case
+				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
+				else NULL
+			end
+		) AS `line_qty`,
+		max(
+			case
+				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
+				else NULL
+			end
+		) AS `product_id`
+		
+	from
+		`wp_woocommerce_order_itemmeta`
+		inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
+	group by
+		`wp_woocommerce_order_itemmeta`.`order_item_id`
+),
+product_meta as(
+	select
+		post_id as product_id, 
+		max(
+			case
+				when `wp_postmeta`.`meta_key` = '_sku' then `wp_postmeta`.`meta_value`
+				else NULL
+			end
+		) AS `sku`,
+		max(
+			case
+				when `wp_postmeta`.`meta_key` = '_proveedor' then `wp_postmeta`.`meta_value`
+				else NULL
+			end
+		) AS `proveedor`,
+		max(
+			case
+				when `wp_postmeta`.`meta_key` = '_thumbnail_id' then `wp_postmeta`.`meta_value`
+				else NULL
+			end
+		) AS `image_id`,
+		max(
+			case
+				when `wp_postmeta`.`meta_key` = '_units_per_pack' then `wp_postmeta`.`meta_value`
+				else NULL
+			end
+		) AS `units_per_pack`
+	from wp_postmeta
+	inner join order_item_meta on order_item_meta.product_id = post_id
+	group by post_id
+),
+seller_names as(
+	select user_id, meta_value
+    from wp_usermeta
+    where meta_key = 'dokan_store_name'
+)
+select
+	order_items.order_id,
+	product_meta.product_id,
+	order_items.order_item_name,
+	line_qty,
+	sku,
+	units_per_pack,
+	replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
+    meta_value as proveedor
+from 
+	order_items
+	left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
+	left join product_meta on order_item_meta.product_id = product_meta.product_id
+	left join wp_posts on wp_posts.id = product_meta.image_id 
+    left join seller_names on seller_names.user_id = product_meta.proveedor
+order by meta_value
         """
         # Ejecutar la primera consulta
         cursor.execute(wp_pickeo_sql)
@@ -275,9 +370,9 @@ def get_order(id,db='repl') -> dict:
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_pickeo) > 0:
-        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id']]
+        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id', 'proveedor']]
         # Nueva lista de nombres de columnas
-        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id']
+        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id', 'proveedor']
         print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo_general_dict
