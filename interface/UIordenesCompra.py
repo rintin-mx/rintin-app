@@ -414,7 +414,7 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
     st.title('Creación de ordenes de compra por CSV')
     st.markdown('''
                 <p>
-                    Ingresa la orden de compra en un archivo ".csv". El archivo debe seguir el siguiente <a href="https://rintin-internal-apps.s3.us-east-2.amazonaws.com/example_files/ordenes_compra_template.csv" download="true">formato.</a>
+                    Ingresa la orden de compra en un archivo ".csv". El archivo debe seguir el siguiente <a href="https://rintin-internal-apps.s3.us-east-2.amazonaws.com/example_files/template_orden_compra.csv" download="true">formato.</a>
                 </p>''', unsafe_allow_html=True)
     if 'currentSeller' not in st.session_state:
         index = None

@@ -1,6 +1,6 @@
 import streamlit as st
 from interface.UIpicking import UITodosLosPedidos,UIDetallePedido,pickFinal
-from db.db_order import get_order,get_seller
+from db.db_order import get_order,get_seller, get_proveedores
 from db.db_UserInteractionEvents import event_instert
 
 
@@ -24,7 +24,8 @@ def app():
                         event_instert(EventName,EventAction,EventUser)
                     st.header("Todo los Pedidos")
                     data=get_seller()
-                    UITodosLosPedidos(data)
+                    proveedores=get_proveedores()
+                    UITodosLosPedidos(data, proveedores['proveedor'])
                 elif st.session_state.current_view == 'detalle':
                     data=[]
                     if st.session_state.useremail is not None:
