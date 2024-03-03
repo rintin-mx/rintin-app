@@ -50,6 +50,12 @@ ordermeta as (
 				else NULL
 			end
 		) AS postcode,
+        max(
+			case
+				when meta_key = '_payment_method' then meta_value
+				else NULL
+			end
+		) AS metodo_pago,
 		max(
 			case
 				when meta_key = '_shipping_state' then meta_value
@@ -190,7 +196,8 @@ final as(
 			end AS number_unified,
 		address,
 		line_qty,
-		order_total
+		order_total,
+        metodo_pago
 	from order_items 
 	inner join cps on cps.codigo_postal = order_items.postcode
 	left join order_item_meta on order_items.order_item_id = order_item_meta.order_item_id
@@ -203,7 +210,8 @@ select
 	address,
 	sum(line_qty) as num_paquetes,
 	order_total,
-	estado
+	estado,
+    metodo_pago
 from final
 group by 
 	order_id,
@@ -212,7 +220,8 @@ group by
 	number_unified,
 	address,
 	order_total,
-	estado
+	estado,
+    metodo_pago
 		"""
 		cursor.execute(sql)
 		results = cursor.fetchall()
@@ -221,7 +230,7 @@ group by
 		cursor.close()
 		connection.close()
 		if len(orders) > 0:
-			orders.columns = ['order_id', 'name', 'zona_entrega', 'number_unified', 'address', 'num_paquetes', 'order_total', 'estado']
+			orders.columns = ['order_id', 'name', 'zona_entrega', 'number_unified', 'address', 'num_paquetes', 'order_total', 'estado', 'metodo_pago']
 			orders_dict = orders.to_dict(orient='list')
 			return orders_dict
 		return None
@@ -317,7 +326,7 @@ def insert_item_problem(product):
 		print('Error al realizar la inserción:', e)
 		return False
 
-def update_route_order_status(route_id, order_id, status, reason):
+def update_route_order_status(route_id, order_id, status, reason, img_url):
 	db = 'prod'
 	config = config_db(db)
 	current_date = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -327,6 +336,8 @@ def update_route_order_status(route_id, order_id, status, reason):
 			cursor =  connection.cursor(dictionary=True)
 			status_for_route_order = 'success'
 			sql = f"UPDATE entrega_ordenes SET estado = '{status}' WHERE order_id = {order_id}"
+			cursor.execute(sql)
+			sql = f"UPDATE entrega_ordenes SET img_url = '{img_url}' WHERE order_id = {order_id}"
 			cursor.execute(sql)
 			if status != 'Entregado':
 				status_for_route_order= 'failed'
@@ -628,6 +639,7 @@ def get_order_items(order_id, db='repl') -> dict:
 		# Crear un cursor para ejecutar consultas
 		cursor = conexion.cursor(dictionary=True)
 		sql =f"""
+
 with orders as (
 	select
 		id as order_id,
@@ -640,12 +652,15 @@ with orders as (
 		
 ),
 order_items as(
-	select order_item_id, orders.order_id, order_item_name
+	select order_item_id, orders.order_id, order_item_name, order_item_type
 	from wp_woocommerce_order_items
 	inner join orders on wp_woocommerce_order_items.order_id = orders.order_id
-	where order_item_type = 'line_item'
+    where order_item_type = 'line_item'
+    union 
+    select order_item_id, order_id, order_item_name, order_item_type
+	from wp_woocommerce_order_items
+    where (order_item_type = 'shipping' or order_item_type = 'fee') and order_id = {order_id}
 ),
-
 order_item_meta as (
 	select
 		`wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
@@ -655,6 +670,12 @@ order_item_meta as (
 				else NULL
 			end
 		) AS `line_qty`,
+        max(
+			case
+				when `wp_woocommerce_order_itemmeta`.`meta_key` = 'cost' then `wp_woocommerce_order_itemmeta`.`meta_value`
+				else NULL
+			end
+		) AS `cost`,
 		max(
 			case
 				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
@@ -707,13 +728,17 @@ select
 	sku,
 	replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
     order_items.order_id,
-    line_total / line_qty as line_total
+    case 
+		when order_item_type = 'line_item' then line_total / line_qty
+        when order_item_type = 'shipping' then cost 
+        when order_item_type = 'fee' then line_total
+	end as line_total,
+    order_item_type
 from 
 	order_items
 	left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
 	left join product_meta on order_item_meta.product_id = product_meta.product_id
 	left join wp_posts on wp_posts.id = product_meta.image_id
-
 
 		"""
 		cursor.execute(sql)
@@ -731,7 +756,7 @@ from
 		# Nueva lista de nombres de columnas
 		#wp_seller=wp_seller[['user_id' 'dokan_store_name']]
 		if len(order_items) > 0:
-			order_items.columns = ['order_item_id', 'order_item_name', 'line_qty' , 'sku', 'img_url', 'order_id', 'line_total']
+			order_items.columns = ['order_item_id', 'order_item_name', 'line_qty' , 'sku', 'img_url', 'order_id', 'line_total', 'order_item_type']
 			wp_order_general_dict = order_items.to_dict(orient='list')
 			return wp_order_general_dict
 		return None

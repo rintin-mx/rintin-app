@@ -29,6 +29,7 @@ def app():
             address = st.session_state.current_order['address']
             total = st.session_state.current_order['total']
             estado = st.session_state.current_order['estado']
+            metodo_pago = st.session_state.current_order['metodo_pago']
             order_items = get_order_items(order_id)
             child_order_list = set(order_items['order_id'])
-            order_detail(order_id, number_unified, address, order_items, route_id, estado, child_order_list)
+            order_detail(order_id, number_unified, address, order_items, route_id, estado, child_order_list, metodo_pago)

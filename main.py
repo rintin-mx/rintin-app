@@ -8,7 +8,7 @@ import numpy as np
 st.set_page_config(
         page_title="Rintin",
 )
-import ingreso_entregador, entregas_oax, numerosGuiaOax, ingresoPickup,login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
+import ingreso_entregador, entregas_oax, numerosGuiaOax, ingresoPickup,login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenesCompra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
