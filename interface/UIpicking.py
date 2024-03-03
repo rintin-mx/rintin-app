@@ -35,39 +35,38 @@ def UITodosLosPedidos(data, proveedores):
     unique_proveedores_list = proveedores
     unique_values = df['Seller'].unique()
     unique_values_list = unique_values.tolist()
-    
-
-    if "estadoUIP" not in st.session_state:
-        st.session_state['estadoUIP']=False
-    
-    if "disabledUIP" not in st.session_state:
-        st.session_state['disabledUIP']=False
-    
-    if st.session_state.disabledUIP == False:
-        option = st.selectbox(
-                "Seller",
-                unique_values_list,
-                key="selectboxOption",
-                index=None
-            )
-        proveedor_select = st.selectbox(
-                "Proveedor",
-                unique_proveedores_list,
-                key="selectboxPckerar",
-                index=None
-            )
+    if 'sellersPickearIndex' not in st.session_state:
+        st.session_state['sellersPickearIndex'] = None
+    if 'optionsPickearIndex' not in st.session_state:
+        st.session_state['optionsPickearIndex'] = None
+    option = st.selectbox(
+            "Seller",
+            unique_values_list,
+            key="selectboxOption",
+            index=st.session_state['sellersPickearIndex']
+        )
+    proveedor_select = st.selectbox(
+            "Proveedor",
+            unique_proveedores_list,
+            key="selectboxPckerar",
+            index=st.session_state['optionsPickearIndex']
+        )
         
         
     if "optionsPickear" not in st.session_state:
         st.session_state['optionsPickear']=None
+        st.session_state['optionsPickearIndex'] = None
     if "sellersPickear" not in st.session_state:
         st.session_state['sellersPickear'] = None
+        st.session_state['sellersPickearIndex'] = None
     if proveedor_select is not None:
         st.session_state['optionsPickear'] = proveedor_select
+        st.session_state['optionsPickearIndex'] = unique_proveedores_list.index(proveedor_select)
     else:
         st.session_state['optionsPickear'] = None
     if option is not None:
         st.session_state['sellersPickear'] = option
+        st.session_state['sellersPickearIndex'] = unique_values_list.index(option)
     else:
         st.session_state['sellersPickear'] = None
     
@@ -80,7 +79,12 @@ def UITodosLosPedidos(data, proveedores):
         df_data = df_data
     else:
         df_data = df_data[df_data['proveedor'].str.contains(str(st.session_state['optionsPickear']))]
-
+    if st.button('Limpiar filtros'):
+        st.session_state['sellersPickear'] = None
+        st.session_state['sellersPickearIndex'] = None
+        st.session_state['optionsPickear']=None
+        st.session_state['optionsPickearIndex'] = None
+        st.rerun()
     print(df_data)
     for i in range(len(df_data)):
         st.write("---")

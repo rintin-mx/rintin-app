@@ -5,6 +5,7 @@ import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
+from integration.insertToS3 import insertOrderImage
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from db.db_entregas_oax import insert_route, update_route_order_status, insert_item_problem, update_recieved_money, update_route_status, insert_product_problem
 from integration.endpoint_WATI import send_post_request_to_api
@@ -257,17 +258,21 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
 	if value != float(total) and value != 0:
 		st.error('Validacion')
 	button = st.button('Confirmar entrega')
+	photo = st.file_uploader('Imagen de entrega', type=['png', 'jpg'])
 	if validacion:
 		respuesta = ui.alert_dialog(show=button, title="Confirmación de entrega de orden", description=f'Se entrego la orden {order_id}', confirm_label="Confirmar", cancel_label="Volver", key="respuesta_entrega")
 	else:
 		st.error('Se deben seleccionar todas las razones de no entrega en los productos')
 	if respuesta:
+		img_url = ''
+		if photo is not None:
+			img_url = insertOrderImage(photo, order_id, 'rintin-internal-apps')
 		for product in order_items_con_falla:
 			if product['tipo'] == 0:
 				insert_item_problem(product)
 			elif product['tipo'] == 1:
 				insert_product_problem(product)
-		update_route_order_status(route_id, order_id, 'Entregado', razon_no_entrega)
+		update_route_order_status(route_id, order_id, 'Entregado', razon_no_entrega, img_url)
 		update_recieved_money(order_id, value)
 		for order in orders_dict:
 			if orders_dict[order] == 0:
