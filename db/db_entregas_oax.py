@@ -326,7 +326,7 @@ def insert_item_problem(product):
 		print('Error al realizar la inserción:', e)
 		return False
 
-def update_route_order_status(route_id, order_id, status, reason):
+def update_route_order_status(route_id, order_id, status, reason, img_url):
 	db = 'prod'
 	config = config_db(db)
 	current_date = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -336,6 +336,8 @@ def update_route_order_status(route_id, order_id, status, reason):
 			cursor =  connection.cursor(dictionary=True)
 			status_for_route_order = 'success'
 			sql = f"UPDATE entrega_ordenes SET estado = '{status}' WHERE order_id = {order_id}"
+			cursor.execute(sql)
+			sql = f"UPDATE entrega_ordenes SET img_url = '{img_url}' WHERE order_id = {order_id}"
 			cursor.execute(sql)
 			if status != 'Entregado':
 				status_for_route_order= 'failed'
