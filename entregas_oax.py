@@ -4,6 +4,7 @@ from interface.ui_entregas_oax import UIentregas_oax, UIroute_orders, order_deta
 from streamlit_float import *
 
 def app():
+    print('cambiado')
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'entregas_oax'
