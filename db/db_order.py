@@ -240,6 +240,7 @@ def get_order(id,db='repl') -> dict:
                     order_items.order_id,
                     product_meta.product_id,
                     order_items.order_item_name,
+                    order_items.order_item_id,
                     line_qty,
                     sku,
                     units_per_pack,
@@ -275,9 +276,9 @@ def get_order(id,db='repl') -> dict:
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_pickeo) > 0:
-        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id']]
+        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id','order_item_id']]
         # Nueva lista de nombres de columnas
-        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id']
+        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id','order_item_id']
         print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo_general_dict

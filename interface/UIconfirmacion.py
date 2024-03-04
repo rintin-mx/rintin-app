@@ -1,5 +1,6 @@
 
 import sys
+import time
 sys.path.append('..')
 from typing import List
 import streamlit as st
@@ -13,7 +14,7 @@ from db.db_UserInteractionEvents import event_instert
 from datetime import datetime
 import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
-from db.db_auditoria import get_order_auditoria
+from db.db_auditoria import get_order_auditoria, get_order_status, product_confirm_change
 import random
 from st_material_table import st_material_table
 from st_mui_table import st_mui_table
@@ -49,6 +50,7 @@ def orderMsjString(objeto):
 
 def UIDetallePedido(data_deta,idPedido):
     st.subheader(f"Detalle de la orden: {idPedido}")
+    st.info(f"Estado de la orden: {get_order_status(idPedido)}")
     if st.button("Regresar la lista de confirmación"):
             st.session_state.current_view = 'confirmacion'
             st.rerun()
@@ -63,6 +65,8 @@ def UIDetallePedido(data_deta,idPedido):
     objArry=[]
 
     for i, pedido in df.iterrows():
+        cambio_prod = ''
+        producto_reemplazo = ''
         #col1, col2, col3, col4, col5 = st.columns(5)
         col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 2])
         with col1:
@@ -81,6 +85,11 @@ def UIDetallePedido(data_deta,idPedido):
 
         with col4:
             cantidad_pickeada = st.number_input(f"Confirmados", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad))
+            if(cantidad_pickeada != int(pedido.Cantidad)):    
+                cambio_prod = st.selectbox(f"Opcion de reemplazo", ('No reemplazar', 'Reemplazar'), key=f"opcion_{i}")
+                if(cambio_prod == 'Reemplazar'):
+                    producto_reemplazo = st.text_input('Product_SKU', key=f"prod_reemplazo_{i}")
+
         with col5:
             # Comparar si la cantidad ingresada es igual a la cantidad requerida
             if cantidad_pickeada == int(pedido.Cantidad):
@@ -91,14 +100,23 @@ def UIDetallePedido(data_deta,idPedido):
                 estado = 'NO OK'
                 st.error(estado)
             else:
-                estado = 'NO OK'
+                estado = 'NO OK'                    
                 st.error(estado)
             estados.append(estado)
-            objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
+            print(f"---{cambio_prod}------{producto_reemplazo}---")
+            if(cambio_prod == 'Reemplazar' and producto_reemplazo != ''):
+                objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
+                            "sku":pedido.SKU,
+                            "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado,"seller_id":pedido.seller_id,
+                            "producto_nuevo_sku":producto_reemplazo, "cantidad_reemplazada":int(pedido.Cantidad), "order_item_id":pedido.order_item_id})
+            else:
+                objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
                             "sku":pedido.SKU,
                             "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado,"seller_id":pedido.seller_id})
+        
         st.write('---')
 
+    print(f"{i} - {objArry}")
     agrupacion=[]
     validacion=[]
     validacionStr = ''
@@ -126,24 +144,41 @@ def UIDetallePedido(data_deta,idPedido):
             with st.spinner(f'Actualizando estado de los productos del pedido pedido a "Validación Stock"'):
                 lineasProblemas = []
                 i=0
+                mssg = ''
+                Faltante_no_reemplazo = False       #Hay algun faltante que no necesita reemplazo? Empieza en F y se vuelve T si existe
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
                         update_order_product_status(objeto['producto_id'],'validacion')
+                        if(len(objeto) > 8):
+                            mssg += f"\nCambio SKU: {objeto['sku']} por {objeto['producto_nuevo_sku']}"
+                            print('---------------- Va a escribir en tabla')
+                            product_confirm_change(objeto['order_item_id'], objeto['producto_nuevo_sku'],objeto['cantidad_reemplazada'], time.strftime('%Y-%m-%d %H:%M:%S'))
+                            print('---------------- Escribió en tabla')
+                        else:
+                            Faltante_no_reemplazo = True
 
                 if len(lineasProblemas) > 0:
-                    order_notes = "\n".join(lineasProblemas)
+                    order_notes = "\n".join(lineasProblemas) + mssg
+                    print(order_notes)
                     with st.spinner(f'Actualizano las notas del pedido para confirmación de seller  en las bodegas CDMX'):
                         asyncio.run(update_order_note__wordpress(idPedido, order_notes))
-                with st.spinner('Actualizando estado de orden a "Validacion stock"'):
-                    r = asyncio.run(update_status_wordpress(idPedido, 'stock-2'))
+                
+                # if (Faltante no reemplazo/Faltante reemplazo)
+                if(Faltante_no_reemplazo):
+                    with st.spinner('Actualizando estado de orden a "Validacion stock"'):
+                        r = asyncio.run(update_status_wordpress(idPedido, 'stock-2'))
+                else: 
+                    with st.spinner('Actualizando estado de orden a "Recolectar"'):
+                        r = asyncio.run(update_status_wordpress(idPedido, 'recolectar-2'))
+                print(f"Faltante_no_reemplazo: {Faltante_no_reemplazo}")
             st.session_state.current_view = 'finalProcesoConfirmacion'
             st.session_state.productos_validacion = validacionStr
             st.rerun()
 
 def UITFinalizarProceso(data, productList):
     
-    st.markdown(f'## Se actualizaron algunos productos del pedido con número {data["id"][0]} al estado "Validacion Stock"')
+    st.markdown(f'## Se actualizaron algunos productos del pedido con número {data["id"][0]} al estado {get_order_status(data["id"][0])}')
     st.write('---')
     
     st.markdown(f'### Los productos son los siguientes: {productList}')

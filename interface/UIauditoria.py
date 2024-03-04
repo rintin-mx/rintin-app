@@ -13,7 +13,7 @@ from db.db_UserInteractionEvents import event_instert
 from datetime import datetime
 import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
-from db.db_auditoria import get_order_auditoria
+from db.db_auditoria import get_order_auditoria, get_product_changes
 import random
 from st_material_table import st_material_table
 from st_mui_table import st_mui_table
@@ -72,8 +72,25 @@ def UIDetallePedido(data_deta,idPedido):
         banner_status = 'rec-problem-2'
     df = pd.DataFrame(data_deta)
     objArry=[]
+
+    # agrupa los order_item_id de los productos
+    order_item_ids = ''
+    for id in df["order_item_id"]:
+        order_item_ids += f"{id}, "
+    order_item_ids = order_item_ids[:-2]
+
+    # obtiene la lista de los productos con reemplazo
+    changed_list = get_product_changes(order_item_ids)
+
     for i, pedido in df.iterrows():
         #col1, col2, col3, col4, col5 = st.columns(5)
+        has_substitute = False
+        substitute = ''
+        for prod in changed_list.iterrows():
+            if(prod[1].order_item_id == pedido.order_item_id):
+                has_substitute = True
+                substitute = prod[1].nuevo_producto_sku
+
         col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
         with col1:
             if pedido.Imagen is not  None:
@@ -87,6 +104,9 @@ def UIDetallePedido(data_deta,idPedido):
             st.markdown(f'##### Unidades: {pedido.units_per_pack}')            
         with col3:
             st.markdown(f'##### Cantidad: {pedido.Cantidad}')
+            if has_substitute:
+                st.markdown(f'##### SKU de reemplazo: {substitute}')
+            
             st.write("")  # Espacio extra
 
         with col4:
