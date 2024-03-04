@@ -62,7 +62,6 @@ def updateOrdenCompra(order_id, orderInfo, products):
             cursor.close()
             connection.close()
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False
     
 def insertOrdenCompra(orderInfo, products):
@@ -95,7 +94,6 @@ def insertOrdenCompra(orderInfo, products):
             return insertedId
             
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False
 
 def get_order_info(id, db='repl')->dict:
@@ -378,7 +376,6 @@ def update_oi_values(order_compra_id, products):
             connection.close()
             
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False
           
 def update_product(product, product_id):
@@ -400,7 +397,6 @@ def update_product(product, product_id):
             connection.close()
             
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False
     
 def deleteProducts(products, order_id):
@@ -418,7 +414,6 @@ def deleteProducts(products, order_id):
             cursor.close()
             connection.close()
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False
     
 def get_live_sellers(db='repl') -> dict:

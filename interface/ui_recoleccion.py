@@ -12,8 +12,7 @@ import streamlit_shadcn_ui as ui
 import time
 
 
-def ejecuto ():
-    print("ejecuto")
+
 def UIpendienteRecoleccion(total_pedidos, total_paquetes , total_registros, data):
 
     # Título de la sección
@@ -43,7 +42,6 @@ def UIpendienteRecoleccion(total_pedidos, total_paquetes , total_registros, data
     left_col, right_col = st.columns([0.3, 0.1])  # Ajusta la proporción según sea necesario
     with right_col:
         if st.button("Iniciar recolección"):
-            print("pulse boton Iniciando recolección")
             EventName,EventAction,EventUser='picking','Se pulso en botón Iniciar recolección',st.session_state.useremail
             event_instert(EventName,EventAction,EventUser)
             st.session_state.current_view = 'recoleccion'
@@ -54,7 +52,6 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
     #if 'mostrar_expander' not in st.session_state:
     #st.session_state['mostrar_expander'] = False
     #if st.button("Volver a inicio"):
-    #        print("pulse boton Iniciando pick")
     #        st.session_state.current_view = 'pick'
     #        st.rerun()
     st.header("Proceso de recolección y selección")
@@ -93,8 +90,6 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
                 EventName,EventAction,EventUser='picking','Se pulso en botón Recolectar',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
                 st.session_state.Seller_name = vendedor["Seller"]
-                print("st.session_state.Seller_name")
-                print(st.session_state.Seller_name)
                 
                 st.session_state.current_view = 'pendiente'
                 st.rerun()
@@ -145,14 +140,12 @@ def UIagrerPedidoSellerSeleccion(data):
     # Iterar a través del DataFrame para crear la interfaz
     for index, row in df.iterrows():
         txt=str(row.num_paquetes).split(".")
-        print(row)
         
         with col1:
             st.markdown(f'<div class="flex-container"><div class="nombre-producto">order_id: {row.order_id}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="flex-container"><div class="sku-producto">Seller: {row.seller_name}</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="flex-container"><div class="sku-producto">Numero de Paquetes:{txt[0]}</div></div>', unsafe_allow_html=True) 
             recolectado = st.toggle('',key=f'recolectado{index}')
-            print("recolectado")
             if recolectado:
                 st.session_state.recolectado=False
                 recoTotal.append({'order_id':row.order_id,"seller_name":row.seller_name, "num_pedidos":row.num_pedidos, "num_paquetes":row.num_paquetes,"recolectado":recolectado})
@@ -164,27 +157,18 @@ def UIagrerPedidoSellerSeleccion(data):
                 choice = ui.select(options=["No motivo","Seller no tenía el pedido listo", "Seller creía que no estaba pagado", "Capacidad de nuestro recolector","Seller dice ya haberlo entregado","Seller dice que no existe el pedido"], key=f'choice1'+str(index))
                 noReco.append({'order_id':row.order_id,"seller_name":row.seller_name, "num_pedidos":row.num_pedidos, "num_paquetes":row.num_paquetes,"noReco":choice})
 
-    #print("recoTotal")
-    #print(recoTotal)
-    #print("noReco")
-    #print(noReco)
     #recoTotal= [{'order_id': 281958, 'seller_name': 'Fanny Love', 'num_pedidos': 1, 'num_paquetes': 1.0, 'recolectado': True},[{'order_id': 281958, 'seller_name': 'Fanny Love', 'num_pedidos': 1, 'num_paquetes': 1.0, 'recolectado': True}]]
     if st.button('Continuar', key=f"Continuar_50"):
-        print("pulse boton Continuar")
         EventName,EventAction,EventUser='picking','Se pulso en botón Continuar',st.session_state.useremail
         event_instert(EventName,EventAction,EventUser)
         if len(recoTotal)>0:
             recoString = recoString[:-2]
-            print("entre recoTotal")
             with st.spinner(f'Actualizando estatus del pedido Auditoria'):
                 order_status='rec_ped_aud'
                 for i,pedido in enumerate(recoTotal):
-                    print(pedido)
-                    #print(pedido['order_id'])
                         #idPedido
                         #para test '281660'
                     r=asyncio.run(endpoint_update_status_by_order_id(pedido['order_id'], order_status))
-                    print(r)
                     EventName,EventAction,EventUser='picking','Se ejecuto endpoint_update_status_by_order_id',st.session_state.useremail
                     event_instert(EventName,EventAction,EventUser)
             st.session_state['orderList'] = recoTotal
@@ -192,14 +176,10 @@ def UIagrerPedidoSellerSeleccion(data):
             st.session_state.current_view = 'recoleccionFinal'
             st.rerun()
         if len(noReco)>0:
-            print("entre noReco")
             with st.spinner(f'Actualizando estatus del pedido Auditoria no recolectados'):
-                print("insertar nuevo estado")
                 for i,pedido in enumerate(noReco):
                     if pedido['noReco']!="No motivo":
                         
-                        print("pedido")
-                        print(pedido['order_id'])
                         meta_key='_no_motivo_recoleccion'
                         insert_order_metadata(pedido['order_id'],meta_key,pedido['noReco'])
                         EventName,EventAction,EventUser='picking','Se ejecuto insert_order_metadata',st.session_state.useremail
@@ -212,7 +192,6 @@ def UIagrerPedidoSellerSeleccion(data):
 
 
         if st.session_state.flag == True:
-            print("entre al if st.session_state.flag")
             st.session_state.current_view = 'recoleccion'
             st.rerun()
           

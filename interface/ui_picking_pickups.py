@@ -145,7 +145,6 @@ def UIpicking_final(data, currentStatus):
         st.rerun()
 
 def UIpicking_pickups(data, order_ids):
-    print(data)
     st.write(' ## Picking - Pickups')
     if data is None:
         st.write(' ### No hay ordenes para pickear')

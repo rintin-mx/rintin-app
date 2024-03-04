@@ -373,7 +373,6 @@ order by meta_value
         wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id', 'proveedor']]
         # Nueva lista de nombres de columnas
         wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id', 'proveedor']
-        print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo_general_dict
     else:

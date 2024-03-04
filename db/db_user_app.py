@@ -43,15 +43,11 @@ def insert_user(db,userName, password):
             cursor = conexion.cursor()
             # Hashing de la contraseña
             hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            print(hashed)
             query = "INSERT INTO userApp (email, contrasena) VALUES (%s, %s)"
-            print(query)
             valores = (userName, hashed)
-            print(valores)
             cursor.execute(query, valores)
             conexion.commit()
             user_id = cursor.lastrowid
-            print("Usuario insertado exitosamente.")
              # Registrar el tiempo de finalización
             end_time = time.time()
 
@@ -61,8 +57,6 @@ def insert_user(db,userName, password):
             # Convertir a minutos y segundos
             minutes = int(duration // 60)
             seconds = int(duration % 60)
-    except Error as e:
-        print("Error al conectar a MariaDB", e)
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -70,9 +64,6 @@ def insert_user(db,userName, password):
     return user_id
 
 def validate_user(db,userName, password):
-    print("validate_user")
-    print(userName)
-    print(password)
     config = config_db(db)
     # Establecer la conexión a la base de datos
     conexion = mysql.connector.connect(**config)
@@ -84,13 +75,10 @@ def validate_user(db,userName, password):
             query = "SELECT contrasena FROM userApp WHERE email = %s"
             cursor.execute(query, (userName,))
             resultado = cursor.fetchone()
-            print("resultado")
-            print(resultado)
             if resultado:
                 contrasena_almacenada = resultado[0]
                 # Compara la contraseña ingresada con el hash almacenado
                 if bcrypt.checkpw(password.encode('utf-8'), contrasena_almacenada.encode('utf-8')):
-                    print("Acceso permitido.")
                     end_time = time.time()
                     # Calcular la duración
                     duration = end_time - start_time
@@ -99,12 +87,7 @@ def validate_user(db,userName, password):
                     seconds = int(duration % 60)
                     return True
                 else:
-                    print("Acceso denegado.")
                     return False
-            else:
-                print("Usuario no encontrado.")
-    except Error as e:
-        print("Error al conectar a MariaDB", e)
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -135,15 +118,12 @@ def get_user_permissions(user_id):
             result = cursor.fetchall()
             return result
 
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
 
     finally:
         # Cerrar la conexión y el cursor
         if connection.is_connected():
             cursor.close()
             connection.close()
-            print("Conexión a la base de datos cerrada.")
 
 def get_user_permissions_by_email(email):
     db='repl'
@@ -170,15 +150,12 @@ def get_user_permissions_by_email(email):
             result = cursor.fetchall()
             return result
 
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
 
     finally:
         # Cerrar la conexión y el cursor
         if connection.is_connected():
             cursor.close()
             connection.close()
-            print("Conexión a la base de datos cerrada.")
 
 def get_all_user():
     db='repl'
@@ -198,11 +175,8 @@ def get_all_user():
             users = cursor.fetchall()
             return users
 
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
     finally:
         # Cerrar la conexión y el cursor
         if connection.is_connected():
             cursor.close()
             connection.close()
-            print("Conexión a la base de datos cerrada.")

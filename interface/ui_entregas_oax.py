@@ -82,7 +82,6 @@ def UIentregas_oax(data, order_ids, zonas):
 		df_data =df_data[data_frame['zona_entrega'].isin(zonas_entrega)]
 	else:
 		df_data = df_data
-	print(df_data)
 	container2 = st.container()
 	with container2:
 		st.write('<div class="container_2"></div>', unsafe_allow_html=True)
@@ -125,7 +124,6 @@ def UIentregas_oax(data, order_ids, zonas):
 				{'name': 'pickup_en_camino', 'value': 'Oaxaca (JP García)'},
 			]
 			send_post_request_to_api('03_pedido_en_camino_pickup_v1', params, f'521{order["number_unified"]}')
-		print('dentro')
 		st.session_state['current_view'] = 'entregas_oax'
 		del st.session_state.current_selected
 		st.rerun()

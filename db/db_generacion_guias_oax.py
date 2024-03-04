@@ -29,8 +29,6 @@ def config_db(db='repl') -> dict:
 
 def update_order_metadata(order_id, num_guia, logis_op):
     config = config_db('prod')
-    print(':)')
-    print(order_id)
     
     try:
         connection = mysql.connector.connect(**config)
@@ -40,8 +38,6 @@ def update_order_metadata(order_id, num_guia, logis_op):
             # Sentencia SQL para insertar datos
             sql = "SELECT * FROM wp_postmeta WHERE post_id = %s AND meta_key = '_numero_guia_interno'"
             cursor.execute(sql, (order_id,))
-            print('primer select')
-            print(cursor.rowcount)
             if cursor.rowcount == 0:
                 sql = "INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (%s, '_numero_guia_interno', %s)"
                 cursor.execute(sql, (order_id, num_guia))
@@ -51,8 +47,6 @@ def update_order_metadata(order_id, num_guia, logis_op):
 
             sql = "SELECT * FROM wp_postmeta WHERE post_id = %s AND meta_key = '_logis_op_interno'"
             cursor.execute(sql, (order_id,))
-            print('segundo select')
-            print(cursor.rowcount)
             if cursor.rowcount == 0:
                 sql = "INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (%s, '_logis_op_interno', %s)"
                 cursor.execute(sql, (order_id, logis_op))
@@ -65,7 +59,6 @@ def update_order_metadata(order_id, num_guia, logis_op):
             connection.close()
             return True
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False
 
 def get_ordenes_generar_guia(db='repl') -> dict:

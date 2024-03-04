@@ -44,7 +44,6 @@ def UIgenerar_guias(data):
     with col5:
         st.write('**Número de guía**')
     st.write('---')
-    print(data)
     for i in range(len(data['order_id'])):
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
@@ -70,7 +69,6 @@ def UIgenerar_guias(data):
         st.write('---')
     
     if len(new_data) > 0:
-        print(new_data)
         order_id_string = order_id_string[:-2]
         respuesta = False
         trigger_btn = ui.button(text="Actualizar", key="trigger_btn")
@@ -84,13 +82,11 @@ def UIgenerar_guias(data):
                     ]
                     update_order_metadata(str(value['order_id']), value['numero_guia'], value['paqueteria'])
                     if value['childs'] is None:
-                        print('hola')
                         r2 = asyncio.run(endpoint_update_status_by_order_id(value['order_id'], 'embarque'))
                     else:
                         childs_array = value['childs'].split(', ')
                         if len(childs_array) > 0:
                             for order_id in childs_array:
-                                print(int(order_id))
                                 update_order_metadata(order_id, value['numero_guia'], value['paqueteria'])
                                 r2 = asyncio.run(endpoint_update_status_by_order_id(int(order_id), 'embarque'))
             st.session_state['orders_string'] = order_id_string

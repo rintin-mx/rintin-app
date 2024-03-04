@@ -91,7 +91,6 @@ select * from final where id = {orderId}
         wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs', 'post_parent']]
         # Nueva lista de nombres de columnas
         wp_check_statusses.columns = ['id','num_agrupados','childs', 'post_parent']
-        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_check_statusses_general_dict = wp_check_statusses.to_dict(orient='list')
         return wp_check_statusses_general_dict
 
@@ -222,7 +221,6 @@ def get_order_detail(id, db = 'repl'):
         wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id']]
         # Nueva lista de nombres de columnas
         wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id']
-        print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo_general_dict
     else:

@@ -21,7 +21,6 @@ def permisos():
         df_opciones=opcionSistema()
         ops_id_fk=st.selectbox("Seleccione una opción de sistema", df_opciones['opsCompuesta'])
         id_fk_clean=ops_id_fk.split('-')[0]
-        print(id_fk_clean)
         nombre_permiso = st.text_input("Nombre del Permiso:", key="insertar_permiso_nombre")
         descripcion = st.text_area("Descripción", key="insertar_permiso_descripcion")
         if st.button("Insertar Permiso", key="button_insertar_permiso"):
@@ -41,8 +40,6 @@ def permisos():
         # Selección de permiso para editar o eliminar
         selected_permiso_id = st.selectbox("Seleccione un Permiso para Editar o Eliminar", df_permisos['opsCompuesta'])
         id_fk_permiso_clean=int(selected_permiso_id.split('-')[0])
-        print(id_fk_permiso_clean)
-        print(df_permisos['permiso_id'])
 
         # Obtener los datos del permiso seleccionado
         selected_permiso_data = df_permisos[df_permisos['permiso_id'] == id_fk_permiso_clean].iloc[0]

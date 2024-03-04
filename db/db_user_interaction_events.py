@@ -50,17 +50,13 @@ def event_instert(EventName,EventAction,EventUser):
             # Asegurar los cambios en la base de datos
             connection.commit()
 
-            print("Evento insertado con éxito.")
 
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
 
     finally:
         # Cerrar la conexión y el cursor
         if connection.is_connected():
             cursor.close()
             connection.close()
-            print("Conexión a la base de datos cerrada.")
 
 
 def upsert_user_session(user_id, is_logged_in,db):
@@ -90,18 +86,14 @@ def upsert_user_session(user_id, is_logged_in,db):
             cursor.execute(sql, (user_id, is_logged_in, login_timestamp, logout_timestamp))
             connection.commit()
 
-            print("Evento insertado con éxito.")
             
 
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
 
     finally:
         # Cerrar la conexión y el cursor
         if connection.is_connected():
             cursor.close()
             connection.close()
-            print("Conexión a la base de datos cerrada.")
 
 def get_user_session(user_id):
     config = config_db(db)
@@ -135,12 +127,9 @@ def get_user_session(user_id):
 
             return result
 
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
 
     finally:
         # Cerrar la conexión y el cursor
         if connection.is_connected():
             cursor.close()
             connection.close()
-            print("Conexión a la base de datos cerrada.")

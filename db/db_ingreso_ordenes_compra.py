@@ -123,7 +123,6 @@ def insertOCItems(product_list, order_id, responsable):
             connection.close()
             return True
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False
 
 def get_pending_products(id, db='repl') -> dict:
@@ -251,5 +250,4 @@ def updateOrdenCompraStatus(status, id):
             return True
             
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
         return False

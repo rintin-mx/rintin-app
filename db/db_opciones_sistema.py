@@ -44,7 +44,6 @@ def insert_opciones_sistema(nombre_opcion, descripcion,db='prod'):
             valores = (nombre_opcion, descripcion)
             cursor.execute(sql, valores)
             conexion.commit()
-            print("Usuario insertado exitosamente.")
              # Registrar el tiempo de finalización
             end_time = time.time()
 
@@ -54,8 +53,6 @@ def insert_opciones_sistema(nombre_opcion, descripcion,db='prod'):
             # Convertir a minutos y segundos
             minutes = int(duration // 60)
             seconds = int(duration % 60)
-    except Error as e:
-        print("Error al conectar a MariaDB", e)
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -74,9 +71,6 @@ def eliminar_opciones_sistema(ops_id,db='prod'):
         valores = (ops_id,)
         cursor.execute(sql, valores)
         conexion.commit()
-        print("Rol eliminado con éxito.")
-    except mysql.connector.Error as error:
-        print("Error al eliminar el opciones_sistema: {}".format(error))
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -96,9 +90,6 @@ def actualizar_opciones_sistema(ops_id, nombre_opcion, descripcion,db='prod'):
             valores = (nombre_opcion, descripcion, ops_id)
             cursor.execute(sql, valores)
             conexion.commit()
-            print("ctualizar_opciones_sistema actualizado con éxito.")
-    except mysql.connector.Error as error:
-        print("Error al actualizar el opciones_sistema: {}".format(error))
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -117,8 +108,6 @@ def obtener_todos_los_opciones_sistema(db='repl'):
             # Obtener los registros
             registros = cursor.fetchall()
             return registros
-    except mysql.connector.Error as error:
-        print("Error al obtener los opciones_sistema: {}".format(error))
     finally:
         if conexion.is_connected():
             cursor.close()

@@ -61,7 +61,6 @@ def editarProducto(index, seller_name):
 
 # Funcion para agregar un producto a lista del diccionario del seller
 def agregarProducto(producto):
-    print(producto)
     tempArr = st.session_state['dictProductos'][st.session_state['currentSeller']]
     tempArr.append(producto)
     st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr 
@@ -89,8 +88,6 @@ def create_download_link(val, filename):
 def UITTerminarOrdenCompra(parents, order_data):
     order_parent_list = [0]
     bodegas_recepcion = ['centro_cdmx', 'oaxaca', 'aj_cdmx', 'showroom']
-    print('order')
-    print(order_data)
     if parents is not None and len(parents['id_orden_compra']) > 0:
         order_parent_list = order_parent_list + parents['id_orden_compra']
     if order_data is not None:
@@ -191,8 +188,6 @@ def UITTerminarOrdenCompra(parents, order_data):
                 'bodega_recepcion': bodega_recepcion,
                 'orden_padre': orden_padre
             }
-            print('deletedProducts')
-            print(st.session_state['deletedProducts'])
             if 'deletedProducts' in st.session_state and len(st.session_state['deletedProducts']) > 0:
                 deleteProducts(st.session_state['deletedProducts'], st.session_state['ordenCompraId'])
             updateOrdenCompra(st.session_state['ordenCompraId'], orderDict, st.session_state['dictProductos'][st.session_state['currentSeller']])
@@ -230,7 +225,6 @@ def UITTerminarOrdenCompra(parents, order_data):
 def UITAddProduct(producto, fabricante, proveedores):
     marcas = st.session_state.marcas
     st.title('Producto Nuevo')
-    print(producto)
     # Get product info
     if (producto is not None):
         nombreVal = producto['nombre']
@@ -247,7 +241,6 @@ def UITAddProduct(producto, fabricante, proveedores):
         if 'product_id' in producto:
             product_id = producto['product_id']
     else:
-        print('producto no esta declarado')
         nombreVal = ''
         skuVal = ''
         tipo_product_indexVal = 0
@@ -271,19 +264,11 @@ def UITAddProduct(producto, fabricante, proveedores):
         marcasIndex = None
         disabled = True
     marca = st.selectbox('Marca', options=marcas, index=marcasIndex, disabled=disabled)
-    print('marca select value')
-    print(marca)
     # Is new brand
     
     if marca is not None:
-        print('marcas is not none para generar index')
-        print('marca')
-        print(marca)
         marcasIndex = marcas.index(marca)
-        print('marca index')
-        print(marcasIndex)
     else:
-        print('marcas es none')
         marcasIndex = None
         st.session_state.current_marca_index = marcasIndex
     
@@ -305,7 +290,6 @@ def UITAddProduct(producto, fabricante, proveedores):
     else:
         units_per_pack = 0
     costo = st.number_input('Costo [Paquete/Unidad]', value=costoVal, min_value=0.00)
-    print(costo)
     if producto is not None and img_url != '':
         st.image(img_url)
     input_file = st.file_uploader("Agrega la imagen del producto", accept_multiple_files=False)
@@ -432,7 +416,6 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
             csv_df = pd.read_csv(csv_file)
             csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete', 'marca', 'dueno_producto', 'proveedor']]
             csv_dict = csv_df.to_dict(orient='list')
-            print(csv_dict)
             #'Unidad', 'Paquete'
             tempArr = []
             for i in range(len(csv_dict['sku'])):   
@@ -440,7 +423,6 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
                     tipo_producto = 'Unidad'
                 else:
                     tipo_producto = 'Paquete'
-                print(fabricante['user_id'])
                 fabricanteIndex = fabricante['user_id'].index(csv_dict['dueno_producto'][i])
                 fabricante_name = fabricante['meta_value'][fabricanteIndex]
                 proveedorIndex = proveedores['user_id'].index(csv_dict['proveedor'][i])
@@ -464,8 +446,6 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
             st.session_state['current_view'] = 'terminar_orden_compra'
             st.rerun()
         except Exception as e:
-            print('error')
-            print(e)
             st.error('Hubo un error al procesar el archivo, revisa que siga el formato correctamente.')
     st.write(
             """<style>
@@ -481,8 +461,6 @@ def UITOrdenesCompra(data, products):
     # Título de la página
     titleStr = 'Orden Compra'
     disabled = False
-    print('products')
-    print(products)
     if 'isEditing' in st.session_state:
         disabled = True
     if 'isEditing' in st.session_state and 'initialFetch' not in st.session_state:
@@ -511,7 +489,6 @@ def UITOrdenesCompra(data, products):
             }
             tempArr.append(tempDict)
         st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
-        print(st.session_state['dictProductos'][st.session_state['currentSeller']])
         st.session_state['initialFetch'] = True;
     if st.button('Volver'):
         st.session_state.current_view = 'ordenesCompraMenu'
@@ -576,7 +553,6 @@ def UITOrdenesCompra(data, products):
                         if 'isEditing' in st.session_state:
                             tempArrDeleted = st.session_state['deletedProducts']
                             tempArrDeleted.append(value['product_id'])
-                            print(tempArrDeleted)
                             st.session_state['deletedProducts'] = tempArrDeleted
                         tempArr = st.session_state['dictProductos'][st.session_state['currentSeller']]
                         del tempArr[index]

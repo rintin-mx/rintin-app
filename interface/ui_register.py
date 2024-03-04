@@ -39,9 +39,7 @@ def UIRegister():
         
         user = auth.create_user(email = email, password = password,uid=username)
         user_id=insert_user('prod',email,password) 
-        print(user_id)
         rol_id_fk_clean=int(rol_id_fk.split('-')[0])
-        print(rol_id_fk_clean) 
         insertar_usuario_rol(user_id,int(rol_id_fk_clean))
         st.success('Account created successfully!')
         st.markdown('Please Login using your email and password')

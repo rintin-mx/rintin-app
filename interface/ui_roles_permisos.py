@@ -97,7 +97,6 @@ def rolespermisos():
                 eliminar_callback = lambda idx=index, rol_id_fk=row['rol_id_fk'], permiso_id_fk=row['permiso_id_fk']: eliminar_fila(rol_id_fk, permiso_id_fk)
                 st.button('Eliminar', key=f'eliminar_{index}', on_click=eliminar_callback)
                 #st.button('Eliminar', key=f'eliminar_{index}', on_click=lambda idx=index: eliminar_fila(row['rol_id_fk'],row['permiso_id_fk']))
-            print(row)
         #AgGrid(df_roles_permisos)
         #filtered_df = dataframe_explorer(df_roles_permisos, case=True)
         #st.dataframe(filtered_df, use_container_width=True)

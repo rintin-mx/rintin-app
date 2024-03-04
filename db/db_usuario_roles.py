@@ -43,7 +43,6 @@ def insertar_usuario_rol(usuario_id_fk, rol_id_fk,db='prod'):
             valores = (usuario_id_fk, rol_id_fk)
             cursor.execute(sql, valores)
             conexion.commit()
-            print("usuarios_roles insertado exitosamente.")
              # Registrar el tiempo de finalización
             end_time = time.time()
             # Calcular la duración
@@ -51,8 +50,6 @@ def insertar_usuario_rol(usuario_id_fk, rol_id_fk,db='prod'):
             # Convertir a minutos y segundos
             minutes = int(duration // 60)
             seconds = int(duration % 60)
-    except Error as e:
-        print("Error al conectar a MariaDB", e)
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -70,9 +67,6 @@ def eliminar_usuario_rol(usuario_id_fk, rol_id_fk,db='prod'):
         valores = (usuario_id_fk, rol_id_fk)
         cursor.execute(sql, valores)
         conexion.commit()
-        print("Rol eliminado con éxito.")
-    except mysql.connector.Error as error:
-        print("Error al eliminar el rol: {}".format(error))
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -91,9 +85,6 @@ def actualizar_usuario_rol(usuario_id_fk, rol_id_fk,db='prod'):
             valores = (usuario_id_fk, rol_id_fk)
             cursor.execute(sql, valores)
             conexion.commit()
-            print("actualizar_usuario_rol actualizado con éxito.4444444")
-    except mysql.connector.Error as error:
-        print("Error al actualizar el rol: {}".format(error))
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -112,8 +103,6 @@ def obtener_todos_los_usuario_rol(db='repl'):
             # Obtener los roles_permisos
             roles_permisos = cursor.fetchall()
             return roles_permisos
-    except mysql.connector.Error as error:
-        print("Error al obtener los roles: {}".format(error))
     finally:
         if conexion.is_connected():
             cursor.close()

@@ -29,8 +29,6 @@ def UIOrdenesEmpaquetar(data, orders_for_filter):
     df_data=[]
     df = pd.DataFrame(data)
 
-    print("df")
-    print(df)
     filter_value = st.selectbox(
     'Selecciona el número de orden',
      options=orders_for_filter,
@@ -108,7 +106,6 @@ def UIOrdenesEmpaquetarDetalle(data,idPedido):
     estadoSeleccion=''
     for i, pedido in df.iterrows():
         col1, col2, col4, col5 = st.columns([2, 2, 3, 2])
-        print(pedido)
         with col1:
             st.write("**Pedido**")
             st.write(pedido.order_id)
@@ -163,8 +160,5 @@ def UIOrdenesEmpaquetarDetalle(data,idPedido):
             st.session_state.current_view = 'finalProcesoEmpaquetado'
             st.rerun()
         else:
-            print('+++++++++++++++++++++++++++++++++++++++')
-            print('No se encontraron pedidos para agrupar')
-            print('+++++++++++++++++++++++++++++++++++++++')  
             st.warning('No se ha empaquetado ningún pedido.')
 

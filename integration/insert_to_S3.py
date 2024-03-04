@@ -13,7 +13,6 @@ def insertImage(image, seller_id, bucket_name):
         file_url = f'https://{bucket_name}.s3.us-east-2.amazonaws.com/{rutaS3}'
         return file_url
     except Exception as e:
-        print(e)
         return False
 
 def insertOrderImage(image, order_id, bucket_name):
@@ -26,5 +25,4 @@ def insertOrderImage(image, order_id, bucket_name):
         file_url = f'https://{bucket_name}.s3.us-east-2.amazonaws.com/{rutaS3}'
         return file_url
     except Exception as e:
-        print(e)
         return ''

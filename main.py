@@ -42,11 +42,6 @@ class MultiApp:
             if valEmail is not None:
                 permisos=get_user_permissions_by_email(valEmail)
                 lista_permisos = [dic['nombre_permiso'] for dic in permisos]
-
-            print(permisos)
-            print('************')
-            print(lista_permisos)
-            print('************')
             default_index=1
             st.session_state.username=val
             st.session_state.useremail=valEmail

@@ -46,18 +46,12 @@ def insert_productos_validados(productID, SKU, usuarioTimestamp, orderID, cantid
             cursor.execute(sql, (productID, SKU, usuarioTimestamp, orderID, cantidadOrden, cantidadPickeada,fuente, email, estado_anterior, estado_actual, razon))
             connection.commit()
 
-            print("Evento insertado con éxito.")
             
-
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
-
     finally:
         # Cerrar la conexión y el cursor
         if connection.is_connected():
             cursor.close()
             connection.close()
-            print("Conexión a la base de datos cerrada.")
 
 def update_order_product_status(product_id,estatus) -> dict:
     db='prod'

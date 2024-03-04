@@ -42,7 +42,6 @@ def users():
  
 
     if st.button('Asignar permisos', key="button_asignar_permisos"):
-            print("entreeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
             insertar_usuario_rol(st.session_state.user_id,st.session_state.rol_id)
             st.success('Se asigno correctamente un rol a este usuario!')
             st.balloons()

@@ -28,7 +28,6 @@ def UIgeneracion_guias_oax(data, order_filter, zone_filter):
 
     order_id_string = ''
     
-    print(order_list)
     with filter_col1:
         order_filter_input = st.selectbox('Busqueda por orden', options=order_filter, index= None)
     with filter_col2:
@@ -107,7 +106,6 @@ def UIgeneracion_guias_oax(data, order_filter, zone_filter):
                         childs_array = value['hijos'].split(', ')
                         if len(childs_array) > 0:
                             for order_id in childs_array:
-                                print(int(order_id))
                                 update_order_metadata(order_id, value['numero_guia'], value['paqueteria'])
                                 r2 = asyncio.run(endpoint_update_status_by_order_id(int(order_id), 'embarque'))
             st.session_state['orders_string'] = order_id_string

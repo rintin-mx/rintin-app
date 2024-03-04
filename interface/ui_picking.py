@@ -85,7 +85,6 @@ def UITodosLosPedidos(data, proveedores):
         st.session_state['optionsPickear']=None
         st.session_state['optionsPickearIndex'] = None
         st.rerun()
-    print(df_data)
     for i in range(len(df_data)):
         st.write("---")
         with st.container():
@@ -132,7 +131,6 @@ def UIDetallePedido(data_deta,idPedido):
     objArry=[]
     for i, pedido in df.iterrows():
         st.write(f'### Proveedor: {pedido.proveedor}')
-        print(pedido.Imagen)
         #col1, col2, col3, col4, col5 = st.columns(5)
         col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 2])
         with col1:
@@ -199,8 +197,6 @@ def UIDetallePedido(data_deta,idPedido):
                 #idPedido
                 #para test '281660'
                 r = asyncio.run(update_status_wordpress(idPedido, order_status))
-                print("r")
-                print(r)
                 st.session_state.current_view = 'pickFinal'
                 st.session_state['currentOrderId'] = idPedido
                 st.session_state['currentStatus'] = 'Pedidos por auditar'
@@ -231,7 +227,6 @@ def UIDetallePedido(data_deta,idPedido):
                 asyncio.run(update_status_wordpress(idPedido, order_status))
                 st.snow()
             with st.spinner(f'Actualizano las notas del pedido de {st.session_state.nombreSeller}'):
-                print("eneee")
                 #idPedido
                 #para test '281660'
                 asyncio.run(update_order_note__wordpress(idPedido, order_notes))
