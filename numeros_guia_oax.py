@@ -1,6 +1,6 @@
 import streamlit as st
-from interface.UIgeneracion_guias_oax import UIgeneracion_guias_oax, UIgenerar_guias_final_oax
-from db.db_generacionGuiasOax import get_ordenes_generar_guia
+from interface.ui_generacion_guias_oax import UIgeneracion_guias_oax, UIgenerar_guias_final_oax
+from db.db_generacion_guias_oax import get_ordenes_generar_guia
 def app():
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:

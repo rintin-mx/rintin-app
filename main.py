@@ -1,14 +1,14 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 import extra_streamlit_components as stx
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
 from db.db_userApp import get_user_permissions_by_email
 import numpy as np
 
 st.set_page_config(
         page_title="Rintin",
 )
-import ingreso_entregador, entregas_oax, numerosGuiaOax, ingresoPickup,login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenesCompra
+import ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -107,12 +107,12 @@ class MultiApp:
                 EventName,EventAction,EventUser='Main','acceso a la opción picking pickups',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == 'Ingreso Pickups':
-            ingresoPickup.app()
+            ingreso_pickup.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción picking pickups',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == 'Números de Guía Oaxaca':
-            numerosGuiaOax.app()
+            numeros_guia_oax.app()
         if app == 'Entregas Oaxaca':
             entregas_oax.app()
         if app == 'Ingreso Entregas Oaxaca':
@@ -123,7 +123,7 @@ class MultiApp:
                 EventName,EventAction,EventUser='Main','acceso a la opción empaquetado',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == 'Números de Guía':
-            numerosGuia.app()
+            numeros_guia.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción numeros de guia',valEmail
                 event_instert(EventName,EventAction,EventUser)
@@ -163,16 +163,14 @@ class MultiApp:
                 EventName,EventAction,EventUser='Main','acceso a la opción agrupacion',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == "Ordenes de Compra":
-            ordenesCompra.app()
+            ordenes_compra.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Ordenes de Compra',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == 'Ingreso OC Bodega':
-            ingresoOrdenesCompra.app()
+            ingreso_ordenes_compra.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Ingreso Ordenes de Compra Bodega',valEmail
                 event_instert(EventName,EventAction,EventUser)
-        if app=='Test':
-            test.app()
 
     run() 

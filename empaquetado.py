@@ -1,7 +1,7 @@
 
 import streamlit as st
-from interface.UIEmpaquetado import UIOrdenesEmpaquetar,UIOrdenesEmpaquetarDetalle, UITFinalizarProceso
-from db.db_UserInteractionEvents import event_instert   
+from interface.ui_empaquetado import UIOrdenesEmpaquetar,UIOrdenesEmpaquetarDetalle, UITFinalizarProceso
+from db.db_user_interaction_events import event_instert   
 from db.db_empaquetado import get_seller_centro_padre,get_order_detalle_empaquetado
 
 

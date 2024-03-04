@@ -1,5 +1,5 @@
 import streamlit as st
-from interface.UIrecoleccion import UIpendienteRecoleccion, UIrecoleccionFinal, UIpendienteRecoleccionSeleccion,UIagrerPedidoSellerSeleccion
+from interface.ui_recoleccion import UIpendienteRecoleccion, UIrecoleccionFinal, UIpendienteRecoleccionSeleccion,UIagrerPedidoSellerSeleccion
 from db.db_recoleccion import get_seller_recollection,get_data_seller_by_name
 import pandas as pd
 

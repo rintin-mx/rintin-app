@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
-from integration.insertToS3 import insertOrderImage
+from integration.insert_to_S3 import insertOrderImage
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from db.db_entregas_oax import insert_route, update_route_order_status, insert_item_problem, update_recieved_money, update_route_status, insert_product_problem
 from integration.endpoint_WATI import send_post_request_to_api

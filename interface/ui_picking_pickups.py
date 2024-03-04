@@ -2,14 +2,14 @@
 import sys
 sys.path.append('..')
 
-from integration.insertToS3 import insertImage
+from integration.insert_to_S3 import insertImage
 import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
 from datetime import datetime
-from db.db_productosValidados import insert_productos_validados,update_order_product_status
+from db.db_productos_validados import insert_productos_validados,update_order_product_status
 import asyncio
 
 import base64

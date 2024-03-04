@@ -1,7 +1,7 @@
 import streamlit as st
 
 from db.db_picking_pickups import get_ordenes_pickup, get_orders_for_filter, get_order_detail, checkForChildStatusses
-from interface.UIpicking_pickups import UIpicking_pickups, UIpicking_detalle, UIpicking_final
+from interface.ui_picking_pickups import UIpicking_pickups, UIpicking_detalle, UIpicking_final
 
 def app():
     if 'username' in st.session_state:

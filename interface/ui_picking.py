@@ -7,8 +7,8 @@ import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
-from db.db_productosValidados import insert_productos_validados,update_order_product_status
-from db.db_UserInteractionEvents import event_instert
+from db.db_productos_validados import insert_productos_validados,update_order_product_status
+from db.db_user_interaction_events import event_instert
 from datetime import datetime
 import streamlit.components.v1 as components
 

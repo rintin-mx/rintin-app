@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
 
 
 async def update_status_wordpress(order_id, order_status):

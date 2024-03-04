@@ -1,6 +1,6 @@
 import streamlit as st
 from db.db_entregas_oax import get_orders, get_route_orders, has_active_route, get_order_items
-from interface.UIentregas_oax import UIentregas_oax, UIroute_orders, order_detail
+from interface.ui_entregas_oax import UIentregas_oax, UIroute_orders, order_detail
 from streamlit_float import *
 
 def app():

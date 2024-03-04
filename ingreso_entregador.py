@@ -1,6 +1,6 @@
 import streamlit as st
 from db.db_ingreso_entregador_oax import get_routes, get_route_orders
-from interface.UIingreso_entregas_oax import UIingreso_entregador_oax, UIorder_detail, UIconfirmacion
+from interface.ui_ingreso_entregas_oax import UIingreso_entregador_oax, UIorder_detail, UIconfirmacion
 
 
 def app():

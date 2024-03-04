@@ -1,6 +1,6 @@
 import streamlit as st
-from db.db_ingresoOrdenesCompra import get_live_sellers, get_products, get_pending_products
-from interface.UIingresoOrdenesCompra import orderSelector, orderDetail
+from db.db_ingreso_ordenes_compra import get_live_sellers, get_products, get_pending_products
+from interface.ui_ingreso_ordenes_compra import orderSelector, orderDetail
 
 def app():
     if 'username' in st.session_state:

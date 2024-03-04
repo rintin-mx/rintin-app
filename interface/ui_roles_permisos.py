@@ -3,7 +3,7 @@ import pandas as pd
 from db.db_roles import obtener_todos_los_roles
 from db.db_pemrisos import obtener_todos_los_permisos
 from streamlit_extras.dataframe_explorer import dataframe_explorer
-from db.db_rolesPermisos import insertar_rol_permiso, eliminar_rol_permiso, actualizar_rol_permiso, obtener_todos_los_roles_permisos
+from db.db_roles_permisos import insertar_rol_permiso, eliminar_rol_permiso, actualizar_rol_permiso, obtener_todos_los_roles_permisos
 
 
 def anadir_fila(rol,permiso):

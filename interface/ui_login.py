@@ -8,7 +8,7 @@ from firebase_admin import credentials
 from firebase_admin import auth
 import extra_streamlit_components as stx
 from db.db_userApp import validate_user
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
 
 if not firebase_admin._apps:
     cred = credentials.Certificate('rintin-16fee-firebase-adminsdk-zcrog-536fdf1dfb.json') 

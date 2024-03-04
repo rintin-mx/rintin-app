@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from db.db_ingreso_pickup import get_orders
-from interface.UIingreso_pickup import ingresoPickup, finalizarProceso
+from interface.ui_ingreso_pickup import ingresoPickup, finalizarProceso
 
 def app():
     if 'username' in st.session_state:

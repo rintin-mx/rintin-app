@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from db.db_pemrisos import insertar_permiso, eliminar_permiso, actualizar_permiso, obtener_todos_los_permisos
-from db.db_opcionesSistema import obtener_todos_los_opciones_sistema
+from db.db_opciones_sistema import obtener_todos_los_opciones_sistema
 
 def opcionSistema():
     lista_roles = obtener_todos_los_opciones_sistema()

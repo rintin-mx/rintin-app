@@ -4,7 +4,7 @@ sys.path.append('..')
 
 import streamlit as st
 import streamlit_shadcn_ui as ui
-from db.db_ingresoOrdenesCompra import get_ordenes_compra, updateOrdenCompraStatus, insertOCItems
+from db.db_ingreso_ordenes_compra import get_ordenes_compra, updateOrdenCompraStatus, insertOCItems
 
 
 def orderDetail(products):

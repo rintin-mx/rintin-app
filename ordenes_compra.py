@@ -1,10 +1,10 @@
 
 import streamlit as st
-from interface.UIordenesCompra import UITOrdenesCompra
-from interface.UIordenesCompra import UITAddProduct
-from db.db_UserInteractionEvents import event_instert   
-from db.db_ordenesCompra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info, get_brands, get_fabricantes, get_proveedores
-from interface.UIordenesCompra import UITOrdenesCompraCSV, UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
+from interface.ui_ordenes_compra import UITOrdenesCompra
+from interface.ui_ordenes_compra import UITAddProduct
+from db.db_user_interaction_events import event_instert   
+from db.db_ordenes_compra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info, get_brands, get_fabricantes, get_proveedores
+from interface.ui_ordenes_compra import UITOrdenesCompraCSV, UITTerminarOrdenCompra, UITOrdenesCompraMenu,UITOrdenesCompraEdit
 
 def app():
     if 'username' in st.session_state:

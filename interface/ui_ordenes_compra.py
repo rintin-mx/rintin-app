@@ -2,7 +2,7 @@
 import sys
 sys.path.append('..')
 
-from integration.insertToS3 import insertImage
+from integration.insert_to_S3 import insertImage
 import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
@@ -11,8 +11,8 @@ from fpdf import FPDF
 import asyncio
 import time
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
-from db.db_ingresoOrdenesCompra import updateOrdenCompraStatus
-from db.db_ordenesCompra import insertOrdenCompra, update_oi_values, update_product, updateOrdenCompra, deleteProducts
+from db.db_ingreso_ordenes_compra import updateOrdenCompraStatus
+from db.db_ordenes_compra import insertOrdenCompra, update_oi_values, update_product, updateOrdenCompra, deleteProducts
 from datetime import datetime
 import streamlit.components.v1 as components
 

@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from db.db_opcionesSistema import obtener_todos_los_opciones_sistema, actualizar_opciones_sistema, eliminar_opciones_sistema, insert_opciones_sistema
+from db.db_opciones_sistema import obtener_todos_los_opciones_sistema, actualizar_opciones_sistema, eliminar_opciones_sistema, insert_opciones_sistema
 
 def opcionSistema():
     st.title("Gestión de Opciones de sistema")
