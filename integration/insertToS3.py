@@ -27,4 +27,4 @@ def insertOrderImage(image, order_id, bucket_name):
         return file_url
     except Exception as e:
         print(e)
-        return False
+        return ''
