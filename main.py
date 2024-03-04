@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import extra_streamlit_components as stx
 from db.db_user_interaction_events import event_instert
-from db.db_userApp import get_user_permissions_by_email
+from db.db_user_app import get_user_permissions_by_email
 import numpy as np
 
 st.set_page_config(

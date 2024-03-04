@@ -1,7 +1,7 @@
 
 import streamlit as st
 import pandas as pd
-from db.db_userApp import get_user_permissions,get_all_user
+from db.db_user_app import get_user_permissions,get_all_user
 from db.db_roles import obtener_todos_los_roles
 from db.db_usuario_roles import insertar_usuario_rol
 

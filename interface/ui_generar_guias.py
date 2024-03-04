@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_order_meta_data, endpoint_update_status_by_order_id
-from db.db_numerosGuia import update_order_metadata
+from db.db_numeros_guia import update_order_metadata
 
 operadores_list = [
     'estafeta',

@@ -1,5 +1,5 @@
 import streamlit as st
-from db.db_numerosGuia import get_ordenes_generar_guia
+from db.db_numeros_guia import get_ordenes_generar_guia
 from interface.ui_generar_guias import UIgenerar_guias, UIgenerar_guias_final
 
 def app():
