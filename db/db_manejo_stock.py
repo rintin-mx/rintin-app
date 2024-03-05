@@ -40,7 +40,7 @@ def get_products_grouped_by_seller():
     Get products that have a "bodega" linked to them with their respective seller and proveedor information
     
     Returns:
-    dict: A dictionary containing the query results. None if no results where queried
+    list: A list containing the query results. None if no results where queried
     '''
     config = config_db()
     try:
@@ -73,3 +73,15 @@ where post_type = 'product' and pm.meta_key = '_proveedor' and u1.meta_key = 'do
         return results
     else:
         return None
+
+def get_products_by_proveedor_seller(seller, proveedor):
+    '''
+    Get products that have a "bodega" linked to them with their respective seller and proveedor information
+    
+    Parameters:
+    seller (int): Seller id
+    proveedor (int): Proveedor id
+    
+    Returns:
+    dict: A dictionary containing the query results. None if no results where queried
+    '''

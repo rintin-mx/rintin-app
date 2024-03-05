@@ -44,6 +44,29 @@ def detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers):
         st.markdown(f'#### Proveedor: {product.proveedor_name}')
         st.markdown(f'#### Total skus: {product.sku_count}')
         st.write('')
-        st.checkbox('Bajar productos', key=f'{i}_checkbox')
-        st.button('Stock', key=f'{i}_button')
+        disable_products = st.checkbox('Bajar productos', key=f'{i}_checkbox')
+        if disable_products:
+            seller_proveedor_to_disable.append({
+                "seller_id": product.seller_id,
+                "proveedor_id": product.proveedor_id
+            })
+        if st.button('Stock', key=f'{i}_button'):
+            if disable_products:
+                print('Eliminar producto')
+            else:
+                st.session_state['current_group_info'] = {
+                    "seller_name": product.seller_name, 
+                    "proveedor_name": product.proveedor_name
+                }
+                st.session_state['current_view'] = 'conteo_stock_por_seller'
+                st.rerun()
         st.write('---')
+        
+def conteo_stock_por_seller(seller_products):
+    current_group_info = st.session_state['current_group_info']
+    if st.button('Regresar'):
+        st.session_state['current_view'] = 'detalle_ordenes_por_seller'
+        st.rerun()
+    st.markdown(f'### Seller: {current_group_info["seller_name"]}')
+    st.markdown(f'### Proveedor: {current_group_info["proveedor_name"]}')
+    
