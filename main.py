@@ -172,7 +172,5 @@ class MultiApp:
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Ingreso Ordenes de Compra Bodega',valEmail
                 event_instert(EventName,EventAction,EventUser)
-        if app=='Test':
-            test.app()
 
     run() 
