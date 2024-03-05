@@ -313,8 +313,13 @@ def get_substitute_prod(order_id_list, db='repl') -> dict:
             left join cambios_productos on cambios_productos.order_item_id = wp_woocommerce_order_items.order_item_id
             where order_item_type = 'line_item' and post_status = 'wc-recolectar-2')
 
-        select order_id, nuevo_producto_sku, cantidad_reemplazada 
-        from cambios_productos
+        select 
+        order_id,
+        nuevo_producto_sku,
+        cantidad_reemplazada,
+         order_item_name
+        from 
+        cambios_productos
         left join order_items on cambios_productos.order_item_id = order_items.order_item_id
         where order_id in ({order_id_list})
         """
