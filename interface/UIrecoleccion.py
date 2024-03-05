@@ -80,17 +80,17 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
     header_col4.write("**Reemplazos**")
     header_col5.write("")
     for index, vendedor in df.iterrows():
-        txt = str(vendedor["#Paquetes"]).split(".")
+        txt = str(vendedor["paquetes"]).split(".")
         
         col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
         with col1:
-            st.write(str(vendedor["Seller"]))
+            st.write(str(vendedor["seller"]))
         with col2:
-            st.write(vendedor["#Pedidos"])
+            st.write(vendedor["pedidos"])
         with col3:
             st.write(int(txt[0]))
         with col4:
-            st.write(vendedor["#Reemplazos"])
+            st.write(vendedor["reemplazos"])
         with col5:
             #recolectar_button = st.button("Recolectar", key=vendedor["nombre"])
             if st.button("Recolectar", key=f"recolectar_{index}"):
@@ -167,16 +167,17 @@ def UIagrerPedidoSellerSeleccion(data):
             st.markdown(f'<div class="flex-container"><div class="sku-producto">Seller: {row.seller_name}</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="flex-container"><div class="sku-producto">Numero de Paquetes:{txt[0]}</div></div>', unsafe_allow_html=True)
 
-            # Búsqueda de la orden en la lista de cambiados
-            i = 0
-            while i < len(df) and substitute_products['order_id'][i] != row.order_id:
-                i += 1
-            
-            # Al ser encontrado, despliega la información del cambio
-            if substitute_products['order_id'][i] == row.order_id:
-                sku = substitute_products['nuevo_producto_sku'][i]
-                cantidad = substitute_products['cantidad_reemplazada'][i]
-                st.markdown(f'<div class="flex-container"><div class="sku-producto">Producto Reemplazado: {sku} por {cantidad} unidades.</div></div>', unsafe_allow_html=True)
+            if int(df['productos_reemplazados']) > 0:
+                # Búsqueda de la orden en la lista de cambiados
+                i = 0
+                while i < len(df) and substitute_products['order_id'][i] != row.order_id:
+                    i += 1
+                
+                # Al ser encontrado, despliega la información del cambio
+                if substitute_products['order_id'][i] == row.order_id:
+                    sku = substitute_products['nuevo_producto_sku'][i]
+                    cantidad = substitute_products['cantidad_reemplazada'][i]
+                    st.warning(f'Producto Reemplazado: {sku} por {cantidad} unidades.')
 
             recolectado = st.toggle('',key=f'recolectado{index}')
             print("recolectado")

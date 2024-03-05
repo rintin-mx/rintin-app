@@ -156,9 +156,9 @@ def get_seller_recollection(db='repl') -> dict:
     minutes = int(duration // 60)
     seconds = int(duration % 60)
     print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
-    seller_recolection.columns = ['Seller', '#Pedidos','#Paquetes', '#Reemplazos']
-    total_pedidos = seller_recolection['#Pedidos'].sum()
-    total_paquetes = seller_recolection['#Paquetes'].sum()
+    seller_recolection.columns = ['seller', 'pedidos','paquetes', 'reemplazos']
+    total_pedidos = seller_recolection['pedidos'].sum()
+    total_paquetes = seller_recolection['paquetes'].sum()
     total_registros = len(seller_recolection)
     seller_recolection_dict = seller_recolection.to_dict(orient='list')
     return int(total_pedidos),int(total_paquetes),int(total_registros),seller_recolection_dict

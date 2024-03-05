@@ -166,7 +166,7 @@ def UIDetallePedido(data_deta,idPedido):
         with col3:
             st.markdown(f'##### Cantidad: {pedido.Cantidad}')
             if has_substitute:
-                st.markdown(f'##### SKU de reemplazo: {substitute}')
+                st.warning(f'##### SKU de reemplazo: {substitute}')
             st.write("")  # Espacio extra
 
         with col4:

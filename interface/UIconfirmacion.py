@@ -145,7 +145,7 @@ def UIDetallePedido(data_deta,idPedido):
                 lineasProblemas = []
                 i=0
                 mssg = ''
-                Faltante_no_reemplazo = False       #Hay algun faltante que no necesita reemplazo? Empieza en F y se vuelve T si existe
+                faltante_no_reemplazo = False       #Hay algun faltante que no necesita reemplazo? Empieza en F y se vuelve T si existe
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
@@ -156,7 +156,7 @@ def UIDetallePedido(data_deta,idPedido):
                             product_confirm_change(objeto['order_item_id'], objeto['producto_nuevo_sku'],objeto['cantidad_reemplazada'], time.strftime('%Y-%m-%d %H:%M:%S'))
                             print('---------------- Escribió en tabla')
                         else:
-                            Faltante_no_reemplazo = True
+                            faltante_no_reemplazo = True
 
                 if len(lineasProblemas) > 0:
                     order_notes = "\n".join(lineasProblemas) + mssg
@@ -165,13 +165,13 @@ def UIDetallePedido(data_deta,idPedido):
                         asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                 
                 # if (Faltante no reemplazo/Faltante reemplazo)
-                if(Faltante_no_reemplazo):
+                if(faltante_no_reemplazo):
                     with st.spinner('Actualizando estado de orden a "Validacion stock"'):
                         r = asyncio.run(update_status_wordpress(idPedido, 'stock-2'))
                 else: 
                     with st.spinner('Actualizando estado de orden a "Recolectar"'):
                         r = asyncio.run(update_status_wordpress(idPedido, 'recolectar-2'))
-                print(f"Faltante_no_reemplazo: {Faltante_no_reemplazo}")
+                
             st.session_state.current_view = 'finalProcesoConfirmacion'
             st.session_state.productos_validacion = validacionStr
             st.rerun()
