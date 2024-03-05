@@ -13,7 +13,8 @@ def app():
             data = get_products_grouped_by_seller()
             if data is not None:
                 data_pd = pd.DataFrame(data)
-                grouped_by_seller_proveedor = data_pd.groupby(['seller_name', 'proveedor_name']).agg(sku_count=('id', 'count')).reset_index()
-                sellers = data_pd['seller_name'].unique()
-                detalle_ordenes_por_seller()
+                grouped_by_seller_proveedor = data_pd.groupby(['seller_name', 'proveedor_name', 'seller_id', 'proveedor_id']).agg(sku_count=('id', 'count')).reset_index()
+                sellers = list(data_pd['seller_name'].unique())
+
+                detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers)
             
