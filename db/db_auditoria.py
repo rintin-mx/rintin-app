@@ -5,6 +5,7 @@ sys.path.append('..')
 from config import USER, PASSWORD,HOST,DATABASE,USER_REPLICA,PASSWORD_REPLICA,HOST_REPLICA,DATABASE_REPLICA
 
 import mysql.connector
+from mysql.connector import Error
 import pandas as pd
 import numpy as np
 import time
@@ -121,6 +122,102 @@ def get_seller_centro(db='repl') -> dict:
         else:
             return {}
 
+def product_confirm_change(order_item_id, nuevo_producto_sku, cantidad_reemplazada, fecha):
+    db ='prod'
+    config = config_db(db)
+    start_time = time.time()
+
+    try:
+        connection = mysql.connector.connect(**config)
+        
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+
+            # Consulta SQL para insertar datos
+            # Sentencia SQL para insertar datos
+            sql = "INSERT INTO cambios_productos (order_item_id, nuevo_producto_sku, cantidad_reemplazada, fecha) VALUES (%s, %s, %s, %s)"
+            # Ejecutar la sentencia SQL
+            cursor.execute(sql, (order_item_id, nuevo_producto_sku, cantidad_reemplazada, fecha))
+            connection.commit()
+
+            print("Cambio insertado con éxito.")
+            
+
+    except Error as e:
+        print("Error al conectar a la base de datos:", e)
+
+    finally:
+        # Cerrar la conexión y el cursor
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Conexión a la base de datos cerrada.")
+
+def get_order_status(id, db='repl') -> str:
+    config = config_db(db)
+
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        # id = {id}
+        status = f"""
+            select
+                post_status
+            from
+                wp_posts
+            where
+                id={id}
+        """
+    
+        # Ejecutar la primera consulta
+        cursor.execute(status)
+
+        # Obtener los resultados de la primera consulta
+        resultados_status = cursor.fetchall()
+        # Convertir los resultados a un DataFrame de pandas
+        status = pd.DataFrame(resultados_status)
+
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+
+    return status['post_status'][0]
+
+def get_product_changes(id, db='repl') -> str:
+    config = config_db(db)
+
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        # id = {id}
+        cambios = f"""
+            select 
+                order_item_id,
+                nuevo_producto_sku 
+            from 
+                cambios_productos 
+            where 
+                order_item_id in ({id})
+        """
+    
+        # Ejecutar la primera consulta
+        cursor.execute(cambios)
+
+        # Obtener los resultados de la primera consulta
+        resultados_cambios = cursor.fetchall()
+        # Convertir los resultados a un DataFrame de pandas
+        cambios = pd.DataFrame(resultados_cambios)
+
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+
+    return cambios
+
 def get_order_auditoria(id,db='repl') -> dict:
     config = config_db(db)
     # Registrar el tiempo de inicio
@@ -229,7 +326,8 @@ def get_order_auditoria(id,db='repl') -> dict:
                     sku,
                     units_per_pack,
                     replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
-                    bodega
+                    bodega,
+                    order_items.order_item_id
                 from 
                     order_items
                     left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
@@ -263,9 +361,9 @@ def get_order_auditoria(id,db='repl') -> dict:
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_pickeo) > 0:
-        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id','seller_id', 'bodega']]
+        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id','seller_id', 'bodega', 'order_item_id']]
         # Nueva lista de nombres de columnas
-        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id','seller_id', 'bodega']
+        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id','seller_id', 'bodega', 'order_item_id']
         #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo

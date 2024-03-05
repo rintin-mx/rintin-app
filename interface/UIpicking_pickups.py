@@ -10,6 +10,7 @@ from integration.endpoint_wordpress import endpoint_update_status_by_order_id, e
 from db.db_UserInteractionEvents import event_instert
 from datetime import datetime
 from db.db_productosValidados import insert_productos_validados,update_order_product_status
+from db.db_auditoria import get_product_changes
 import asyncio
 
 import base64
@@ -46,8 +47,27 @@ def UIpicking_detalle(order_info, order_id, orden_padre):
     cantidad_pickeada =0
     df = pd.DataFrame(order_info)
     objArry=[]
+
+    # agrupa los order_item_id de los productos
+    order_item_ids = ''
+    for id in df["order_item_id"]:
+        order_item_ids += f"{id}, "
+    order_item_ids = order_item_ids[:-2]
+
+    # obtiene la lista de los productos con reemplazo
+    changed_list = get_product_changes(order_item_ids)
+    print(order_item_ids)
+
     for i, pedido in df.iterrows():
         #col1, col2, col3, col4, col5 = st.columns(5)
+
+        has_substitute = False
+        substitute = ''
+        for prod in changed_list.iterrows():
+            if(prod[1].order_item_id == pedido.order_item_id):
+                has_substitute = True
+                substitute = prod[1].nuevo_producto_sku
+
         col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 3])
         with col1:
             if pedido.Imagen is not  None:
@@ -61,6 +81,9 @@ def UIpicking_detalle(order_info, order_id, orden_padre):
             st.markdown(f'##### Unidades: {pedido.units_per_pack}')            
         with col3:
             st.markdown(f'##### Cantidad: {pedido.Cantidad}')
+            if has_substitute:
+                st.warning(f'##### SKU de reemplazo: {substitute}')
+
             st.write("")  # Espacio extra
 
         with col4:

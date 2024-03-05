@@ -35,9 +35,9 @@ def app():
             print('data_df')
             print(data_df)
             # Realizamos el inner join
-            df_merged = pd.merge(dataBase_df, data_df, left_on='Seller', right_on='seller_name')
-            df_final=df_merged[["Seller","#Pedidos","num_paquetes","recolectado","order_id"]]
-            df_final.columns = ['seller_name', 'num_pedidos','num_paquetes','recolectado','order_id']
+            df_merged = pd.merge(dataBase_df, data_df, left_on='seller', right_on='seller_name')
+            df_final=df_merged[["seller","pedidos","num_paquetes","recolectado","order_id", "productos_reemplazados"]]
+            df_final.columns = ['seller_name', 'num_pedidos','num_paquetes','recolectado','order_id','productos_reemplazados']
             df_final_dict = df_final.to_dict(orient='list')
             if st.button("regresar a recoleccion"):
                 st.session_state.current_view = 'recoleccion'

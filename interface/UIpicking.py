@@ -9,6 +9,7 @@ import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
 from db.db_productosValidados import insert_productos_validados,update_order_product_status
 from db.db_UserInteractionEvents import event_instert
+from db.db_auditoria import get_product_changes
 from datetime import datetime
 import streamlit.components.v1 as components
 
@@ -130,11 +131,28 @@ def UIDetallePedido(data_deta,idPedido):
 
     df = pd.DataFrame(data_deta)
     objArry=[]
+
+    # Extrae los ids de las ordenes para buscar cambios en productos
+    order_item_ids = ''
+    for id in df["order_item_id"]:
+        order_item_ids += f"{id}, "
+    order_item_ids = order_item_ids[:-2]
+    changed_list = get_product_changes(order_item_ids)
+
     for i, pedido in df.iterrows():
         st.write(f'### Proveedor: {pedido.proveedor}')
         print(pedido.Imagen)
         #col1, col2, col3, col4, col5 = st.columns(5)
         col1, col2, col3, col4, col5 = st.columns([3, 3, 3, 3, 2])
+
+        # Busca si el producto tiene un sustituto
+        has_substitute = False
+        substitute = ''
+        for prod in changed_list.iterrows():
+            if(prod[1].order_item_id == pedido.order_item_id):
+                has_substitute = True
+                substitute = prod[1].nuevo_producto_sku
+
         with col1:
             if pedido.Imagen is not  None:
                 st.image(pedido.Imagen, use_column_width=True)
@@ -147,6 +165,8 @@ def UIDetallePedido(data_deta,idPedido):
             st.markdown(f'##### Unidades: {pedido.units_per_pack}')            
         with col3:
             st.markdown(f'##### Cantidad: {pedido.Cantidad}')
+            if has_substitute:
+                st.warning(f'##### SKU de reemplazo: {substitute}')
             st.write("")  # Espacio extra
 
         with col4:
