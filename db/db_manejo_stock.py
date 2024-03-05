@@ -17,7 +17,7 @@ def config_db(env='repl') -> dict:
     db (string): Enviroment name.
 
     Returns:
-    dict: A dictionary containing database connection parameters.
+    dict: A dataframe containing database connection parameters.
     """
     if env == 'prod':
         config = {
@@ -36,6 +36,12 @@ def config_db(env='repl') -> dict:
     return config
 
 def get_products_grouped_by_seller():
+    '''
+    Get products that have a "bodega" linked to them with their respective seller and proveedor information
+    
+    Returns:
+    dict: A dictionary containing the query results. None if no results where queried
+    '''
     config = config_db()
     try:
         connection = mysql.connector.connect(**config)
@@ -59,14 +65,11 @@ where post_type = 'product' and pm.meta_key = '_proveedor' and u1.meta_key = 'do
 
         cursor.execute(sql)
         results = cursor.fetchall()
-        results_df = pd.DataFrame(results)
     finally:
         cursor.close()
         connection.close()
 
-    if len(results_df) > 0:
-        results_df = results_df[['id','seller_id', 'proveedor_id', 'seller_name', 'proveedor_name', 'bodega']]
-        results_general_df = results_df.to_dict(orient='list')
-        return results_general_df
+    if len(results) > 0:
+        return results
     else:
-        return {}
+        return None
