@@ -35,7 +35,9 @@ def app():
             UITAddProduct(product, fabricantes, proveedores)
         elif st.session_state.current_view == 'ordenesCompraCsv':
             data = get_live_sellers()
-            UITOrdenesCompraCSV(data)
+            fabricantes = get_fabricantes()
+            proveedores = get_proveedores()
+            UITOrdenesCompraCSV(data, fabricantes, proveedores)
         elif st.session_state.current_view == 'ordenesCompraMenu':
             if 'ordenCompraId' in st.session_state:
                 del st.session_state['ordenCompraId']

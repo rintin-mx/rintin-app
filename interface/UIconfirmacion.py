@@ -55,8 +55,8 @@ def UIDetallePedido(data_deta,idPedido):
             st.session_state.current_view = 'confirmacion'
             st.rerun()
     #estilos en los textos
-
-   
+    print('data de herramienta')
+    print(data_deta)
     st.write("---")
     # Inicializar una lista para los estados
     estados = []

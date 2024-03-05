@@ -89,6 +89,11 @@ with orders as (
     and meta_key = '_dokan_vendor_id'
     having seller_id != 2705
 ),
+order_shipping as (
+	select 
+		distinct order_id
+	from wp_woocommerce_order_items where order_item_type = 'shipping' and order_item_name like '%oax%'
+),
 grouped_orders as(
 select 
 	post_parent,
@@ -162,7 +167,9 @@ select
 	num_hijos_guia,
 	zona_entrega
 from ordermeta 
-inner join cps on cps.codigo_postal = ordermeta.postcode
+left join cps on cps.codigo_postal = ordermeta.postcode
+where
+	zona_entrega like '%pickup%' or order_id in (select * from order_shipping)
 
         """
         cursor.execute(wp_ordenes_query)
