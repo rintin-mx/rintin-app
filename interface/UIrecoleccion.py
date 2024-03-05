@@ -96,7 +96,7 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
             if st.button("Recolectar", key=f"recolectar_{index}"):
                 EventName,EventAction,EventUser='picking','Se pulso en botón Recolectar',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
-                st.session_state.Seller_name = vendedor["Seller"]
+                st.session_state.Seller_name = vendedor["seller"]
                 print("st.session_state.Seller_name")
                 print(st.session_state.Seller_name)
                 
@@ -142,11 +142,14 @@ def UIagrerPedidoSellerSeleccion(data):
     st.write("---")
 
     # Verificar si hay productos cambiados
-    if int(df['productos_reemplazados']) > 0:
-        order_list = ''
-        for order in df.iterrows():
+    order_list = ''
+    for order in df.iterrows():
+        print('-----------')
+        print(order[1][5])
+        if int(order[1][5]) > 0:    
             order_list += f"{order[1][4]},"
 
+    if order_list != '':
         print("-------------")
         substitute_products = get_substitute_prod(order_list[:-1])
         print(substitute_products)
@@ -167,7 +170,7 @@ def UIagrerPedidoSellerSeleccion(data):
             st.markdown(f'<div class="flex-container"><div class="sku-producto">Seller: {row.seller_name}</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="flex-container"><div class="sku-producto">Numero de Paquetes:{txt[0]}</div></div>', unsafe_allow_html=True)
 
-            if int(df['productos_reemplazados']) > 0:
+            if order_list != '':
                 # Búsqueda de la orden en la lista de cambiados
                 i = 0
                 while i < len(df) and substitute_products['order_id'][i] != row.order_id:
