@@ -180,7 +180,7 @@ def UIagrerPedidoSellerSeleccion(data):
                 if substitute_products['order_id'][i] == row.order_id:
                     sku = substitute_products['nuevo_producto_sku'][i]
                     sku_anterior = substitute_products['order_item_name'][i]
-                    st.warning(f'Este pedido tuvo cambios: {sku} por {sku_anterior}.')
+                    st.warning(f'Este pedido tuvo cambios: {sku_anterior} por {sku}.')
 
             recolectado = st.toggle('',key=f'recolectado{index}')
             print("recolectado")
