@@ -1,7 +1,7 @@
 import streamlit as st
-from interface.UIpicking import UITodosLosPedidos,UIDetallePedido,pickFinal
+from interface.ui_picking import UITodosLosPedidos,UIDetallePedido,pickFinal
 from db.db_order import get_order,get_seller, get_proveedores
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
 
 
 def app():

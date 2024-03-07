@@ -1,7 +1,7 @@
 import streamlit as st
-from interface.UIauditoria import UITodosLosPedidos,UIDetallePedido,UITFinalizarProceso
+from interface.ui_auditoria import UITodosLosPedidos,UIDetallePedido,UITFinalizarProceso
 from db.db_auditoria import get_seller_centro,get_order_auditoria, checkForChildStatusses
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
 
 def app():
         if 'username' in st.session_state:

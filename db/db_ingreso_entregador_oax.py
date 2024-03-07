@@ -136,7 +136,6 @@ def update_route(route_id, order_list, estado):
 			for order in order_list:
 				if int(order['total']) != 0:
 					sql = f"INSERT IGNORE INTO ingreso_entrega_ordenes (order_id, total_a_recibir, total_recibido, razon_diferencia) VALUES ({order['order_id']}, {order['total']}, {order['ingresado']}, '{order['razon']}')"
-					print(sql)
 					cursor.execute(sql)
 			connection.commit()
 			cursor.close()
@@ -144,7 +143,6 @@ def update_route(route_id, order_list, estado):
 			return True
 		return False
 	except Exception as e:
-		print('Error al actualizar la data:', e)
 		cursor.close()
 		connection.close()
 		return False

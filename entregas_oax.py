@@ -1,16 +1,16 @@
 import streamlit as st
 from db.db_entregas_oax import get_orders, get_route_orders, has_active_route, get_order_items
-from interface.UIentregas_oax import UIentregas_oax, UIroute_orders, order_detail
+from interface.ui_entregas_oax import UIentregas_oax, UIroute_orders, order_detail
 from streamlit_float import *
 
 def app():
+    print('cambiado')
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'entregas_oax'
         if st.session_state.current_view in ('ingreso_entregador_oax', 'route_order_detail', 'confirmacion_route_order', 'generar_guias_oax', 'generar_guias_oax_final','pickFinal', 'recoleccionFinal', 'ingresoPickup', 'ingresoPickupFinal', 'final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups','generar_guias', 'generar_guias_final','confirmacion','ingresoOrdenesDetalle','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv'):
             st.session_state['current_view'] = 'entregas_oax'
         if st.session_state.current_view == 'entregas_oax':
-            print(st.session_state.useremail)
             route_id = has_active_route(st.session_state.useremail)
             if route_id != 0:
                 data = get_route_orders(route_id)

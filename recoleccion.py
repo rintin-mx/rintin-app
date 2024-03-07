@@ -1,5 +1,5 @@
 import streamlit as st
-from interface.UIrecoleccion import UIpendienteRecoleccion, UIrecoleccionFinal, UIpendienteRecoleccionSeleccion,UIagrerPedidoSellerSeleccion
+from interface.ui_recoleccion import UIpendienteRecoleccion, UIrecoleccionFinal, UIpendienteRecoleccionSeleccion,UIagrerPedidoSellerSeleccion
 from db.db_recoleccion import get_seller_recollection,get_data_seller_by_name
 import pandas as pd
 
@@ -28,12 +28,6 @@ def app():
             
             dataBase_df = pd.DataFrame(dataBase)
             data_df = pd.DataFrame(data)
-            print('seller name')
-            print(st.session_state.Seller_name)
-            print('dataBase_df')
-            print(dataBase_df)
-            print('data_df')
-            print(data_df)
             # Realizamos el inner join
             df_merged = pd.merge(dataBase_df, data_df, left_on='seller', right_on='seller_name')
             df_final=df_merged[["seller","pedidos","num_paquetes","recolectado","order_id", "productos_reemplazados"]]

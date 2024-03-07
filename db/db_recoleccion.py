@@ -286,7 +286,6 @@ def get_data_seller_by_name(name,db='repl') -> dict:
     minutes = int(duration // 60)
     seconds = int(duration % 60)
     wp_seller_by_name_recolection['recolectado'] = False
-    print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
 
     wp_seller_by_name_recolection_dict = wp_seller_by_name_recolection.to_dict(orient='list')
     return wp_seller_by_name_recolection_dict
