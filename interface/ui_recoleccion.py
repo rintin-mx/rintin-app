@@ -8,6 +8,7 @@ import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from db.db_order import insert_order_metadata
 from db.db_user_interaction_events import event_instert
+from db.db_recoleccion import get_substitute_prod
 import streamlit_shadcn_ui as ui
 import time
 
@@ -69,27 +70,32 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
     st.subheader("Sellers a recolectar")
     st.write("---")
     df = pd.DataFrame(data)
-    header_col1, header_col2, header_col3,header_col4= st.columns([2, 1, 1,1])
+    header_col1, header_col2, header_col3,header_col4,header_col5= st.columns([2, 1, 1, 1, 1])
     header_col1.write("**Seller**")
     header_col2.write("**Pedidos**")
     header_col3.write("**Paquetes**") 
-    header_col4.write("")
+    header_col4.write("**Reemplazos**")
+    header_col5.write("")
     for index, vendedor in df.iterrows():
-        txt = str(vendedor["#Paquetes"]).split(".")
+        txt = str(vendedor["paquetes"]).split(".")
         
-        col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+        col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
         with col1:
-            st.write(str(vendedor["Seller"]))
+            st.write(str(vendedor["seller"]))
         with col2:
-            st.write(vendedor["#Pedidos"])
+            st.write(vendedor["pedidos"])
         with col3:
             st.write(int(txt[0]))
         with col4:
+            st.write(vendedor["reemplazos"])
+        with col5:
             #recolectar_button = st.button("Recolectar", key=vendedor["nombre"])
             if st.button("Recolectar", key=f"recolectar_{index}"):
                 EventName,EventAction,EventUser='picking','Se pulso en botón Recolectar',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
-                st.session_state.Seller_name = vendedor["Seller"]
+                st.session_state.Seller_name = vendedor["seller"]
+                print("st.session_state.Seller_name")
+                print(st.session_state.Seller_name)
                 
                 st.session_state.current_view = 'pendiente'
                 st.rerun()
@@ -131,6 +137,20 @@ def UIagrerPedidoSellerSeleccion(data):
 
     df = pd.DataFrame(data)
     st.write("---")
+
+    # Verificar si hay productos cambiados
+    order_list = ''
+    for order in df.iterrows():
+        print('-----------')
+        print(order[1][5])
+        if int(order[1][5]) > 0:    
+            order_list += f"{order[1][4]},"
+
+    if order_list != '':
+        print("-------------")
+        substitute_products = get_substitute_prod(order_list[:-1])
+        print(substitute_products)
+
     # Solo necesitas una columna
     col1 = st.columns(1)[0]
     col1.write('Información de orden')
@@ -144,7 +164,20 @@ def UIagrerPedidoSellerSeleccion(data):
         with col1:
             st.markdown(f'<div class="flex-container"><div class="nombre-producto">order_id: {row.order_id}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="flex-container"><div class="sku-producto">Seller: {row.seller_name}</div></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="flex-container"><div class="sku-producto">Numero de Paquetes:{txt[0]}</div></div>', unsafe_allow_html=True) 
+            st.markdown(f'<div class="flex-container"><div class="sku-producto">Numero de Paquetes:{txt[0]}</div></div>', unsafe_allow_html=True)
+
+            if order_list != '':
+                # Búsqueda de la orden en la lista de cambiados
+                i = 0
+                while i < len(df) and substitute_products['order_id'][i] != row.order_id:
+                    i += 1
+                
+                # Al ser encontrado, despliega la información del cambio
+                if substitute_products['order_id'][i] == row.order_id:
+                    sku = substitute_products['nuevo_producto_sku'][i]
+                    sku_anterior = substitute_products['order_item_name'][i]
+                    st.warning(f'Este pedido tuvo cambios: {sku_anterior} por {sku}.')
+
             recolectado = st.toggle('',key=f'recolectado{index}')
             if recolectado:
                 st.session_state.recolectado=False
