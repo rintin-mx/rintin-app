@@ -61,7 +61,7 @@ inner join wp_postmeta pm on post_id = id
 inner join wp_usermeta u1 on u1.user_id = post_author
 inner join wp_usermeta u2 on u2.user_id = pm.meta_value
 inner join wp_usermeta u3 on u3.user_id = post_author
-where post_type = 'product' and pm.meta_key = '_proveedor' and u1.meta_key = 'dokan_store_name' and u2.meta_key = 'dokan_store_name' and u3.meta_key = 'bodega' and u3.meta_value is not null and post_status != 'proceso_stock'
+where post_type = 'product' and pm.meta_key = '_proveedor' and u1.meta_key = 'dokan_store_name' and u2.meta_key = 'dokan_store_name' and u3.meta_key = 'bodega' and u3.meta_value is not null and post_status = 'proceso_stock'
         """
 
         cursor.execute(sql)
@@ -110,7 +110,7 @@ select
     and u3.meta_value is not null
     and pm.meta_value = {proveedor_id}
     and post_author ={seller_id}
-    and post_status != 'proceso_stock'
+    and post_status = 'proceso_stock'
 ),
 product_meta as(
 	select
@@ -241,8 +241,8 @@ def insert_to_stock_count_table(product_id, stock_fisico, stock_total):
             cst_offset = timedelta(hours=-6)
             cst_time = current_utc_time + cst_offset
             mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
-            sql = "INSERT INTO stock_bodegas (product_id, stock_total, stock_fisico) VALUES (%s, %s, %s)"
-            cursor.execute(sql, (product_id, stock_fisico, stock_total))
+            sql = "INSERT INTO stock_bodegas (product_id, stock_total, stock_fisico, fecha) VALUES (%s, %s, %s, %s)"
+            cursor.execute(sql, (product_id, stock_fisico, stock_total, mysql_datetime_cst))
             connection.commit()
             cursor.close()
             connection.close()

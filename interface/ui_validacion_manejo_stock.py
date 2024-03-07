@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 import streamlit as st
-from db.db_manejo_stock import update_product_stock_on_db, insert_to_stock_count_table, update_product_status
+from db.db_validacion_manejo_stock import update_product_stock_on_db, insert_to_stock_count_table, update_product_status
 import streamlit_shadcn_ui as ui
 from fpdf import FPDF
 import base64
@@ -10,6 +10,10 @@ from datetime import datetime, timedelta
 def handle_select_change():
     '''
     Handles select filter value change by setting the needed states
+    
+    Parameters:
+    select_value (string | None): selected value in the selectbox
+    sellers (list): Unique seller list
     '''
     sellers = st.session_state['unique_sellers']
     select_value = st.session_state['filter_select']
@@ -37,6 +41,7 @@ def detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers):
         grouped_by_seller_proveedor = grouped_by_seller_proveedor[(grouped_by_seller_proveedor['seller_name'] == st.session_state['current_seller'])]
     else:
         current_seller_for_title = 'Todos los sellers'
+    st.markdown('## Validacion de stock')
     st.markdown(f'### Detalle de ordenes por seller: {current_seller_for_title}')
     st.selectbox('Sellers', key='filter_select', options=sellers, index=st.session_state['current_seller_index'], on_change=handle_select_change)
     st.write('---')
@@ -61,7 +66,7 @@ def detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers):
                     "seller_id": product.seller_id,
                     "proveedor_id": product.proveedor_id
                 }
-                st.session_state['current_view'] = 'conteo_stock_por_seller'
+                st.session_state['current_view'] = 'validacion_conteo_stock_por_seller'
                 st.rerun()
         st.write('---')
 
@@ -117,11 +122,7 @@ def update_product_stock():
     print(products_dict)
     products_ok_dict = st.session_state['products_ok']
     for product in products_dict:
-        if products_dict[product]['difference'] < 0 and int(abs(products_dict[product]['difference']) * float(products_dict[product]['cost'])) >= 2000:
-            print('Se manda a validación')
-            print(products_dict[product])
-            update_product_status(product)
-        elif products_dict[product]['difference'] != 0:
+        if products_dict[product]['difference'] != 0:
             print('Se actualiza directo')
             print(products_dict[product])
             update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
@@ -130,15 +131,6 @@ def update_product_stock():
         insert_to_stock_count_table(product, products_ok_dict[product]['stock_fisico'], products_ok_dict[product]['inserted_stock'])
 
 def create_download_link(val, filename):
-    '''
-    Creates a url for downloading the pdf file
-    
-    Parameters:
-    val (file): PDF file
-    filename (string): File name
-    
-    Return (HTML component): A tag containing the download link
-    '''
     b64 = base64.b64encode(val) 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Descargar PDF</a>'
 
@@ -202,7 +194,7 @@ def finalizar_manejo_stock():
         print(go_back)
         if go_back:
             print('entro')
-            st.session_state.current_view = 'detalle_ordenes_por_seller'
+            st.session_state.current_view = 'validacion_detalle_ordenes_por_seller'
             st.session_state['is_generated'] = False
             st.rerun()
 
@@ -240,7 +232,7 @@ def conteo_stock_por_seller():
     with container:
         st.write('<div class="floating"></div>', unsafe_allow_html=True)
         if st.button('Regresar'):
-            st.session_state['current_view'] = 'detalle_ordenes_por_seller'
+            st.session_state['current_view'] = 'validacion_detalle_ordenes_por_seller'
             st.rerun()
         current_group_info = st.session_state['current_group_info']
         st.markdown(f'### Seller: {current_group_info["seller_name"]}')
@@ -251,7 +243,7 @@ def conteo_stock_por_seller():
         respuesta = ui.alert_dialog(show=button, title="Confirmación de conteo", description=f'Productos OK: {len(st.session_state["products_ok"].keys())} \n Productos con diferencias: {len(st.session_state["products_con_validacion"].keys())}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
             update_product_stock()
-            st.session_state.current_view = 'finalizar_manejo_stock'
+            st.session_state.current_view = 'validacion_finalizar_manejo_stock'
             st.rerun()
 
     if conteo_filter is not None and conteo_filter == 'Contado':
