@@ -93,18 +93,17 @@ def get_seller_recollection(db='repl') -> dict:
                 HAVING
                     zone = 'centro'
                 ),
-                order_items AS(
-                SELECT
-                    order_item_id,
-                    wp_woocommerce_order_items.order_id,
-                    order_item_name
-                FROM
-                    wp_woocommerce_order_items
-                    INNER JOIN wp_posts ON wp_posts.id = order_id
-                WHERE
-                    order_item_type = 'line_item'
-                    AND post_status = 'wc-recolectar-2'
-                ),
+                order_items as(
+					select
+					wp_woocommerce_order_items.order_item_id,
+					wp_woocommerce_order_items.order_id,
+					order_item_name,
+					case when cambios_productos.order_item_id is null then 0 else 1 end as reemplazado
+					from wp_woocommerce_order_items
+					inner join wp_posts on wp_posts.id = order_id
+					left join cambios_productos on cambios_productos.order_item_id = wp_woocommerce_order_items.order_item_id
+					where order_item_type = 'line_item' and post_status = 'wc-recolectar-2'
+				),
                 product_order_meta_values AS (
                 SELECT
                     `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
@@ -123,7 +122,8 @@ def get_seller_recollection(db='repl') -> dict:
                 SELECT
                 seller_name,
                 count(DISTINCT ordermeta.order_id) AS num_pedidos,
-                sum(order_quantity) AS num_paquetes
+                sum(order_quantity) AS num_paquetes,
+                sum(reemplazado) as productos_reemplazados
                 FROM
                 ordermeta
                 INNER JOIN sellers ON sellers.user_id = dokan_vendor_id
@@ -156,9 +156,9 @@ def get_seller_recollection(db='repl') -> dict:
     minutes = int(duration // 60)
     seconds = int(duration % 60)
     print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
-    seller_recolection.columns = ['Seller', '#Pedidos','#Paquetes']
-    total_pedidos = seller_recolection['#Pedidos'].sum()
-    total_paquetes = seller_recolection['#Paquetes'].sum()
+    seller_recolection.columns = ['seller', 'pedidos','paquetes', 'reemplazos']
+    total_pedidos = seller_recolection['pedidos'].sum()
+    total_paquetes = seller_recolection['paquetes'].sum()
     total_registros = len(seller_recolection)
     seller_recolection_dict = seller_recolection.to_dict(orient='list')
     return int(total_pedidos),int(total_paquetes),int(total_registros),seller_recolection_dict
@@ -223,11 +223,16 @@ def get_data_seller_by_name(name,db='repl') -> dict:
                     having zone = 'centro'
                 ),
                 order_items as(
-                    select order_item_id, wp_woocommerce_order_items.order_id, order_item_name
-                    from wp_woocommerce_order_items
-                    inner join wp_posts on wp_posts.id = order_id
-                    where order_item_type = 'line_item' and post_status = 'wc-recolectar-2'
-                ),
+					select
+					wp_woocommerce_order_items.order_item_id,
+					wp_woocommerce_order_items.order_id,
+					order_item_name,
+					case when cambios_productos.order_item_id is null then 0 else 1 end as reemplazado
+					from wp_woocommerce_order_items
+					inner join wp_posts on wp_posts.id = order_id
+					left join cambios_productos on cambios_productos.order_item_id = wp_woocommerce_order_items.order_item_id
+					where order_item_type = 'line_item' and post_status = 'wc-recolectar-2'
+				),
                 product_order_meta_values as (
                     select
                         `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
@@ -248,7 +253,8 @@ def get_data_seller_by_name(name,db='repl') -> dict:
                     seller_name,
                     ordermeta.order_id as order_id,
                     count(distinct ordermeta.order_id) as num_pedidos,
-                    sum(order_quantity) as num_paquetes
+                    sum(order_quantity) as num_paquetes,
+                    sum(reemplazado) as productos_reemplazados
                 from ordermeta
                     inner join sellers on sellers.user_id = dokan_vendor_id
                     inner join order_items on order_items.order_id = ordermeta.order_id
@@ -280,10 +286,66 @@ def get_data_seller_by_name(name,db='repl') -> dict:
     minutes = int(duration // 60)
     seconds = int(duration % 60)
     wp_seller_by_name_recolection['recolectado'] = False
-    print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
 
     wp_seller_by_name_recolection_dict = wp_seller_by_name_recolection.to_dict(orient='list')
     return wp_seller_by_name_recolection_dict
 
+def get_substitute_prod(order_id_list, db='repl') -> dict:
+    # Registrar el tiempo de inicio
+    config = config_db(db)
+    # Establecer la conexión a la base de datos
+    conexion = mysql.connector.connect(**config)
+    # Registrar el tiempo de inicio
+    start_time = time.time()
+    try:
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        substitute_products_from_seller=f"""
+        with order_items AS (
+            select
+            wp_woocommerce_order_items.order_item_id,
+            wp_woocommerce_order_items.order_id,
+            order_item_name,
+            case when cambios_productos.order_item_id is null then 0 else 1 end as reemplazado
+            from wp_woocommerce_order_items
+            inner join wp_posts on wp_posts.id = order_id
+            left join cambios_productos on cambios_productos.order_item_id = wp_woocommerce_order_items.order_item_id
+            where order_item_type = 'line_item' and post_status = 'wc-recolectar-2')
 
+        select 
+        order_id,
+        nuevo_producto_sku,
+        cantidad_reemplazada,
+         order_item_name
+        from 
+        cambios_productos
+        left join order_items on cambios_productos.order_item_id = order_items.order_item_id
+        where order_id in ({order_id_list})
+        """
+        # Ejecutar la primera consulta
+        cursor.execute(substitute_products_from_seller)
 
+        # Obtener los resultados de la primera consulta
+        resultados_substitute_products_from_seller= cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        substitute_products_from_seller = pd.DataFrame(resultados_substitute_products_from_seller)
+
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+    
+    # Registrar el tiempo de finalización
+    end_time = time.time()
+
+    # Calcular la duración
+    duration = end_time - start_time
+
+    # Convertir a minutos y segundos
+    minutes = int(duration // 60)
+    seconds = int(duration % 60)
+    print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
+
+    substitute_products_from_seller = substitute_products_from_seller.to_dict(orient='list')
+    return substitute_products_from_seller
