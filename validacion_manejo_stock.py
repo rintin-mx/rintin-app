@@ -7,7 +7,7 @@ def app():
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'validacion_detalle_ordenes_por_seller'
-        if st.session_state.current_view in ('detalle_ordenes_por_seller', 'conteo_stock_por_seller', 'finalizar_manejo_stock', 'generar_guias_oax', 'generar_guias_oax_final', 'ingreso_entregador_oax', 'route_order_detail', 'confirmacion_route_order', 'entregas_oax', 'entrega_order_detail', 'generar_guias_final','generar_guias','pickFinal', 'recoleccionFinal', 'ingresoPickup', 'ingresoPickupFinal','final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups','ordenesCompraMenu','detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu','auditoria', 'ingresoOrdenesCompra'):
+        if st.session_state.current_view in ('confirmar_baja_proveedor', 'detalle_ordenes_por_seller', 'conteo_stock_por_seller', 'finalizar_manejo_stock', 'generar_guias_oax', 'generar_guias_oax_final', 'ingreso_entregador_oax', 'route_order_detail', 'confirmacion_route_order', 'entregas_oax', 'entrega_order_detail', 'generar_guias_final','generar_guias','pickFinal', 'recoleccionFinal', 'ingresoPickup', 'ingresoPickupFinal','final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups','ordenesCompraMenu','detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu','auditoria', 'ingresoOrdenesCompra'):
             st.session_state['current_view'] = 'validacion_detalle_ordenes_por_seller'
         if st.session_state['current_view'] == 'validacion_detalle_ordenes_por_seller':
             if 'products_by_proveedor_seller' in st.session_state:
@@ -22,8 +22,6 @@ def app():
                 del st.session_state.products_ok
             if 'products_con_validacion' in st.session_state:
                 del st.session_state.products_ok
-            
-
             data = get_products_grouped_by_seller()
             if data is not None:
                 data_pd = pd.DataFrame(data)
@@ -31,6 +29,8 @@ def app():
                 sellers = list(data_pd['seller_name'].unique())
 
                 detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers)
+            else:
+                st.write('# No hay productos en validación')
         elif st.session_state['current_view'] == 'validacion_conteo_stock_por_seller':
             seller_id = st.session_state['current_group_info']['seller_id']
             proveedor_id = st.session_state['current_group_info']['proveedor_id']

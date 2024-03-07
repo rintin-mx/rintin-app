@@ -50,24 +50,15 @@ def detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers):
         st.markdown(f'#### Proveedor: {product.proveedor_name}')
         st.markdown(f'#### Total skus: {product.sku_count}')
         st.write('')
-        disable_products = st.checkbox('Bajar productos', key=f'{i}_checkbox')
-        if disable_products:
-            seller_proveedor_to_disable.append({
+        if st.button('Stock', key=f'{i}_button'):
+            st.session_state['current_group_info'] = {
+                "seller_name": product.seller_name, 
+                "proveedor_name": product.proveedor_name,
                 "seller_id": product.seller_id,
                 "proveedor_id": product.proveedor_id
-            })
-        if st.button('Stock', key=f'{i}_button'):
-            if disable_products:
-                print('Eliminar producto')
-            else:
-                st.session_state['current_group_info'] = {
-                    "seller_name": product.seller_name, 
-                    "proveedor_name": product.proveedor_name,
-                    "seller_id": product.seller_id,
-                    "proveedor_id": product.proveedor_id
-                }
-                st.session_state['current_view'] = 'validacion_conteo_stock_por_seller'
-                st.rerun()
+            }
+            st.session_state['current_view'] = 'validacion_conteo_stock_por_seller'
+            st.rerun()
         st.write('---')
 
 def handle_input_change(id):

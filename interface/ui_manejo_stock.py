@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 import streamlit as st
-from db.db_manejo_stock import update_product_stock_on_db, insert_to_stock_count_table, update_product_status
+from db.db_manejo_stock import update_product_status_bulk, update_product_stock_on_db, insert_to_stock_count_table, update_product_status
 import streamlit_shadcn_ui as ui
 from fpdf import FPDF
 import base64
@@ -16,6 +16,16 @@ def handle_select_change():
     st.session_state['current_seller'] = select_value
     if select_value is not None:
         st.session_state['current_seller_index'] = sellers.index(select_value)
+
+def confirmar_baja_proveedor():
+    st.write(f"## Estás seguro que deséas dar de baja los productos del seller {st.session_state['current_group_info']['seller_name']} con proveedor {st.session_state['current_group_info']['proveedor_name']}")
+    if st.button('Confirmar'):
+        update_product_status_bulk(st.session_state['current_group_info']['ids'])
+        st.session_state.current_view = 'detalle_ordenes_por_seller'
+        st.rerun()
+    if st.button('Cancelar'):
+        st.session_state.current_view = 'detalle_ordenes_por_seller'
+        st.rerun()
 
 def detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers):
     '''
@@ -45,24 +55,24 @@ def detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers):
         st.markdown(f'#### Proveedor: {product.proveedor_name}')
         st.markdown(f'#### Total skus: {product.sku_count}')
         st.write('')
-        disable_products = st.checkbox('Bajar productos', key=f'{i}_checkbox')
-        if disable_products:
-            seller_proveedor_to_disable.append({
+        if st.button('Dar de baja', key=f"{i}_baja_btn"):
+            st.session_state.current_view = 'confirmar_baja_proveedor'
+            st.session_state['current_group_info'] = {
+                "seller_name": product.seller_name, 
+                "proveedor_name": product.proveedor_name,
+                "ids": product.id_concat
+            }
+            st.rerun()
+        if st.button('Stock', key=f'{i}_button'):
+            print('sí')
+            st.session_state['current_group_info'] = {
+                "seller_name": product.seller_name, 
+                "proveedor_name": product.proveedor_name,
                 "seller_id": product.seller_id,
                 "proveedor_id": product.proveedor_id
-            })
-        if st.button('Stock', key=f'{i}_button'):
-            if disable_products:
-                print('Eliminar producto')
-            else:
-                st.session_state['current_group_info'] = {
-                    "seller_name": product.seller_name, 
-                    "proveedor_name": product.proveedor_name,
-                    "seller_id": product.seller_id,
-                    "proveedor_id": product.proveedor_id
-                }
-                st.session_state['current_view'] = 'conteo_stock_por_seller'
-                st.rerun()
+            }
+            st.session_state['current_view'] = 'conteo_stock_por_seller'
+            st.rerun()
         st.write('---')
 
 def handle_input_change(id):

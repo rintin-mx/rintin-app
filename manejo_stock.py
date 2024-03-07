@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from db.db_manejo_stock import get_products_grouped_by_seller, get_products_by_proveedor_seller, get_products_in_active_orders
-from interface.ui_manejo_stock import detalle_ordenes_por_seller, conteo_stock_por_seller, finalizar_manejo_stock
+from interface.ui_manejo_stock import confirmar_baja_proveedor, detalle_ordenes_por_seller, conteo_stock_por_seller, finalizar_manejo_stock
 
 def app():
     if 'username' in st.session_state:
@@ -27,9 +27,12 @@ def app():
             data = get_products_grouped_by_seller()
             if data is not None:
                 data_pd = pd.DataFrame(data)
-                grouped_by_seller_proveedor = data_pd.groupby(['seller_name', 'proveedor_name', 'seller_id', 'proveedor_id']).agg(sku_count=('id', 'count')).reset_index()
+                grouped_by_seller_proveedor = data_pd.groupby(['seller_name', 'proveedor_name', 'seller_id', 'proveedor_id']).agg(
+                    sku_count=('id', 'count'),
+                    id_concat=('id', lambda x: ', '.join(map(str, x)))
+                    ).reset_index()
                 sellers = list(data_pd['seller_name'].unique())
-
+                print(grouped_by_seller_proveedor)
                 detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers)
         elif st.session_state['current_view'] == 'conteo_stock_por_seller':
             seller_id = st.session_state['current_group_info']['seller_id']
@@ -58,5 +61,6 @@ def app():
             conteo_stock_por_seller()
         elif st.session_state.current_view == 'finalizar_manejo_stock':
             finalizar_manejo_stock()
-            
+        elif st.session_state.current_view == 'confirmar_baja_proveedor':
+            confirmar_baja_proveedor()
             

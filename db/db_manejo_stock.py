@@ -255,7 +255,44 @@ def insert_to_stock_count_table(product_id, stock_fisico, stock_total):
             connection.close()
         return False
 
+def update_product_status_bulk(product_id_list):
+    '''
+    Update of product status to proceso_stock
+    
+    Parameters:
+    product_id_list (string): String of concatenated ids separated by ', '
+    
+    Return: boolean
+    '''
+    config = config_db('prod')
+    print(product_id_list)
+    try:
+        connection = mysql.connector.connect(**config)
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True, buffered=True)
+            sql = f"UPDATE wp_posts SET post_status = 'proceso_stock' WHERE id in ({product_id_list})"
+            cursor.execute(sql)
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return True
+        return False
+    except Exception as e:
+        print(e)
+        if 'connection' in locals() and connection.is_connected():
+            cursor.close()
+            connection.close()
+        return False
+
 def update_product_status(product_id):
+    '''
+    Update of product status to proceso_stock
+    
+    Parameters:
+    product_id (int): Id of the product
+    
+    Return: boolean
+    '''
     config = config_db('prod')
     try:
         connection = mysql.connector.connect(**config)
