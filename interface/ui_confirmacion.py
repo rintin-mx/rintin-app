@@ -139,12 +139,37 @@ def UIDetallePedido(data_deta,idPedido):
             st.session_state.current_view = 'confirmacion'
             st.session_state.current_status = banner_text
 
+            lineasProblemas = []
+            i=0
+            mssg = ''
+
+            for objeto in objArry:
+                    if objeto['estado'] == 'NO OK':
+                        lineasProblemas.append(orderMsjString(objeto))
+                        update_order_product_status(objeto['producto_id'],'validacion')
+
+                        # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
+                        # este condicional me permite identificar los reemplazados
+
+                        if(len(objeto) > 8):
+                            mssg += f"\nCambio SKU: {objeto['sku']} por {objeto['producto_nuevo_sku']}"
+                            product_confirm_change(objeto['order_item_id'], objeto['producto_nuevo_sku'],objeto['cantidad_reemplazada'], time.strftime('%Y-%m-%d %H:%M:%S'))
+
+            if len(lineasProblemas) > 0:
+                    order_notes = "\n".join(lineasProblemas) + mssg
+                    print(order_notes)
+                    with st.spinner(f'Actualizano las notas del pedido para confirmación de seller  en las bodegas CDMX'):
+                        asyncio.run(update_order_note__wordpress(idPedido, order_notes))
+
             sellers_in_bodega = get_seller_en_bodega(seller)
 
+            print(f"------------{sellers_in_bodega['bodega'][0]}")
             if sellers_in_bodega['bodega'][0] == None:
                 with st.spinner('Actualizando estado de orden a "preparacion pedidos unificados"'):
                         r = asyncio.run(update_status_wordpress(idPedido, 'prepara_pedido'))
 
+            st.session_state.current_view = 'finalProcesoConfirmacion'
+            st.session_state.productos_validacion = validacionStr
             st.rerun()
            
     else:
@@ -160,6 +185,10 @@ def UIDetallePedido(data_deta,idPedido):
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
                         update_order_product_status(objeto['producto_id'],'validacion')
+
+                        # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
+                        # este condicional me permite identificar los reemplazados
+
                         if(len(objeto) > 8):
                             mssg += f"\nCambio SKU: {objeto['sku']} por {objeto['producto_nuevo_sku']}"
                             product_confirm_change(objeto['order_item_id'], objeto['producto_nuevo_sku'],objeto['cantidad_reemplazada'], time.strftime('%Y-%m-%d %H:%M:%S'))
