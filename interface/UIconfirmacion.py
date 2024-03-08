@@ -15,7 +15,7 @@ from datetime import datetime
 import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
 from db.db_auditoria import get_order_auditoria, get_order_status, product_confirm_change
-from db.db_confirmacion import get_sellers_en_bodega
+from db.db_confirmacion import get_seller_en_bodega
 import random
 from st_material_table import st_material_table
 from st_mui_table import st_mui_table
@@ -141,12 +141,9 @@ def UIDetallePedido(data_deta,idPedido):
             st.session_state.current_view = 'confirmacion'
             st.session_state.current_status = banner_text
 
-            sellers_in_bodega = get_sellers_en_bodega()
-            i = 0
-            while i < len(sellers_in_bodega) - 1 and sellers_in_bodega['user_id'][i] != seller:
-                i += 1
+            sellers_in_bodega = get_seller_en_bodega(seller)
 
-            if sellers_in_bodega['user_id'][i] != seller:
+            if sellers_in_bodega['bodega'][0] == None:
                 with st.spinner('Actualizando estado de orden a "preparacion pedidos unificados"'):
                         r = asyncio.run(update_status_wordpress(idPedido, 'prepara_pedido'))
 

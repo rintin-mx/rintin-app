@@ -438,7 +438,7 @@ select * from final where id = {orderId}
         wp_check_statusses_general_dict = wp_check_statusses.to_dict(orient='list')
         return wp_check_statusses_general_dict
     
-def get_sellers_en_bodega(db='Repl'):
+def get_seller_en_bodega(seller_id, db='Repl'):
 
     # Get sellers that are in a bodega
 
@@ -459,12 +459,23 @@ def get_sellers_en_bodega(db='Repl'):
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         sellers_in_bodega=f"""
-        select 
-            user_id
-        from 
-            seller_meta_materialized 
-        where 
-            bodega is not null
+        select
+            user_id,
+            max(
+                case
+                    when `meta_key` = 'wp_capabilities' then `meta_value`
+                    else NULL
+                end
+            ) AS `wp_capabilities`,
+            max(
+                case
+                    when `meta_key` = 'bodega' then `meta_value`
+                    else NULL
+                end
+            ) AS `bodega`
+            from wp_usermeta 
+            group by user_id
+            having wp_capabilities like '%seller%' and user_id = {seller_id}
         """
         # Ejecutar la primera consulta
         cursor.execute(sellers_in_bodega)
@@ -479,6 +490,8 @@ def get_sellers_en_bodega(db='Repl'):
         # Cerrar el cursor y la conexión
         cursor.close()
         conexion.close()
+    
+
     
     # Registrar el tiempo de finalización
     end_time = time.time()
