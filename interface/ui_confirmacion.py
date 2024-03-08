@@ -147,6 +147,10 @@ def UIDetallePedido(data_deta,idPedido):
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
                         update_order_product_status(objeto['producto_id'],'validacion')
+
+                        # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
+                        # este condicional me permite identificar los reemplazados
+
                         if(len(objeto) > 8):
                             mssg += f"\nCambio SKU: {objeto['sku']} por {objeto['producto_nuevo_sku']}"
                             product_confirm_change(objeto['order_item_id'], objeto['producto_nuevo_sku'],objeto['cantidad_reemplazada'], time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -181,6 +185,10 @@ def UIDetallePedido(data_deta,idPedido):
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
                         update_order_product_status(objeto['producto_id'],'validacion')
+
+                        # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
+                        # este condicional me permite identificar los reemplazados
+
                         if(len(objeto) > 8):
                             mssg += f"\nCambio SKU: {objeto['sku']} por {objeto['producto_nuevo_sku']}"
                             product_confirm_change(objeto['order_item_id'], objeto['producto_nuevo_sku'],objeto['cantidad_reemplazada'], time.strftime('%Y-%m-%d %H:%M:%S'))
