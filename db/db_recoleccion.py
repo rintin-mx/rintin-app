@@ -301,26 +301,42 @@ def get_substitute_prod(order_id_list, db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         substitute_products_from_seller=f"""
-        with order_items AS (
+        WITH order_item as(
             select
+                wp_woocommerce_order_itemmeta.order_item_id AS order_item_id,
+                case
+                    when wp_woocommerce_order_itemmeta.meta_key = '_product_id' then wp_woocommerce_order_itemmeta.meta_value
+                    else NULL
+                end AS product_id,
+                nuevo_producto_sku
+            from
+                wp_woocommerce_order_itemmeta
+            inner join cambios_productos on cambios_productos.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
+        ),
+        skus AS (
+            select 
+                product_id,
+                sku
+            from
+                product_meta_materialized
+        ),
+        final AS (
+        select
+            order_item_id,
+            sku,
+            nuevo_producto_sku
+        from
+            order_item join skus on skus.product_id = order_item.product_id
+        )
+        select
+            order_id,
             wp_woocommerce_order_items.order_item_id,
-            wp_woocommerce_order_items.order_id,
-            order_item_name,
-            case when cambios_productos.order_item_id is null then 0 else 1 end as reemplazado
-            from wp_woocommerce_order_items
-            inner join wp_posts on wp_posts.id = order_id
-            left join cambios_productos on cambios_productos.order_item_id = wp_woocommerce_order_items.order_item_id
-            where order_item_type = 'line_item' and post_status = 'wc-recolectar-2')
-
-        select 
-        order_id,
-        nuevo_producto_sku,
-        cantidad_reemplazada,
-         order_item_name
-        from 
-        cambios_productos
-        left join order_items on cambios_productos.order_item_id = order_items.order_item_id
-        where order_id in ({order_id_list})
+            sku,
+            nuevo_producto_sku
+        from
+            final join wp_woocommerce_order_items on wp_woocommerce_order_items.order_item_id = final.order_item_id
+        where
+            order_id in ({order_id_list})
         """
         # Ejecutar la primera consulta
         cursor.execute(substitute_products_from_seller)
@@ -347,5 +363,5 @@ def get_substitute_prod(order_id_list, db='repl') -> dict:
     seconds = int(duration % 60)
     print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
 
-    substitute_products_from_seller = substitute_products_from_seller.to_dict(orient='list')
+    #substitute_products_from_seller = substitute_products_from_seller.to_dict(orient='list')
     return substitute_products_from_seller
