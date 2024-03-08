@@ -1,4 +1,4 @@
-from interface.UILogin import UILogin
+from interface.ui_login import UILogin
 
 def app():
     UILogin()

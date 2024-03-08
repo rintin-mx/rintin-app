@@ -30,7 +30,7 @@ def config_db(db='repl') -> dict:
         }
     return config
 
-def insert_rol(rol, descripcion,db='prod'):
+def insertar_usuario_rol(usuario_id_fk, rol_id_fk,db='prod'):
     config = config_db(db)
     # Establecer la conexión a la base de datos
     conexion = mysql.connector.connect(**config)
@@ -39,16 +39,14 @@ def insert_rol(rol, descripcion,db='prod'):
     try:
         if conexion.is_connected():
             cursor = conexion.cursor()
-            sql = "INSERT INTO roles (nombre_rol, descripcion) VALUES (%s, %s)"
-            valores = (rol, descripcion)
+            sql = "INSERT INTO usuarios_roles (usuario_id_fk, rol_id_fk) VALUES (%s, %s)"
+            valores = (usuario_id_fk, rol_id_fk)
             cursor.execute(sql, valores)
             conexion.commit()
              # Registrar el tiempo de finalización
             end_time = time.time()
-
             # Calcular la duración
             duration = end_time - start_time
-
             # Convertir a minutos y segundos
             minutes = int(duration // 60)
             seconds = int(duration % 60)
@@ -57,7 +55,7 @@ def insert_rol(rol, descripcion,db='prod'):
             cursor.close()
             conexion.close()
 
-def eliminar_rol(rol_id,db='prod'):
+def eliminar_usuario_rol(usuario_id_fk, rol_id_fk,db='prod'):
     config = config_db(db)
     # Establecer la conexión a la base de datos
     conexion = mysql.connector.connect(**config)
@@ -65,8 +63,8 @@ def eliminar_rol(rol_id,db='prod'):
     start_time = time.time()
     try:
         cursor = conexion.cursor()
-        sql = "DELETE FROM roles WHERE rol_id = %s"
-        valores = (rol_id,)
+        sql = "DELETE FROM usuarios_roles WHERE usuario_id_fk = %s and rol_id_fk = %s"
+        valores = (usuario_id_fk, rol_id_fk)
         cursor.execute(sql, valores)
         conexion.commit()
     finally:
@@ -74,7 +72,7 @@ def eliminar_rol(rol_id,db='prod'):
             cursor.close()
             conexion.close()
 
-def actualizar_rol(rol_id, nuevo_nombre, nueva_descripcion,db='prod'):
+def actualizar_usuario_rol(usuario_id_fk, rol_id_fk,db='prod'):
     config = config_db(db)
     # Establecer la conexión a la base de datos
     conexion = mysql.connector.connect(**config)
@@ -83,8 +81,8 @@ def actualizar_rol(rol_id, nuevo_nombre, nueva_descripcion,db='prod'):
     try:
         if conexion.is_connected():
             cursor = conexion.cursor()
-            sql = "UPDATE roles SET nombre_rol = %s, descripcion = %s WHERE rol_id = %s"
-            valores = (nuevo_nombre, nueva_descripcion, rol_id)
+            sql = "UPDATE roles_permisos SET rol_id = %s, permiso_id = %s"
+            valores = (usuario_id_fk, rol_id_fk)
             cursor.execute(sql, valores)
             conexion.commit()
     finally:
@@ -92,7 +90,7 @@ def actualizar_rol(rol_id, nuevo_nombre, nueva_descripcion,db='prod'):
             cursor.close()
             conexion.close()
 
-def obtener_todos_los_roles(db='repl'):
+def obtener_todos_los_usuario_rol(db='repl'):
     config = config_db(db)
     # Establecer la conexión a la base de datos
     conexion = mysql.connector.connect(**config)
@@ -101,10 +99,10 @@ def obtener_todos_los_roles(db='repl'):
     try:
         if conexion.is_connected():
             cursor = conexion.cursor()
-            cursor.execute("SELECT * FROM roles")
-            # Obtener los registros
-            registros = cursor.fetchall()
-            return registros
+            cursor.execute("SELECT * FROM usuarios_roles")
+            # Obtener los roles_permisos
+            roles_permisos = cursor.fetchall()
+            return roles_permisos
     finally:
         if conexion.is_connected():
             cursor.close()

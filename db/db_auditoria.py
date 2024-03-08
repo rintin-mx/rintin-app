@@ -466,7 +466,6 @@ def valido_bodega_CDMX(id,db='repl') -> dict:
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_es_bodega) > 0:
-        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         return wp_es_bodega
     else:
         return {}
@@ -535,6 +534,5 @@ select * from final where id = {orderId}
         wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs', 'post_parent']]
         # Nueva lista de nombres de columnas
         wp_check_statusses.columns = ['id','num_agrupados','childs', 'post_parent']
-        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_check_statusses_general_dict = wp_check_statusses.to_dict(orient='list')
         return wp_check_statusses_general_dict
