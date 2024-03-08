@@ -141,15 +141,12 @@ def UIagrerPedidoSellerSeleccion(data):
     # Verificar si hay productos cambiados
     order_list = ''
     for order in df.iterrows():
-        print('-----------')
         print(order[1][5])
         if int(order[1][5]) > 0:    
             order_list += f"{order[1][4]},"
 
     if order_list != '':
-        print("-------------")
         substitute_products = get_substitute_prod(order_list[:-1])
-        print(substitute_products)
 
     # Solo necesitas una columna
     col1 = st.columns(1)[0]
@@ -169,13 +166,13 @@ def UIagrerPedidoSellerSeleccion(data):
             if order_list != '':
                 # Búsqueda de la orden en la lista de cambiados
                 i = 0
-                while i < len(df) and substitute_products['order_id'][i] != row.order_id:
+                while i < len(substitute_products['order_id']) - 1 and substitute_products['order_id'][i] != row.order_id:
                     i += 1
                 
                 # Al ser encontrado, despliega la información del cambio
                 if substitute_products['order_id'][i] == row.order_id:
                     sku = substitute_products['nuevo_producto_sku'][i]
-                    sku_anterior = substitute_products['order_item_name'][i]
+                    sku_anterior = substitute_products['sku'][i]
                     st.warning(f'Este pedido tuvo cambios: {sku_anterior} por {sku}.')
 
             recolectado = st.toggle('',key=f'recolectado{index}')

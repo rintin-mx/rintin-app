@@ -15,6 +15,7 @@ from datetime import datetime
 import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
 from db.db_auditoria import get_order_auditoria, get_order_status, product_confirm_change
+from db.db_confirmacion import get_seller_en_bodega
 import random
 from st_material_table import st_material_table
 from st_mui_table import st_mui_table
@@ -61,6 +62,8 @@ def UIDetallePedido(data_deta,idPedido):
     cantidad_pickeada =0
     df = pd.DataFrame(data_deta)
     objArry=[]
+    seller = ''
+    seller_open = True
 
     for i, pedido in df.iterrows():
         cambio_prod = ''
@@ -101,7 +104,6 @@ def UIDetallePedido(data_deta,idPedido):
                 estado = 'NO OK'                    
                 st.error(estado)
             estados.append(estado)
-            print(f"---{cambio_prod}------{producto_reemplazo}---")
             if(cambio_prod == 'Reemplazar' and producto_reemplazo != ''):
                 objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
                             "sku":pedido.SKU,
@@ -111,15 +113,18 @@ def UIDetallePedido(data_deta,idPedido):
                 objArry.append({"order_id":pedido.order_id,"nombre_producto":pedido.Producto,"producto_id":pedido.product_id,
                             "sku":pedido.SKU,
                             "cantidad_sistema":int(pedido.Cantidad),"cantidad_nueva":cantidad_pickeada,"estado":estado,"seller_id":pedido.seller_id})
+            
+            if seller_open:
+                seller = pedido.seller_id
+                seller_open = False
         
         st.write('---')
 
-    print(f"{i} - {objArry}")
     agrupacion=[]
     validacion=[]
     validacionStr = ''
     for i in range(len(objArry)):
-        if objArry[i]['estado'] =='OK':
+        if objArry[i]['estado'] =='OK' or (objArry[i]['estado'] =='NO OK' and len(objArry[i]) > 8):
             agrupacion.append(objArry[i]['order_id'])
         else:
             validacion.append(objArry[i]['producto_id'])
@@ -133,6 +138,13 @@ def UIDetallePedido(data_deta,idPedido):
             st.toast('¡Orden guardada con éxito!')
             st.session_state.current_view = 'confirmacion'
             st.session_state.current_status = banner_text
+
+            sellers_in_bodega = get_seller_en_bodega(seller)
+
+            if sellers_in_bodega['bodega'][0] == None:
+                with st.spinner('Actualizando estado de orden a "preparacion pedidos unificados"'):
+                        r = asyncio.run(update_status_wordpress(idPedido, 'prepara_pedido'))
+
             st.rerun()
            
     else:
@@ -150,9 +162,7 @@ def UIDetallePedido(data_deta,idPedido):
                         update_order_product_status(objeto['producto_id'],'validacion')
                         if(len(objeto) > 8):
                             mssg += f"\nCambio SKU: {objeto['sku']} por {objeto['producto_nuevo_sku']}"
-                            print('---------------- Va a escribir en tabla')
                             product_confirm_change(objeto['order_item_id'], objeto['producto_nuevo_sku'],objeto['cantidad_reemplazada'], time.strftime('%Y-%m-%d %H:%M:%S'))
-                            print('---------------- Escribió en tabla')
                         else:
                             faltante_no_reemplazo = True
 
