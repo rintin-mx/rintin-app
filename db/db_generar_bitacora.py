@@ -9,7 +9,7 @@ import numpy as np
 import time
 
 def config_db(db='repl') -> dict:
-    # Registrar el tiempo de inicio
+    
     if db == 'prod':
         config = {
             'user': USER,
@@ -26,7 +26,7 @@ def config_db(db='repl') -> dict:
         }
     return config
 
-def get_seller_centro_padre(db='repl') -> dict:
+def get_lista_ordenes_padre(db='repl'):
 
     # Get a list of Parent orders and their children orders to be searched in the UI
 
@@ -34,12 +34,12 @@ def get_seller_centro_padre(db='repl') -> dict:
     # None
 
     # Returns:
-    # Dictionary: a dictionary containing the query results 
+    # Dataframe: a dataframe containing the query results 
     #             (Parent_order_id, [children_order_id,children_order_id, ..., children_order_id])
 
-    # Registrar el tiempo de inicio
+    
     config = config_db(db)
-    start_time = time.time()
+    
     try:
         conexion = mysql.connector.connect(**config)
         # Crear un cursor para ejecutar consultas
@@ -129,21 +129,11 @@ from final_helper2
     finally:
         # Cerrar el cursor y la conexión
         cursor.close()
-        conexion.close()
-        # Registrar el tiempo de finalización
-        end_time = time.time()
-
-        # Calcular la duración
-        duration = end_time - start_time
-
-        # Convertir a minutos y segundos
-        minutes = int(duration // 60)
-        seconds = int(duration % 60)
+        conexion.close() 
         # Nueva lista de nombres de columnas
-        #ordenes_padres_e_hijos_general_dict = ordenes_padres_e_hijos.to_dict(orient='list')
         return ordenes_padres_e_hijos
 
-def get_order_bitacora(order_id, db='Repl') -> dict:
+def get_order_bitacora(order_id, db='Repl'):
 
     # Get all the information needed to create a Bitacora for a Parent order, including the childrens info
 
@@ -155,13 +145,13 @@ def get_order_bitacora(order_id, db='Repl') -> dict:
     # ()
 
     config = config_db(db)
-    # Registrar el tiempo de inicio
-    start_time = time.time()
+    
+    
     try:
         conexion = mysql.connector.connect(**config)
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
-        #and id={id}
+        
         info_bitacora = f"""
         With order_client_info AS (
 select 
@@ -246,7 +236,11 @@ select
     order_client_info.order_shipping AS shipping,
     order_client_info.sub_total - order_client_info.discount + order_client_info.order_shipping AS total,
     order_client_info.shipping_addres AS shipping_addres,
-    concat(order_client_info.shipping_addres_2, '. Preferible a la hora: ', order_client_info.hora_preferente, '. Se entregará en: ', order_client_info.negocio_entrega) AS comentarios_entrega,
+    concat(case when order_client_info.shipping_addres_2 is null then '' else order_client_info.shipping_addres_2 end,
+			'. Preferible a la hora: ',
+            case when order_client_info.negocio_entrega is null then '' else order_client_info.negocio_entrega end,
+			', se entregará en:',
+            case when order_client_info.hora_preferente is null then '' else order_client_info.hora_preferente end) AS comentarios_entrega,
     Case
 		When order_client_info.payment_method_title = 'cheque' or lcase(order_client_info.payment_method_title) = 'cod' then 'COD'
         else 'Prepaid'
@@ -261,7 +255,7 @@ select
         When zona_entrega.zona_entrega = 'pickup-M' then 'Miahuatlan'
         else zona_entrega.estado
 	end AS destino,
-    comentarios.comments AS comments,
+    case when comentarios.comments is null then 'N/A' else comentarios.comments end AS comments,
     shipping_method.order_item_name AS metodo_de_envio,
     case when subpedidos.num_subpedidos is not null then subpedidos.num_subpedidos else 0 end AS num_subpedidos,
     case when subpedidos.num_subpedidos is not null then subpedidos.pedidos_hijos else '' end  AS pedidos_hijos
@@ -291,24 +285,12 @@ join
         # Cerrar el cursor y la conexión
         cursor.close()
         conexion.close()
-    
-    # Registrar el tiempo de finalización
-    end_time = time.time()
 
-    # Calcular la duración
-    duration = end_time - start_time
-
-    # Convertir a minutos y segundos
-    minutes = int(duration // 60)
-    seconds = int(duration % 60)
     # Nueva lista de nombres de columnas
-   #order_id,order_item_name,line_qty,sku,img_url, estado
-    if len(info_bitacora) > 0:
-        info_bitacora = info_bitacora[['order_id','full_name','phone','fecha_orden','sub_total','discount','shipping','total', 'shipping_addres', 'comentarios_entrega', 'pay_method', 'zona', 'destino', 'comments', 'metodo_de_envio', 'num_subpedidos', 'pedidos_hijos']]
-        # Nueva lista de nombres de columnas
-        info_bitacora.columns = ['order_id','full_name','phone','fecha_orden','sub_total','discount','shipping','total', 'shipping_addres', 'comentarios_entrega', 'pay_method', 'zona', 'destino', 'comments', 'metodo_de_envio', 'num_subpedidos', 'pedidos_hijos']
-        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
-        return info_bitacora
+    info_bitacora = info_bitacora[['order_id','full_name','phone','fecha_orden','sub_total','discount','shipping','total', 'shipping_addres', 'comentarios_entrega', 'pay_method', 'zona', 'destino', 'comments', 'metodo_de_envio', 'num_subpedidos', 'pedidos_hijos']]
+    # Nueva lista de nombres de columnas
+    info_bitacora.columns = ['order_id','full_name','phone','fecha_orden','sub_total','discount','shipping','total', 'shipping_addres', 'comentarios_entrega', 'pay_method', 'zona', 'destino', 'comments', 'metodo_de_envio', 'num_subpedidos', 'pedidos_hijos']
+    return info_bitacora
 
 def get_suborders_bitacora(orders_id, db='Repl'):
 
@@ -322,13 +304,12 @@ def get_suborders_bitacora(orders_id, db='Repl'):
     # ()
 
     config = config_db(db)
-    # Registrar el tiempo de inicio
-    start_time = time.time()
+    
     try:
         conexion = mysql.connector.connect(**config)
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
-        #and id={id}
+        
         sub_orders = f"""
         With item_per_order AS (
 select
@@ -480,21 +461,8 @@ from
         # Cerrar el cursor y la conexión
         cursor.close()
         conexion.close()
-    
-    # Registrar el tiempo de finalización
-    end_time = time.time()
-
-    # Calcular la duración
-    duration = end_time - start_time
-
-    # Convertir a minutos y segundos
-    minutes = int(duration // 60)
-    seconds = int(duration % 60)
     # Nueva lista de nombres de columnas
-   #order_id,order_item_name,line_qty,sku,img_url, estado
-    if len(sub_orders) > 0:
-        sub_orders = sub_orders[['estado','suborder','shop','product_name','changes','units_per_pack','qty_of_packs','pack_price', 'discount', 'subtotal']]
-        # Nueva lista de nombres de columnas
-        sub_orders.columns = ['estado','suborder','shop','product_name','changes','units_per_pack','qty_of_packs','pack_price', 'discount', 'subtotal']
-        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
-        return sub_orders
+    sub_orders = sub_orders[['estado','suborder','shop','product_name','changes','units_per_pack','qty_of_packs','pack_price', 'discount', 'subtotal']]
+    # Nueva lista de nombres de columnas
+    sub_orders.columns = ['estado','suborder','shop','product_name','changes','units_per_pack','qty_of_packs','pack_price', 'discount', 'subtotal']
+    return sub_orders

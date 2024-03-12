@@ -1,7 +1,7 @@
 import streamlit as st
 
 from interface.ui_generar_bitacora import UITodosLosPedidos, UIdetalleBitacora
-from db.db_generar_bitacora import get_seller_centro_padre, get_order_bitacora, get_suborders_bitacora
+from db.db_generar_bitacora import get_lista_ordenes_padre, get_order_bitacora, get_suborders_bitacora
 from db.db_user_interaction_events import event_instert
 
 def app():
@@ -18,7 +18,7 @@ def app():
             if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='bitacora','acceso a las vista bitacora',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
-            data=get_seller_centro_padre()
+            data=get_lista_ordenes_padre()
             UITodosLosPedidos(data)
         if st.session_state.current_view == 'detalle_bitacora':
             if st.session_state.useremail is not None:

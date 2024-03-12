@@ -10,29 +10,57 @@ import base64
 from fpdf import FPDF
 
 def create_download_link(val, filename):
+
+    # Generate a link to download the pdf
+
+    # Parameters:
+    # val: pdf encoded
+    # filename: string with pdf file nanme
+
+    # Returns:
+    # A hyperlink with to download the file
+
     b64 = base64.b64encode(val) 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Descargar PDF</a>'
 
+def search_orderid(searchterm: str) -> List[any]:
+    
+    # Search for the parent_order_id of the order given
+
+    # Parameters:
+    # searchterm: a parent_order_id or children_order_id (str)
+    # Parent_order_id/child_order_id
+
+    # Returns:
+    # A string with the parent_order_id
+
+    data = st.session_state['data']
+    data_filtrado = data[data['order_id'].str.contains(searchterm)|(data['hijos'].str.contains(searchterm))]
+    print(data_filtrado)
+    st.session_state['visible']=False
+
+    return data_filtrado['order_id'] if searchterm else []
+
 def UITodosLosPedidos(data):
-    df = pd.DataFrame(data)
-    global df_data
-    df_data=[]
+
+    # Create the UI to search for the parent order to generate the "bitacora"
+
+    # Parameters:
+    # data: A Dataframe containing 2 columns (parent_order_id, children_order_id's)
+    # [Parent_order_id, child_order_id, child_order_id, ..., child_order_id]
+
+    # Returns:
+    # A UI with a table showing the dataframe received, and a searchbar to select the parent order by writing the parent_order_id
+    # OR any children_order_id
+
+    st.session_state['data'] = data
     selected_value = ''
     if 'visible' not in st.session_state:
         print("visible")
         st.session_state['visible'] = True
         st.rerun()
 
-    df['order_id'] = df['order_id'].astype(str)
-    # function with list of labels
-    def search_orderid(searchterm: str) -> List[any]:
-        df_filtrado = df[df['order_id'].str.contains(searchterm)|(df['hijos'].str.contains(searchterm))]
-        print(df_filtrado)
-        st.session_state['visible']=False
-  
-        return df_filtrado['order_id'] if searchterm else []
-    
-    # pass search function to searchbox
+    data['order_id'] = data['order_id'].astype(str)
     print("selected_value")
     
     selected_value = st_searchbox(
@@ -43,7 +71,7 @@ def UITodosLosPedidos(data):
     )
     print(selected_value)
     submit = st.button("Buscar")
-    st_mui_table(df)
+    st_mui_table(data)
 
     if submit:
         if selected_value is not None:
@@ -55,8 +83,22 @@ def UITodosLosPedidos(data):
             st.info('Debes seleccionar un order_id para continuar', icon="ℹ️")
 
 def UIdetalleBitacora(data_general, data_detalle):
+
+    # Show a second UI where user can download the pdf file of the "bitacora"
+
+    # Parameters:
+    # data_general: A Dataframe with all the information needed of the parent order
+    # ['order_id','full_name','phone','fecha_orden','sub_total','discount','shipping','total', 'shipping_addres', 'comentarios_entrega', 'pay_method', 'zona', 'destino', 'comments', 'metodo_de_envio', 'num_subpedidos', 'pedidos_hijos']
+    # data_detalle: A Dataframe with all the information needed of each product of each children order
+    # ['estado','suborder','shop','product_name','changes','units_per_pack','qty_of_packs','pack_price', 'discount', 'subtotal']
+
+    # Returns:
+    # A UI with the parent_order_id and children_order_id's, and a button to get the link to download the pdf file of the "bitacora"
+
     st.header(f"Bitácora orden {data_general['order_id'][0]}")
     st.subheader(f"Ordenes hijas: {data_general['pedidos_hijos'][0]}")
+
+    # Indexes to divide the directions fields on the "bitacora" pdf
     partition_index = str(data_general['shipping_addres'][0]).rfind('xico') + 4
     partition_index_comentarios = str(data_general['comentarios_entrega'][0]).lower().rfind('. se') + 1
 
