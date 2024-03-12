@@ -2,7 +2,7 @@ import streamlit as st
 
 from interface.UIgenerar_bitacora import UITodosLosPedidos, UIdetalleBitacora
 from db.db_generar_bitacora import get_seller_centro_padre, get_order_bitacora, get_suborders_bitacora
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
 
 def app():
     if 'username' in st.session_state:
