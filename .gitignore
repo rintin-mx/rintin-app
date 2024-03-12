@@ -1,6 +1,8 @@
 # Ignora los archivos de configuración del sistema operativo
 .DS_Store
 __pycache__/*
+*.pyc
+
 
 # Ignora los archivos de logs y bases de datos
 *.log

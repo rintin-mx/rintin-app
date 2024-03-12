@@ -1,10 +1,10 @@
 import streamlit as st
-from interface.UIRegister import UIRegister
-from interface.UIRoles import roles
-from interface.UIOpcionesSistema import opcionSistema
-from interface.UIPermisos import permisos
-from interface.UIRolesPermisos import rolespermisos
-from interface.UIUsuario import users
+from interface.ui_register import UIRegister
+from interface.ui_roles import roles
+from interface.ui_opciones_sistema import opcionSistema
+from interface.ui_permisos import permisos
+from interface.ui_roles_permisos import rolespermisos
+from interface.ui_usuario import users
 from db.db_roles import obtener_todos_los_roles
 
 def app():

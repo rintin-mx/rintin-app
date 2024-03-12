@@ -365,7 +365,6 @@ def valido_bodega_CDMX(id,db='repl') -> dict:
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_es_bodega) > 0:
-        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         return wp_es_bodega
     else:
         return {}
@@ -434,6 +433,74 @@ select * from final where id = {orderId}
         wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs', 'post_parent']]
         # Nueva lista de nombres de columnas
         wp_check_statusses.columns = ['id','num_agrupados','childs', 'post_parent']
-        #print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_check_statusses_general_dict = wp_check_statusses.to_dict(orient='list')
         return wp_check_statusses_general_dict
+    
+def get_seller_en_bodega(seller_id, db='Repl'):
+
+    # Get sellers that are in a bodega
+
+    # Parameters:
+    # None
+
+    # Returns:
+    # Dataframe: A Dataframe containing the query results
+    # A list of Seller_id that are in a bodega
+
+    # Registrar el tiempo de inicio
+    config = config_db(db)
+    # Establecer la conexión a la base de datos
+    conexion = mysql.connector.connect(**config)
+    # Registrar el tiempo de inicio
+    start_time = time.time()
+    try:
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        sellers_in_bodega=f"""
+        select
+            user_id,
+            max(
+                case
+                    when `meta_key` = 'wp_capabilities' then `meta_value`
+                    else NULL
+                end
+            ) AS `wp_capabilities`,
+            max(
+                case
+                    when `meta_key` = 'bodega' then `meta_value`
+                    else NULL
+                end
+            ) AS `bodega`
+            from wp_usermeta 
+            group by user_id
+            having wp_capabilities like '%seller%' and user_id = {seller_id}
+        """
+        # Ejecutar la primera consulta
+        cursor.execute(sellers_in_bodega)
+
+        # Obtener los resultados de la primera consulta
+        resultados_sellers_in_bodega= cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        sellers_in_bodega = pd.DataFrame(resultados_sellers_in_bodega)
+
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+    
+
+    
+    # Registrar el tiempo de finalización
+    end_time = time.time()
+
+    # Calcular la duración
+    duration = end_time - start_time
+
+    # Convertir a minutos y segundos
+    minutes = int(duration // 60)
+    seconds = int(duration % 60)
+    print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
+
+    #substitute_products_from_seller = substitute_products_from_seller.to_dict(orient='list')
+    return sellers_in_bodega

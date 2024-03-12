@@ -9,6 +9,11 @@ import pandas as pd
 import numpy as np
 import time
 
+ex_dict = {
+	"Sin contacto con el cliente": 'sin_contacto_cliente'
+}
+
+
 def config_db(db='repl') -> dict:
 	# Registrar el tiempo de inicio
 	if db == 'prod':
@@ -241,11 +246,8 @@ def has_active_route(user_id, db='repl'):
 		connection = mysql.connector.connect(**config)
 		cursor = connection.cursor(dictionary=True)
 		sql = f"SELECT * FROM wordpress.rutas_envios where responsable = '{user_id}' and estado = 'En ruta';"
-		print(sql)
 		cursor.execute(sql)
 		results = cursor.fetchone()
-		print('results')
-		print(results)
 		cursor.close()
 	finally:
 
@@ -268,14 +270,10 @@ def insert_route(responsable, order_list):
 			sql = "INSERT INTO rutas_envios (responsable, estado, fecha_creacion, fecha_edicion) VALUES (%s, 'En ruta', %s, %s)"
 			cursor.execute(sql, (responsable, current_date, current_date))
 			inserted_id = cursor.lastrowid
-			print('inserted_id')
-			print(inserted_id)
 			for order in order_list:
 				sql = f"INSERT INTO ordenes_de_ruta (id_ruta, order_id, estado, fecha_modificacion) VALUES ({inserted_id}, {order['order_id']}, 'pending', '{current_date}')"
-				print(sql)
 				cursor.execute(sql)
 				sql = f"INSERT IGNORE INTO entrega_ordenes (order_id, total_a_recibir, total_recibido, estado) VALUES ({order['order_id']}, {order['total']}, 0, 'Pendiente entrega')"
-				print(sql)
 				cursor.execute(sql)
 			connection.commit()
 			cursor.close()
@@ -285,7 +283,6 @@ def insert_route(responsable, order_list):
 		connection.commit()
 		cursor.close()
 		connection.close()
-		print('Error al realizar la inserción:', e)
 		return False
 
 def insert_product_problem(product):
@@ -304,7 +301,6 @@ def insert_product_problem(product):
 			return True
 		return False
 	except Exception as e:
-		print('Error al realizar la inserción:', e)
 		return False
 
 def insert_item_problem(product):
@@ -323,7 +319,6 @@ def insert_item_problem(product):
 			return True
 		return False
 	except Exception as e:
-		print('Error al realizar la inserción:', e)
 		return False
 
 def update_route_order_status(route_id, order_id, status, reason, img_url):
@@ -355,7 +350,6 @@ def update_route_order_status(route_id, order_id, status, reason, img_url):
 			return True
 		return False
 	except Exception as e:
-		print('Error al actualizar la data:', e)
 		return False
 
 def update_route_status(route_id, status):
@@ -376,7 +370,6 @@ def update_route_status(route_id, status):
 			return True
 		return False
 	except Exception as e:
-		print('Error al actualizar la data:', e)
 		return False
 
 def update_recieved_money(order_id, money_amount):
@@ -394,7 +387,6 @@ def update_recieved_money(order_id, money_amount):
 			return True
 		return False
 	except Exception as e:
-		print('Error al actualizar la data:', e)
 		return False
 
 def get_orders(db='repl') -> dict:

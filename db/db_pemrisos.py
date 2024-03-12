@@ -47,10 +47,6 @@ def insertar_permiso(ops_id_fk, nombre_permiso, descripcion,db='prod'):
 
             cursor.execute(insert_query, data)
             conexion.commit()
-            print("Permiso insertado exitosamente.")
-
-    except Error as e:
-        print("Error al insertar el permiso:", e)
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -71,10 +67,7 @@ def eliminar_permiso(permiso_id,db='prod'):
             data = (permiso_id,)
             cursor.execute(delete_query, data)
             conexion.commit()
-            print("Permiso eliminado exitosamente.")
 
-    except Error as e:
-        print("Error al eliminar el permiso:", e)
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -97,10 +90,6 @@ def actualizar_permiso(permiso_id, ops_id_fk, nuevo_nombre, nueva_descripcion,db
 
             cursor.execute(update_query, data)
             conexion.commit()
-            print("Permiso actualizado exitosamente.")
-
-    except Error as e:
-        print("Error al actualizar el permiso:", e)
     finally:
         if conexion.is_connected():
             cursor.close()
@@ -120,13 +109,9 @@ def obtener_todos_los_permisos(db='repl'):
             select_query = "SELECT * FROM permisos"
             cursor.execute(select_query)
             permisos = cursor.fetchall()
-            print("Permiso obtenido exitosamente.")
-            print(permisos)
-
             return permisos
 
     except Error as e:
-        print("Error al obtener los permisos:", e)
         return None
     finally:
         if conexion.is_connected():
