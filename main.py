@@ -8,7 +8,7 @@ import numpy as np
 st.set_page_config(
         page_title="Rintin",
 )
-import ingreso_entregador, entregas_oax, numerosGuiaOax, ingresoPickup,login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenesCompra
+import ingreso_entregador, entregas_oax, numerosGuiaOax, ingresoPickup,login,picking_pickups,picking,confirmacion, numerosGuia, empaquetado, recoleccion, ingresoOrdenesCompra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenesCompra, generar_bitacora
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -64,15 +64,15 @@ class MultiApp:
                 #     pagina=1
                 elif val == 'aurea':
                     menu=['Logout','Confirmación Seller']
-                elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','daniel','oscar','jonathan','ismael','ayjpickeo'):
+                elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','oscar','jonathan','ismael','ayjpickeo'):
                     menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega']
                     pagina=st.session_state.pagina=1
                 elif val == ' ivan':
                     menu=['Logout','Pickeo','Ordenes de Compra', 'Picking Pickups']
                 # elif val == 'ismael':
                 #     menu=['Logout','Auditoria','Agrupacion']
-                elif val in ('francisco', 'JuanMa'):
-                    menu=['Logout','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test']
+                elif val in ('francisco', 'JuanMa', 'daniel'):
+                    menu=['Logout','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora']
 
             else:
                 #persona con permisos consedidos por el administrador
@@ -171,6 +171,11 @@ class MultiApp:
             ingresoOrdenesCompra.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Ingreso Ordenes de Compra Bodega',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Generar Bitacora':
+            generar_bitacora.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Generar Bitacora',valEmail
                 event_instert(EventName,EventAction,EventUser)
 
     run() 
