@@ -246,7 +246,7 @@ select
     order_client_info.order_shipping AS shipping,
     order_client_info.sub_total - order_client_info.discount + order_client_info.order_shipping AS total,
     order_client_info.shipping_addres AS shipping_addres,
-    concat(order_client_info.shipping_addres_2, '. Preferible a la hora: ', order_client_info.negocio_entrega, ', se entregará en:', order_client_info.hora_preferente) AS comentarios_entrega,
+    concat(order_client_info.shipping_addres_2, '. Preferible a la hora: ', order_client_info.hora_preferente, '. Se entregará en: ', order_client_info.negocio_entrega) AS comentarios_entrega,
     Case
 		When order_client_info.payment_method_title = 'cheque' or lcase(order_client_info.payment_method_title) = 'cod' then 'COD'
         else 'Prepaid'

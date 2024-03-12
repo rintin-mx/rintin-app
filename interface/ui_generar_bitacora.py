@@ -57,6 +57,8 @@ def UITodosLosPedidos(data):
 def UIdetalleBitacora(data_general, data_detalle):
     st.header(f"Bitácora orden {data_general['order_id'][0]}")
     st.subheader(f"Ordenes hijas: {data_general['pedidos_hijos'][0]}")
+    partition_index = str(data_general['shipping_addres'][0]).rfind('xico') + 4
+    partition_index_comentarios = str(data_general['comentarios_entrega'][0]).lower().rfind('. se') + 1
 
     if st.button('Generar PDF'):
         pdf = FPDF(orientation='L')
@@ -72,14 +74,14 @@ def UIdetalleBitacora(data_general, data_detalle):
                     + "\n" + f"Zona:         {str(data_general['destino'][0])}" 
                     + "\n" + f"Fecha orden:  {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
         pdf.set_font('Arial', '', 10)
-        pdf.cell(40, 10, f"Cliente: ",border=1)
+        pdf.cell(20, 10, f"Cliente: ",border=1)
         pdf.set_font('Arial', 'B', 10)
-        pdf.cell(40, 10, f"{str(data_general['full_name'][0])}",border=1,align='C')
+        pdf.cell(70, 10, f"{str(data_general['full_name'][0])}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(45, 10, f"Dirección cliente: ",border=1)
+        pdf.cell(35, 10, f"Dirección cliente: ",border=1)
         pdf.set_font('Arial', '', 8)
-        pdf.cell(150, 10, f"{str(data_general['shipping_addres'][0])}", align="C",border=1)
-        pdf.ln()
+        pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index]}"
+                       + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:]}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Teléfono del cliente: ",border=1)
         pdf.set_font('Arial', '', 10)
@@ -87,8 +89,8 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.set_font('Arial', '', 10)
         pdf.cell(45, 10, f"Comentarios de entrega: ",border=1)
         pdf.set_font('Arial', '', 8)
-        pdf.cell(150, 10, f"{str(data_general['comentarios_entrega'][0])}", align="C",border=1)
-        pdf.ln()
+        pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios]}"
+                       + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:]}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Método de pago: ",border=1)
         pdf.set_font('Arial', 'B', 10)
