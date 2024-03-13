@@ -168,7 +168,7 @@ select
     MAX(case When meta_key = '_payment_method' then meta_value end) as payment_method_title
 from
 	wp_postmeta
-where post_id = 307173
+where post_id = {order_id}
 ),
 comentarios AS (
 select 
