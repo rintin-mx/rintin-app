@@ -218,4 +218,7 @@ def UIdetalleBitacora(data_general, data_detalle):
 
     if st.button('Regresar al Inicio'):
         st.session_state.current_view = 'bitacora'
+    # limpieza de estado dataframe
+        if 'data' in st.session_state:
+                del st.session_state['data']
         st.rerun()
