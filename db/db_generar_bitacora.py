@@ -106,15 +106,44 @@ final_helper2 as(
 	inner join sellers on user_id = dokan_vendor_id
 	where post_parent = 0 and id not in (select distinct post_parent from orders)
 	having pedidos_auditados > 0
+),
+ordenes_padres AS (
+	select
+		id,
+		post_parent,
+		post_status
+	from wp_posts 
+	where post_type = 'shop_order' and post_parent = 0
+),
+helper_3 as (
+select
+	ordenes_padres.id as order_id,
+    ordenes_padres.id as hijos
+from
+	ordenes_padres
+where
+	ordenes_padres.id not in (
+    select
+		distinct post_parent
+	from wp_posts 
+	where post_type = 'shop_order' and post_parent != 0
+    )
+    and post_status in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial')
 )
 select post_parent as order_id, 
 hijos_en_proceso as hijos
-
-
 from final_helper 
 union 
 select id as order_id, hijos_en_proceso as hijos
 from final_helper2 
+union
+select
+	order_id,
+    hijos
+from
+	helper_3
+order by order_id desc
+
         """
         
         # Ejecutar la primera consulta
@@ -258,7 +287,7 @@ select
     case when comentarios.comments is null then 'N/A' else comentarios.comments end AS comments,
     shipping_method.order_item_name AS metodo_de_envio,
     case when subpedidos.num_subpedidos is not null then subpedidos.num_subpedidos else 0 end AS num_subpedidos,
-    case when subpedidos.num_subpedidos is not null then subpedidos.pedidos_hijos else '' end  AS pedidos_hijos
+    case when subpedidos.num_subpedidos is not null then subpedidos.pedidos_hijos else order_client_info.order_id end  AS pedidos_hijos
 from
 	order_client_info
 join
@@ -404,7 +433,7 @@ group by
 final AS (
 select
 	post_status as estado,
-    order_id as suborder,
+    suborder_id as suborder,
     seller as shop,
     product_name,
     cambios_productos.nuevo_producto_sku as changes,
@@ -448,6 +477,8 @@ select
     pack_price * qty_of_packs - discount as subtotal
 from
 	final
+where
+	qty_of_packs is not null
         """
         # Ejecutar la primera consulta
         cursor.execute(sub_orders)

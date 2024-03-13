@@ -100,7 +100,7 @@ def UIdetalleBitacora(data_general, data_detalle):
 
     # Indexes to divide the directions fields on the "bitacora" pdf
     partition_index = str(data_general['shipping_addres'][0]).rfind('xico') + 4
-    partition_index_comentarios = str(data_general['comentarios_entrega'][0]).lower().rfind('. se') + 1
+    partition_index_comentarios = str(data_general['comentarios_entrega'][0]).lower().rfind(' se') + 1
 
     if st.button('Generar PDF'):
         pdf = FPDF(orientation='L')
@@ -211,7 +211,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.set_xy(50, 180)
         pdf.cell(100,5, 'Este detalle NO es referencia de lo que contiene el paquete ni del total a pagar', align='C')
         pdf.image("imagen/frase_resalto_inicial.png", x = 10, y = 200, w = 200, h = 10)
-        pdf.image("imagen/rintin_telefono.png", x = 230, y = 185, w = 60, h = 30)
+        pdf.image("imagen/rintin_telefono.png", x = 230, y = 190, w = 60, h = 28)
 
         html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'Bitacora pedido ' + str(data_general['order_id'][0]))
         st.markdown(html, unsafe_allow_html=True)
