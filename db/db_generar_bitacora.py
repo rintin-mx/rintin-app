@@ -53,33 +53,6 @@ def get_lista_ordenes_padre(db='repl'):
 	from wp_posts 
 	where post_type = 'shop_order'
 ),
-order_seller as (
-	select
-		post_id,
-		meta_value as dokan_vendor_id
-	from wp_postmeta
-	where meta_key = '_dokan_vendor_id'
-),
-sellers as (
-	select
-		user_id,
-		max(
-			case
-				when `meta_key` = '_zone' then `meta_value`
-				else NULL
-			end
-		) AS `zone`,
-		max(
-			case
-				when `meta_key` = 'dokan_store_name' then `meta_value`
-				else NULL
-			end
-		) AS `seller_name`
-	from
-		wp_usermeta
-	group by user_id
-	having zone = 'centro'
-),
 final_helper as(
 select 
 	post_parent,
@@ -88,8 +61,7 @@ select
     group_concat(case when post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end separator ', ') as hijos_en_proceso
 from 
 	orders
-	inner join order_seller on id = post_id
-	inner join sellers on user_id = dokan_vendor_id
+
 where post_parent != 0
 group by post_parent
 having ordenes_activas > 0
@@ -99,11 +71,8 @@ final_helper2 as(
 		id,
 		case when post_status not in ('wc-empaquetar','wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 1 else 0 end as ordenes_activas,
 		case when post_status = 'wc-agrupar-pedidos' then 1 else 0 end as pedidos_auditados,
-        'N/A' as hijos_auditados,
         'N/A' as hijos_en_proceso
 	from orders 
-	inner join order_seller on id = post_id
-	inner join sellers on user_id = dokan_vendor_id
 	where post_parent = 0 and id not in (select distinct post_parent from orders)
 	having pedidos_auditados > 0
 ),
@@ -143,7 +112,6 @@ select
 from
 	helper_3
 order by order_id desc
-
         """
         
         # Ejecutar la primera consulta
@@ -200,7 +168,7 @@ select
     MAX(case When meta_key = '_payment_method' then meta_value end) as payment_method_title
 from
 	wp_postmeta
-where post_id = {order_id}
+where post_id = 307173
 ),
 comentarios AS (
 select 
@@ -260,10 +228,10 @@ select
     concat(order_client_info.billing_first_name, ' ', order_client_info.billing_last_name) AS full_name,
     order_client_info.billing_phone AS phone,
     wp_posts.post_date AS fecha_orden,
-    order_client_info.sub_total AS sub_total,
+    order_client_info.sub_total - order_client_info.order_shipping + order_client_info.discount AS sub_total,
     order_client_info.discount AS discount,
     order_client_info.order_shipping AS shipping,
-    order_client_info.sub_total - order_client_info.discount + order_client_info.order_shipping AS total,
+    order_client_info.sub_total AS total,
     order_client_info.shipping_addres AS shipping_addres,
     concat(case when order_client_info.shipping_addres_2 is null then '' else order_client_info.shipping_addres_2 end,
 			'. Preferible a la hora: ',
@@ -286,11 +254,11 @@ select
 	end AS destino,
     case when comentarios.comments is null then 'N/A' else comentarios.comments end AS comments,
     shipping_method.order_item_name AS metodo_de_envio,
-    case when subpedidos.num_subpedidos is not null then subpedidos.num_subpedidos else 0 end AS num_subpedidos,
+    case when subpedidos.num_subpedidos is not null then subpedidos.num_subpedidos else 1 end AS num_subpedidos,
     case when subpedidos.num_subpedidos is not null then subpedidos.pedidos_hijos else order_client_info.order_id end  AS pedidos_hijos
 from
 	order_client_info
-join
+left join
 	zona_entrega on order_client_info.postcode = zona_entrega.postcode
 left join
 	comentarios on order_client_info.order_id = comentarios.order_id
