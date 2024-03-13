@@ -15,6 +15,10 @@ def app():
                 st.session_state['current_view'] = 'bitacora'
 
         if st.session_state.current_view == 'bitacora':
+            # limpieza de estado dataframe
+            if 'data' in st.session_state:
+                  del st.session_state['data']
+
             if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='bitacora','acceso a las vista bitacora',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
