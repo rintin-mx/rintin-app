@@ -107,7 +107,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.add_page()
         pdf.image("imagen/rintin_logo.png", x = 10, y = 0, w = 60, h = 25)
         pdf.image("imagen/frase_resalto_mitad.png", x = 100, y = 7, w = 230, h = 10)
-        pdf.set_font('Arial', 'B', 75)
+        pdf.set_font('Arial', 'B', 85)
         pdf.cell(1, 10, '')
         pdf.ln()
         pdf.cell(150, 27, str(data_general['order_id'][0]), align='C',border=1)
