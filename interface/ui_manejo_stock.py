@@ -63,7 +63,7 @@ def detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers):
                 "ids": product.id_concat
             }
             st.rerun()
-        if st.button('Stock', key=f'{i}_button'):
+        if st.button('Comenzar stock', key=f'{i}_button'):
             print('sí')
             st.session_state['current_group_info'] = {
                 "seller_name": product.seller_name, 
@@ -82,11 +82,31 @@ def handle_input_change(id):
     Parameters:
     id (int): Product id in products_by_proveedor_seller DataFrame
     '''
-    if f'{id}_checkbox' not in st.session_state:
+    if f'{id}_number_input' not in st.session_state:
         st.session_state[f'{id}_number_input'] = st.session_state['products_by_proveedor_seller'].at[id, 'counted']
     st.session_state['products_by_proveedor_seller'].at[id, 'counted'] = st.session_state[f'{id}_number_input']
 
 
+def update_product_stock():
+    '''
+    Checks if product stock can be automatically updated or needs validation. 
+    In case it can be updated, updates the stock, else sends it to validation.
+    '''
+    products_dict = st.session_state['products_con_validacion']
+    print(products_dict)
+    products_ok_dict = st.session_state['products_ok']
+    for product in products_dict:
+        if products_dict[product]['difference'] < 0 and int(abs(products_dict[product]['difference']) * float(products_dict[product]['cost'])) >= 2000:
+            print('Se manda a validación')
+            print(products_dict[product])
+            update_product_status(product)
+        elif products_dict[product]['difference'] != 0:
+            print('Se actualiza directo')
+            print(products_dict[product])
+            update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
+        insert_to_stock_count_table(product, products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'])
+    for product in products_ok_dict:
+        insert_to_stock_count_table(product, products_ok_dict[product]['stock_fisico'], products_ok_dict[product]['inserted_stock'])
 
 def check_box_change_handler(id, cost, inserted_stock, stock_fisico, stock_web, sku, active_count):
     '''
@@ -116,28 +136,6 @@ def check_box_change_handler(id, cost, inserted_stock, stock_fisico, stock_web, 
         del st.session_state['products_con_validacion'][id]
     if (not st.session_state[f'{id}_checkbox']) and id in st.session_state['products_ok']:
         del st.session_state['products_ok'][id]
-
-
-def update_product_stock():
-    '''
-    Checks if product stock can be automatically updated or needs validation. 
-    In case it can be updated, updates the stock, else sends it to validation.
-    '''
-    products_dict = st.session_state['products_con_validacion']
-    print(products_dict)
-    products_ok_dict = st.session_state['products_ok']
-    for product in products_dict:
-        if products_dict[product]['difference'] < 0 and int(abs(products_dict[product]['difference']) * float(products_dict[product]['cost'])) >= 2000:
-            print('Se manda a validación')
-            print(products_dict[product])
-            update_product_status(product)
-        elif products_dict[product]['difference'] != 0:
-            print('Se actualiza directo')
-            print(products_dict[product])
-            update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
-        insert_to_stock_count_table(product, products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'])
-    for product in products_ok_dict:
-        insert_to_stock_count_table(product, products_ok_dict[product]['stock_fisico'], products_ok_dict[product]['inserted_stock'])
 
 def create_download_link(val, filename):
     '''
@@ -224,6 +222,8 @@ def conteo_stock_por_seller():
         st.session_state['products_con_validacion'] = {}
     if 'products_ok' not in st.session_state:
         st.session_state['products_ok'] = {}
+    df = st.session_state['products_by_proveedor_seller']
+    product_names = df['post_title'].unique()
     st.markdown('''<style>
         .block-container{
             padding-top: 0
@@ -233,7 +233,7 @@ def conteo_stock_por_seller():
             padding-bottom: 20px;
         }
         div[data-testid="stVerticalBlock"]:has(div.container_2){
-            margin-top: 180px;
+            margin-top: 80px;
         }
         div:has( >.element-container div.floating) {
             display: flex;
@@ -252,11 +252,7 @@ def conteo_stock_por_seller():
         if st.button('Regresar'):
             st.session_state['current_view'] = 'detalle_ordenes_por_seller'
             st.rerun()
-        current_group_info = st.session_state['current_group_info']
-        st.markdown(f'### Seller: {current_group_info["seller_name"]}')
-        st.markdown(f'### Proveedor: {current_group_info["proveedor_name"]}')
-        conteo_filter = st.selectbox('Estado de conteo', options=['Contado', 'No contado'], index=None)
-        status_filter = st.selectbox('Estado de producto', options=['publish', 'trash', 'validacion', 'proceso_stock'], index=None)
+        name_filter = st.selectbox('Nombre de producto', options=product_names, index=None)
         button = st.button('Terminar conteo')
         respuesta = ui.alert_dialog(show=button, title="Confirmación de conteo", description=f'Productos OK: {len(st.session_state["products_ok"].keys())} \n Productos con diferencias: {len(st.session_state["products_con_validacion"].keys())}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
@@ -264,33 +260,30 @@ def conteo_stock_por_seller():
             st.session_state.current_view = 'finalizar_manejo_stock'
             st.rerun()
 
-    if conteo_filter is not None and conteo_filter == 'Contado':
-        df = st.session_state['products_by_proveedor_seller']
-        filtered_products = df[df['checked']]
-    elif conteo_filter is not None and conteo_filter == 'No contado':
-        df = st.session_state['products_by_proveedor_seller']
-        filtered_products = df[~df['checked']] #Filter when df[checked] is False
+    if name_filter is not None:
+        filtered_products = df[df['post_title'] == name_filter]
     else:
-        filtered_products = st.session_state['products_by_proveedor_seller']
-    if status_filter is not None:
-        filtered_products = filtered_products[filtered_products['post_status'] == status_filter]
+        filtered_products = df
+
 
     container2 = st.container()
     with container2:
+        current_group_info = st.session_state['current_group_info']
+        st.markdown(f'### Seller: {current_group_info["seller_name"]}')
+        st.markdown(f'### Proveedor: {current_group_info["proveedor_name"]}')
         st.write('<div class="container_2"></div>', unsafe_allow_html=True)
         for i, product in filtered_products.iterrows():
             stock_fisico = int(product['active_count']) + int(product['stock'])
             st.write('---')
             if product["img_url"] is not  None:
-                st.image(product["img_url"], use_column_width=True )
+                st.image(product["img_url"], use_column_width=False, width=200 )
             else:
                 st.markdown('Sin imagen')
             st.markdown(f'Nombre: {product["post_title"]}')
             st.markdown(f'SKU: {product["sku"]}')
             st.markdown(f'Unidades: {product["units_per_pack"]}')
-            st.markdown(f'Estado del producto: {product["post_status"]}')
             inserted_stock = st.number_input('Conteo físico', min_value=0, step=1, key=f'{i}_number_input', on_change=handle_input_change(i))
             if int(inserted_stock) != stock_fisico:
                 st.error('Validacion')
-            st.checkbox('Conteo completado', key=f'{i}_checkbox', on_change=check_box_change_handler(i, product['cost'], inserted_stock, stock_fisico, int(product['stock']), product["sku"], product['active_count']))
+            st.checkbox('Contado', key=f'{i}_checkbox', on_change=check_box_change_handler(i, product['cost'], inserted_stock, stock_fisico, int(product['stock']), product["sku"], product['active_count']))
 

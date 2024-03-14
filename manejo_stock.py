@@ -44,9 +44,9 @@ def app():
                 order_items_in_active_orders = st.session_state['products_in_active_orders']
             if 'products_by_proveedor_seller' not in st.session_state:
                 products = get_products_by_proveedor_seller(seller_id, proveedor_id)
-                products['checked'] = False
                 products['active_count'] = int(0)
                 products['counted'] = 0
+                products['checked'] = False
                 products.set_index('product_id', inplace=True)
                 for i, product in products.iterrows():
                     try:
