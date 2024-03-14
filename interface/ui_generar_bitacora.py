@@ -107,13 +107,13 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.add_page()
         pdf.image("imagen/rintin_logo.png", x = 10, y = 0, w = 60, h = 25)
         pdf.image("imagen/frase_resalto_mitad.png", x = 100, y = 7, w = 230, h = 10)
-        pdf.set_font('Arial', 'B', 70)
+        pdf.set_font('Arial', 'B', 75)
         pdf.cell(1, 10, '')
         pdf.ln()
         pdf.cell(150, 27, str(data_general['order_id'][0]), align='C',border=1)
         pdf.set_font('Arial', '', 18)
-        pdf.multi_cell(125, 9, f"Destino:       {str(data_general['zona'][0])}" 
-                    + "\n" + f"Zona:         {str(data_general['destino'][0])}" 
+        pdf.multi_cell(125, 9, f"Destino:       {str(data_general['destino'][0])}" 
+                    + "\n" + f"Zona:         {str(data_general['zona'][0])}" 
                     + "\n" + f"Fecha orden:  {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
         pdf.set_font('Arial', '', 10)
         pdf.cell(20, 10, f"Cliente: ",border=1)
@@ -123,7 +123,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(35, 10, f"Dirección cliente: ",border=1)
         pdf.set_font('Arial', '', 8)
         pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index]}"
-                       + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:]}",border=1,align='C')
+                        + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:]}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Teléfono del cliente: ",border=1)
         pdf.set_font('Arial', '', 10)
@@ -132,19 +132,29 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(45, 10, f"Comentarios de entrega: ",border=1)
         pdf.set_font('Arial', '', 8)
         pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios]}"
-                       + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:]}",border=1,align='C')
+                        + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:]}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Método de pago: ",border=1)
         pdf.set_font('Arial', 'B', 10)
         if data_general['pay_method'][0] == 'Prepaid':
-            pdf.set_fill_color(189, 181, 179)
+            pdf.set_fill_color(79, 79, 79)
+            pdf.set_text_color(255, 255, 255)
             pdf.cell(40, 10, f"{str(data_general['pay_method'][0])}",border=1,align='C', fill=True)
         else:
             pdf.cell(40, 10, f"{str(data_general['pay_method'][0])}",border=1,align='C', fill=False)
+        
+        pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', '', 10)
         pdf.cell(45, 10, f"Metodo de envío: ",border=1)
-        pdf.set_font('Arial', '', 8)
-        pdf.cell(150, 10, f"{str(data_general['metodo_de_envio'][0])}", align="C",border=1)
+        pdf.set_font('Arial', 'B', 8)
+        if str(data_general['metodo_de_envio'][0]).startswith('Recolección'):
+            pdf.set_fill_color(79, 79, 79)
+            pdf.set_text_color(255, 255, 255)
+            pdf.cell(150, 10, f"{str(data_general['metodo_de_envio'][0])}", align="C",border=1, fill = True)
+        else:
+            pdf.cell(150, 10, f"{str(data_general['metodo_de_envio'][0])}", align="C",border=1, fill = False)
+        
+        pdf.set_text_color(0, 0, 0)
         pdf.ln()
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Cantidad de pedidos: ",border=1)
@@ -166,19 +176,42 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(30, 10, f"Precio paquetes", align="C")
         pdf.cell(20, 10, f"Descuento", align="C")
         pdf.cell(20, 10, f"Sub Total", align="C")
-        pdf.set_font('Arial', '', 7)
+        pdf.set_font('Arial', '', 10)
         for i in range(len(data_detalle['suborder'])):
             pdf.ln()
+
+            # Where the text starts, also where to start the strikethrough line.
+            x = pdf.get_x()
+            y = pdf.get_y()
+
             pdf.cell(20, 5, f"{str(data_detalle['estado'][i])}", align="C")
             pdf.cell(20, 5, f"{str(data_detalle['suborder'][i])}", align="C")
             pdf.cell(25, 5, f"{str(data_detalle['shop'][i])}", align="C")
-            pdf.cell(60, 5, f"{str(data_detalle['product_name'][i])}", align="C")
-            pdf.cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
-            pdf.cell(30, 5, f"{str(data_detalle['units_per_pack'][i])}", align="C")
+            pdf.multi_cell(60, 5, f"{str(data_detalle['product_name'][i])}", align="C")
+            y_2 = pdf.get_y()
+            # reposition of cursor to write after a multicell
+            pdf.set_xy(x + 125, y)
+            pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+            y_3 = pdf.get_y()
+            # reposition of cursor to write after a multicell
+            pdf.set_xy(x + 145, y)
+            pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
             pdf.cell(30, 5, f"{str(data_detalle['qty_of_packs'][i])}", align="C")
             pdf.cell(30, 5, f"${str(data_detalle['pack_price'][i])}", align="C")
             pdf.cell(20, 5, f"${str(data_detalle['discount'][i])}", align="C")
             pdf.cell(20, 5, f"${str(data_detalle['subtotal'][i])}", align="C")
+            if y_2 > y_3:
+                pdf.set_y(y_2)
+            else:
+                pdf.set_y(y_3)
+
+            if data_detalle['estado'][i] == 'Cancelado':
+                # values to draw a line where suborder is cancelled
+                pdf.set_line_width(0.25)
+                width = 275
+                lineHt = 8
+                # Then draw the line
+                pdf.line(x, y + (lineHt / 4), x+width, y)
         
         pdf.ln()
         pdf.ln()
