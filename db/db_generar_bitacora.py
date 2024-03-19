@@ -314,7 +314,7 @@ select
     order_id
  from
 	wp_woocommerce_order_items
-where order_id in (309100, 309101, 309102)
+where order_id in ({orders_id})
 ),
 order_status AS (
 select 
