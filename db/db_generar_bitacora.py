@@ -97,7 +97,7 @@ where
 	from wp_posts 
 	where post_type = 'shop_order' and post_parent != 0
     )
-    and post_status in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial')
+    and post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial')
 )
 select post_parent as order_id, 
 hijos_en_proceso as hijos
@@ -235,9 +235,9 @@ select
     order_client_info.shipping_addres AS shipping_addres,
     concat(case when order_client_info.shipping_addres_2 is null then '' else order_client_info.shipping_addres_2 end,
 			'. Preferible a la hora: ',
-            case when order_client_info.negocio_entrega is null then '' else order_client_info.negocio_entrega end,
+            case when order_client_info.hora_preferente is null then '' else order_client_info.hora_preferente end,
 			', se entregará en:',
-            case when order_client_info.hora_preferente is null then '' else order_client_info.hora_preferente end) AS comentarios_entrega,
+            case when order_client_info.negocio_entrega is null then '' else order_client_info.negocio_entrega end) AS comentarios_entrega,
     Case
 		When order_client_info.payment_method_title = 'cheque' or lcase(order_client_info.payment_method_title) = 'cod' then 'COD'
         else 'Prepaid'
@@ -323,14 +323,100 @@ select
 from
 	wp_posts
 ),
-prod_and_seller AS (
+tabla_producto as (
 select
 	ID as product_id,
-    post_content as seller,
     post_title as product_name
- from
+from
 	wp_posts
 where post_type = 'product'
+),
+vendor_info as (
+select
+	 user_id,
+    max(
+		case
+			when `meta_key` = '_dokan_vendor_id' then `meta_value`
+			else NULL
+		end
+	) AS `seller_id`,
+    max(
+		case
+			when `meta_key` = 'dokan_store_name' then `meta_value`
+			else NULL
+		end
+	) AS `dokan_store_name`,
+    max(
+		case
+			when `meta_key` = 'wp_capabilities' then `meta_value`
+			else NULL
+		end
+	) AS `capabilities`
+from
+	wp_usermeta
+group by
+	user_id
+),
+seller_info as (
+select
+	vendor_info.user_id as user_id,
+    dokan_store_name as seller_name
+from
+	vendor_info
+left join
+	wp_users on vendor_info.user_id = wp_users.ID
+where capabilities like '%seller%'
+),
+sellers as (
+select
+	post_id as order_id,
+    max(
+		case
+			when `meta_key` = '_dokan_vendor_id' then `meta_value`
+			else NULL
+		end
+	) AS `seller_id`
+from
+	wp_postmeta
+where
+	post_id in ({orders_id})
+),
+dokan as (
+select
+	order_id,
+    seller_id
+from
+	wp_dokan_orders
+where
+	order_id in ({orders_id})
+),
+order_with_seller as (
+select
+	sellers.order_id,
+    case when dokan.seller_id is not null then dokan.seller_id else sellers.seller_id end as def_seller_id
+from
+	sellers
+left join
+	dokan on sellers.order_id = dokan.order_id
+    
+union
+
+select
+	dokan.order_id as order_id,
+    case when dokan.seller_id is not null then dokan.seller_id else sellers.seller_id end as def_seller_id
+from
+	sellers
+right join
+	dokan on sellers.order_id = dokan.order_id
+),
+order_and_seller as (
+select
+	order_id,
+    seller_info.seller_name as seller_name
+from
+	order_with_seller
+left join
+	seller_info on order_with_seller.def_seller_id = seller_info.user_id
 ),
 unit_per_pack AS (
 select
@@ -350,7 +436,7 @@ where meta_key = '_units_per_pack'
 ),
 order_items_detail AS (
 select
-	wp_woocommerce_order_itemmeta.order_item_id,
+	wp_woocommerce_order_itemmeta.order_item_id as order_item_id,
     max(
 		case
 			when `meta_key` = '_product_id' then `meta_value`
@@ -371,6 +457,18 @@ select
 	) AS `line_total`
     from wp_woocommerce_order_itemmeta
     group by wp_woocommerce_order_itemmeta.order_item_id
+),
+order_items_detail_2 as (
+select
+	order_items_detail.order_item_id as order_item_id,
+	order_items_detail.product_id as product_id,
+    order_items_detail.qty as qty,
+    order_items_detail.line_total as line_total,
+    tabla_producto.product_name as product_name
+from
+	order_items_detail
+inner join
+	tabla_producto on tabla_producto.product_id = order_items_detail.product_id
 ),
 prices AS (
 select 
@@ -397,13 +495,13 @@ from
 	wp_postmeta
 group by
 	post_id  
-), 
+),
 final AS (
 select
 	post_status as estado,
     suborder_id as suborder,
-    seller as shop,
-    product_name,
+    order_and_seller.seller_name as shop,
+    order_items_detail_2.product_name as product_name,
     cambios_productos.nuevo_producto_sku as changes,
     units_per_pack_absolute as units_per_pack,
     qty as qty_of_packs,
@@ -416,10 +514,10 @@ select
 from
 	item_per_order
 left join order_status on item_per_order.order_id = order_status.suborder_id
-left join order_items_detail on order_items_detail.order_item_id = item_per_order.order_item_id
-left join prod_and_seller on prod_and_seller.product_id = order_items_detail.product_id
-left join unit_per_pack on unit_per_pack.product_id = order_items_detail.product_id
-left join prices on prices.product_id = order_items_detail.product_id
+left join order_items_detail_2 on order_items_detail_2.order_item_id = item_per_order.order_item_id
+left join order_and_seller on item_per_order.order_id = order_and_seller.order_id
+left join unit_per_pack on unit_per_pack.product_id = order_items_detail_2.product_id
+left join prices on prices.product_id = order_items_detail_2.product_id
 left join cambios_productos on item_per_order.order_item_id = cambios_productos.order_item_id
 )
 select
