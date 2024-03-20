@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from db.db_manejo_stock import get_products_grouped_by_seller, get_products_by_proveedor_seller, get_products_in_active_orders
-from interface.ui_manejo_stock import confirmar_baja_proveedor, detalle_ordenes_por_seller, conteo_stock_por_seller, finalizar_manejo_stock
+from interface.ui_manejo_stock import detalle_ordenes_por_seller, conteo_stock_por_seller, finalizar_manejo_stock
 
 def app():
     if 'username' in st.session_state:
@@ -61,6 +61,4 @@ def app():
             conteo_stock_por_seller()
         elif st.session_state.current_view == 'finalizar_manejo_stock':
             finalizar_manejo_stock()
-        elif st.session_state.current_view == 'confirmar_baja_proveedor':
-            confirmar_baja_proveedor()
             
