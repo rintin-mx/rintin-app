@@ -110,16 +110,13 @@ def update_product_stock():
     In case it can be updated, updates the stock, else sends it to validation.
     '''
     products_dict = st.session_state['products_con_validacion']
-    print(products_dict)
     products_ok_dict = st.session_state['products_ok']
     for product in products_dict:
         if products_dict[product]['difference'] != 0:
-            print('Se actualiza directo')
-            print(products_dict[product])
             update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
-        insert_to_stock_count_table(product, products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'])
+            insert_to_stock_count_table(product, products_dict[product]['stock_web'], products_dict[product]['active_count'], products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'], products_dict[product]['difference'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']), st.session_state.useremail)
     for product in products_ok_dict:
-        insert_to_stock_count_table(product, products_ok_dict[product]['stock_fisico'], products_ok_dict[product]['inserted_stock'])
+        insert_to_stock_count_table(product, products_ok_dict[product]['stock_web'], products_ok_dict[product]['active_count'], products_ok_dict[product]['stock_fisico'], products_ok_dict[product]['inserted_stock'], products_ok_dict[product]['difference'], int(products_ok_dict[product]['stock_web'] + products_ok_dict[product]['difference']), st.session_state.useremail)
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val) 
@@ -154,37 +151,38 @@ def finalizar_manejo_stock():
         pdf.cell(62, 10, 'Proveedor: ' + str(current_group_info["proveedor_name"]), 0, align='C')
         pdf.cell(62, 10, 'Fecha Creación: ' + str(mysql_datetime_cst), 0, align='C')
         pdf.ln()
-        pdf.cell(31, 10, 'Producto (SKU)', 1, align='C')
-        pdf.cell(31, 10, 'Stock sistema', 1, align='C')
-        pdf.cell(31, 10, 'Stock ordenes activas', 1, align='C')
-        pdf.cell(31, 10, 'Total stock', 1, align='C')
-        pdf.cell(31, 10, 'Stock contado', 1, align='C')
-        pdf.cell(31, 10, 'Diferencias', 1, align='C')
+        pdf.cell(50, 10, 'Producto (SKU)', 1, align='C')
+        pdf.cell(22, 10, 'Stock sistema', 1, align='C')
+        pdf.cell(22, 10, 'Stock reservado', 1, align='C')
+        pdf.cell(22, 10, 'Total stock', 1, align='C')
+        pdf.cell(22, 10, 'Stock contado', 1, align='C')
+        pdf.cell(22, 10, 'Diferencias', 1, align='C')
+        pdf.cell(22, 10, 'Nuevo Stock', 1, align='C')
         pdf.ln()
         for product in product_dict:
-            pdf.cell(31, 10, f"{product_dict[product]['sku']}", 1, align='C')
-            pdf.cell(31, 10, f"{product_dict[product]['stock_web']}", 1, align='C')
-            pdf.cell(31, 10, f"{product_dict[product]['active_count']}", 1, align='C')
-            pdf.cell(31, 10, f"{product_dict[product]['stock_fisico']}", 1, align='C')
-            pdf.cell(31, 10, f"{product_dict[product]['inserted_stock']}", 1, align='C')
-            pdf.cell(31, 10, f"{product_dict[product]['difference']}", 1, align='C')
+            pdf.cell(50, 10, f"{product_dict[product]['sku']}", 1, align='C')
+            pdf.cell(22, 10, f"{product_dict[product]['stock_web']}", 1, align='C')
+            pdf.cell(22, 10, f"{product_dict[product]['active_count']}", 1, align='C')
+            pdf.cell(22, 10, f"{product_dict[product]['stock_fisico']}", 1, align='C')
+            pdf.cell(22, 10, f"{product_dict[product]['inserted_stock']}", 1, align='C')
+            pdf.cell(22, 10, f"{product_dict[product]['difference']}", 1, align='C')
+            pdf.cell(22, 10, f"{int(product_dict[product]['stock_web'] + product_dict[product]['difference'])}", 1, align='C')
             pdf.ln()
         for product in ok_product_dict:
-            pdf.cell(31, 10, f"{ok_product_dict[product]['sku']}", 1, align='C')
-            pdf.cell(31, 10, f"{ok_product_dict[product]['stock_web']}", 1, align='C')
-            pdf.cell(31, 10, f"{ok_product_dict[product]['active_count']}", 1, align='C')
-            pdf.cell(31, 10, f"{ok_product_dict[product]['stock_fisico']}", 1, align='C')
-            pdf.cell(31, 10, f"{ok_product_dict[product]['inserted_stock']}", 1, align='C')
-            pdf.cell(31, 10, f"{ok_product_dict[product]['difference']}", 1, align='C')
+            pdf.cell(50, 10, f"{ok_product_dict[product]['sku']}", 1, align='C')
+            pdf.cell(22, 10, f"{ok_product_dict[product]['stock_web']}", 1, align='C')
+            pdf.cell(22, 10, f"{ok_product_dict[product]['active_count']}", 1, align='C')
+            pdf.cell(22, 10, f"{ok_product_dict[product]['stock_fisico']}", 1, align='C')
+            pdf.cell(22, 10, f"{ok_product_dict[product]['inserted_stock']}", 1, align='C')
+            pdf.cell(22, 10, f"{ok_product_dict[product]['difference']}", 1, align='C')
+            pdf.cell(22, 10, f"{int(ok_product_dict[product]['stock_web'] + ok_product_dict[product]['difference'])}", 1, align='C')
             pdf.ln()
         html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'reporte_stock_' + str(mysql_datetime_cst))
         st.session_state['is_generated'] = True
         st.markdown(html, unsafe_allow_html=True)
     if st.session_state['is_generated']:
         go_back = st.button('Regresar al inicio', key='go_back_btn')
-        print(go_back)
         if go_back:
-            print('entro')
             st.session_state.current_view = 'validacion_detalle_ordenes_por_seller'
             st.session_state['is_generated'] = False
             st.rerun()
