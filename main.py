@@ -66,7 +66,7 @@ class MultiApp:
                     menu=['Logout','Pickeo','Ordenes de Compra', 'Picking Pickups']
                 # elif val == 'ismael':
                 #     menu=['Logout','Auditoria','Agrupacion']
-                elif val in ('francisco', 'JuanMa'):
+                elif val in ('francisco', 'JuanMa', 'daniel'):
                     menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora', 'Ingreso Pedidos Pickup']
 
             else:

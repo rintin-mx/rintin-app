@@ -1,8 +1,9 @@
 import streamlit as st
 
-from interface.ui_ingreso_pedidos_pickup import ui_entregas, ui_pendiente_entrega_pickup
-from db.db_ingreso_pedidos_pickup import get_lista_ordenes_padre
+from interface.ui_ingreso_pedidos_pickup import ui_entregas, ui_pendiente_entrega_pickup, ui_descargar_bitacora, ui_validacion_entrega, ui_finalizar_entrega
+from db.db_ingreso_pedidos_pickup import get_lista_ordenes_padre, get_products_from_orders
 from db.db_user_interaction_events import event_instert
+from db.db_generar_bitacora import get_order_bitacora, get_suborders_bitacora
 
 def app():
     if 'username' in st.session_state:
@@ -25,3 +26,21 @@ def app():
                 event_instert(EventName,EventAction,EventUser)  
                 data=get_lista_ordenes_padre() 
                 ui_pendiente_entrega_pickup(data)
+        if st.session_state.current_view == 'bitacora_pickup':
+             if st.session_state.useremail is not None:
+                EventName,EventAction,EventUser='bitacora_pickup','acceso a las vista bitacora_pickup',st.session_state.useremail
+                event_instert(EventName,EventAction,EventUser)
+                data_general=get_order_bitacora(st.session_state['order_id_pickup'])
+                data_detalle=get_suborders_bitacora(data_general['pedidos_hijos'][0])
+                ui_descargar_bitacora(data_general,data_detalle)
+        if st.session_state.current_view == 'validar_entrega':
+             if st.session_state.useremail is not None:
+                EventName,EventAction,EventUser='validar_entrega','acceso a las vista validar_entrega',st.session_state.useremail
+                event_instert(EventName,EventAction,EventUser)
+                data = get_products_from_orders(st.session_state['children_id_pickup'])
+                ui_validacion_entrega(st.session_state['order_id_pickup'], st.session_state['phone_pickup'], data)
+        if st.session_state.current_view == 'finalizar_entrega':
+             if st.session_state.useremail is not None:
+                EventName,EventAction,EventUser='finalizar_entrega','acceso a las vista finalizar_entrega',st.session_state.useremail
+                event_instert(EventName,EventAction,EventUser)
+                ui_finalizar_entrega(st.session_state['order_id_pickup'], st.session_state['children_id_pickup'])
