@@ -8,7 +8,7 @@ import numpy as np
 st.set_page_config(
         page_title="Rintin",
 )
-import validacion_manejo_stock, manejo_stock, ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra, generar_bitacora
+import validacion_manejo_stock, manejo_stock, ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra, generar_bitacora, ingreso_pedidos_pickups
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -66,8 +66,8 @@ class MultiApp:
                     menu=['Logout','Pickeo','Ordenes de Compra', 'Picking Pickups']
                 # elif val == 'ismael':
                 #     menu=['Logout','Auditoria','Agrupacion']
-                elif val in ('francisco', 'JuanMa'):
-                    menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora']
+                elif val in ('francisco', 'JuanMa', 'daniel'):
+                    menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora', 'Ingreso Pedidos Pickup']
 
             else:
                 #persona con permisos consedidos por el administrador
@@ -175,6 +175,11 @@ class MultiApp:
             generar_bitacora.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Generar Bitacora',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Ingreso Pedidos Pickup':
+            ingreso_pedidos_pickups.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Ingreso Pedidos Pickup',valEmail
                 event_instert(EventName,EventAction,EventUser)
 
     run() 
