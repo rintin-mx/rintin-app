@@ -241,7 +241,7 @@ def insert_to_stock_count_table(product_id, stock_sistema, stock_ordenes_activas
             cst_offset = timedelta(hours=-6)
             cst_time = current_utc_time + cst_offset
             mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
-            sql = "INSERT INTO stock_bodegas (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, fecha, responsable) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            sql = "INSERT INTO stock_bodegas (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, fecha, responsable, fuente) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'conteo')"
             cursor.execute(sql, (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, mysql_datetime_cst, responsable))
             connection.commit()
             cursor.close()

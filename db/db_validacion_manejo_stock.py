@@ -241,7 +241,7 @@ def insert_to_stock_count_table(product_id, stock_sistema, stock_ordenes_activas
             cst_offset = timedelta(hours=-6)
             cst_time = current_utc_time + cst_offset
             mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
-            sql = "INSERT INTO stock_bodegas (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, fecha, responsable) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            sql = "INSERT INTO stock_bodegas (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, fecha, responsable, fuente) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'validacion')"
             cursor.execute(sql, (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, mysql_datetime_cst, responsable))
             connection.commit()
             cursor.close()
@@ -256,12 +256,21 @@ def insert_to_stock_count_table(product_id, stock_sistema, stock_ordenes_activas
         return False
 
 def update_product_status(product_id):
+    '''
+    Update product status directly in database
+    
+    Parameters:
+    product_id (int)
+    
+    Return:
+    boolean
+    '''
     config = config_db('prod')
     try:
         connection = mysql.connector.connect(**config)
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True, buffered=True)
-            sql = f"UPDATE wp_posts SET post_status = 'proceso_stock' WHERE id = {product_id}"
+            sql = f"UPDATE wp_posts SET post_status = 'publish' WHERE id = {product_id}"
             cursor.execute(sql)
             connection.commit()
             cursor.close()
@@ -275,9 +284,10 @@ def update_product_status(product_id):
             connection.close()
         return False
 
+
 def update_product_stock_on_db(product_id, actual_stock, new_stock):
     '''
-    Update of product stock made directly in the wp_postmeta table
+    Update product stock made directly in the wp_postmeta table
     
     Parameters:
     product_id (int): Id of the product
@@ -301,12 +311,10 @@ def update_product_stock_on_db(product_id, actual_stock, new_stock):
                 sql = f"UPDATE wp_postmeta SET meta_value = 'instock' WHERE meta_key = '_stock_status' AND post_id = {product_id}"
                 cursor.execute(sql)
                 try:
-                    sql = f"DELETE from wp_term_relationships WHERE object_id = {product_id} and term_taxonomy_id = '212'"
+                    sql = f"DELETE from wp_term_relationships WHERE object_id = {product_id} and term_taxonomy_id = 212"
                     cursor.execute()
                 except Exception:
                     pass
-                sql = f"UPDATE wp_posts SET post_status = 'publish' WHERE id = {product_id}"
-                cursor.execute(sql)
             else:
                 sql = f"UPDATE wp_postmeta SET meta_value = '{new_stock}' WHERE meta_key = '_stock' AND post_id = {product_id}"
                 cursor.execute(sql)
