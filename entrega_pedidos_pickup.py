@@ -32,7 +32,6 @@ def app():
              if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='validar_entrega','acceso a las vista validar_entrega',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
-                #data = get_products_from_orders(st.session_state['children_id_pickup'])
                 data = get_order_items(st.session_state['order_id_pickup'])
                 ui_validacion_entrega(st.session_state['order_id_pickup'], st.session_state['phone_pickup'], st.session_state['addres'], data, st.session_state['pay_method'])
         if st.session_state.current_view == 'finalizar_entrega':

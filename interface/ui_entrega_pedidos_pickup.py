@@ -421,6 +421,7 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         st.rerun()
     else: 
         orders_dict = {}
+        children_orders = []
         calculated_total = 0
         total = 0
         respuesta = False
@@ -437,6 +438,7 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         st.write('#### Productos de la orden')
         order_items_con_falla = []
         for i in range(len(order_items['order_item_id'])):
+            children_orders.append(order_items['order_item_id'][i])
             if order_items['order_item_type'][i] == 'line_item':
                 st.image(order_items['img_url'][i])
                 st.write('#### Nombre de producto:')
@@ -501,6 +503,7 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         else:
             st.error('Se deben seleccionar todas las razones de no entrega en los productos')
         if respuesta:
+            last_product_fail = ''
             img_url = ''
             if photo is not None:
                 img_url = insertOrderImage(photo, order_id, 'rintin-internal-apps')
@@ -509,13 +512,12 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
                     insert_item_problem(product)
                 elif product['tipo'] == 1:
                     insert_product_problem(product)
-            ingreso_entrega(order_id, calculated_total, total, product['razon_no_entrega'], img_url)
-            for order in orders_dict:
-                #if orders_dict[order] == 0:
-                    #r = asyncio.run(update_status_wordpress(order, 'devolucion_proces'))
-            
-                if orders_dict[order] != 0:
-                    r = asyncio.run(update_status_wordpress(order, 'delivered'))
+                if product['razon_no_entrega'] != '':
+                    last_product_fail = product['razon_no_entrega']
+                
+            ingreso_entrega(order_id, total, calculated_total, last_product_fail, img_url)
+            for order in children_orders:
+                r = asyncio.run(update_status_wordpress(order, 'delivered'))
             
             r = asyncio.run(update_status_wordpress(order_id, 'delivered'))
             st.session_state.current_view = 'finalizar_entrega'

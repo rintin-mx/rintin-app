@@ -331,7 +331,7 @@ left join
         # Nueva lista de nombres de columnas
         return ordenes_padres_e_hijos
     
-def get_products_from_orders(orders_id, db='repl'):     # consider deleting
+
 
     # Get a list of products from their children orders to be validated
 
@@ -476,7 +476,7 @@ def get_products_from_orders(orders_id, db='repl'):     # consider deleting
         # Nueva lista de nombres de columnas
         return products_from_orders
 
-def ingreso_inconveniente(order_item_id, cantidad_no_entregada, razon_no_entrega, fecha, db = 'prod'):  # consider deleting
+
     config = config_db(db)
     try:
         connection = mysql.connector.connect(**config)
@@ -520,10 +520,10 @@ def ingreso_entrega(order_id, total_a_recibir, total_recibido, razon_diferencia,
             # Consulta SQL para insertar datos
             # Sentencia SQL para insertar datos
             sql = f"""
-            insert into entrega_ordenes
-                (order_id, total_a_recibir, total_recibido, estado, razon_no_entrega, img_url)
+            insert into ingreso_entrega_ordenes
+                (order_id, total_a_recibir, total_recibido, razon_diferencia, fuente, img_url)
             values
-                ({order_id}, {total_a_recibir}, {total_recibido}, 'Entregado', '{razon_diferencia}', '{img_url}')
+                ({order_id}, {total_a_recibir}, {total_recibido}, '{razon_diferencia}', 'entregas_pickup', '{img_url}')
             """
             # Ejecutar la sentencia SQL
             cursor.execute(sql)
