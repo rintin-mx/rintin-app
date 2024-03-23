@@ -187,12 +187,16 @@ def UIdetalleBitacora(data_general, data_detalle):
             pdf.cell(20, 5, f"{str(data_detalle['estado'][i])}", align="C")
             pdf.cell(20, 5, f"{str(data_detalle['suborder'][i])}", align="C")
             pdf.cell(25, 5, f"{str(data_detalle['shop'][i])}", align="C")
-            pdf.multi_cell(60, 5, f"{str(data_detalle['product_name'][i])}", align="C")
+            pdf.cell(60, 5, f"{str(data_detalle['product_name'][i])[0:28]}", align="C")
             y_2 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 125, y)
-            pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
-            y_3 = pdf.get_y()
+            y_3 = 0
+            if(data_detalle['changes'][i] == ''):
+                pdf.cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+            else:
+                pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+                y_3 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 145, y)
             pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
