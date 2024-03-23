@@ -262,7 +262,6 @@ def conteo_stock_por_seller():
             st.markdown(f'Nombre: {product["post_title"]}')
             st.markdown(f'SKU: {product["sku"]}')
             st.markdown(f'Unidades: {product["units_per_pack"]}')
-            st.markdown(f'Stock fisico: {stock_fisico}')
             inserted_stock = st.number_input('Conteo físico', min_value=0, step=1, key=f'{i}_number_input', on_change=handle_input_change(i))
             if int(inserted_stock) != stock_fisico:
                 st.error('Validacion')

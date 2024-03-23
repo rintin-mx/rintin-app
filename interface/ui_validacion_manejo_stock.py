@@ -112,10 +112,11 @@ def update_product_stock():
     products_dict = st.session_state['products_con_validacion']
     products_ok_dict = st.session_state['products_ok']
     for product in products_dict:
-        if products_dict[product]['difference'] != 0:
-            update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
-            insert_to_stock_count_table(product, products_dict[product]['stock_web'], products_dict[product]['active_count'], products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'], products_dict[product]['difference'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']), st.session_state.useremail)
+        update_product_status(product)
+        update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
+        insert_to_stock_count_table(product, products_dict[product]['stock_web'], products_dict[product]['active_count'], products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'], products_dict[product]['difference'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']), st.session_state.useremail)
     for product in products_ok_dict:
+        update_product_status(product)
         insert_to_stock_count_table(product, products_ok_dict[product]['stock_web'], products_ok_dict[product]['active_count'], products_ok_dict[product]['stock_fisico'], products_ok_dict[product]['inserted_stock'], products_ok_dict[product]['difference'], int(products_ok_dict[product]['stock_web'] + products_ok_dict[product]['difference']), st.session_state.useremail)
 
 def create_download_link(val, filename):
@@ -195,6 +196,8 @@ def conteo_stock_por_seller():
         st.session_state['products_con_validacion'] = {}
     if 'products_ok' not in st.session_state:
         st.session_state['products_ok'] = {}
+    df = st.session_state['products_by_proveedor_seller']
+    product_names = df['post_title'].unique()
     st.markdown('''<style>
         .block-container{
             padding-top: 0
@@ -226,8 +229,7 @@ def conteo_stock_por_seller():
         current_group_info = st.session_state['current_group_info']
         st.markdown(f'### Seller: {current_group_info["seller_name"]}')
         st.markdown(f'### Proveedor: {current_group_info["proveedor_name"]}')
-        conteo_filter = st.selectbox('Estado de conteo', options=['Contado', 'No contado'], index=None)
-        status_filter = st.selectbox('Estado de producto', options=['publish', 'trash', 'validacion', 'proceso_stock'], index=None)
+        name_filter = st.selectbox('Nombre de producto', options=product_names, index=None)
         button = st.button('Terminar conteo')
         respuesta = ui.alert_dialog(show=button, title="Confirmación de conteo", description=f'Productos OK: {len(st.session_state["products_ok"].keys())} \n Productos con diferencias: {len(st.session_state["products_con_validacion"].keys())}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
         if respuesta:
@@ -235,17 +237,11 @@ def conteo_stock_por_seller():
             st.session_state.current_view = 'validacion_finalizar_manejo_stock'
             st.rerun()
 
-    if conteo_filter is not None and conteo_filter == 'Contado':
-        df = st.session_state['products_by_proveedor_seller']
-        filtered_products = df[df['checked']]
-    elif conteo_filter is not None and conteo_filter == 'No contado':
-        df = st.session_state['products_by_proveedor_seller']
-        filtered_products = df[~df['checked']] #Filter when df[checked] is False
+    if name_filter is not None:
+        filtered_products = df[df['post_title'] == name_filter]
     else:
-        filtered_products = st.session_state['products_by_proveedor_seller']
-    if status_filter is not None:
-        filtered_products = filtered_products[filtered_products['post_status'] == status_filter]
-
+        filtered_products = df
+    
     container2 = st.container()
     with container2:
         st.write('<div class="container_2"></div>', unsafe_allow_html=True)
@@ -259,7 +255,6 @@ def conteo_stock_por_seller():
             st.markdown(f'Nombre: {product["post_title"]}')
             st.markdown(f'SKU: {product["sku"]}')
             st.markdown(f'Unidades: {product["units_per_pack"]}')
-            st.markdown(f'Estado del producto: {product["post_status"]}')
             inserted_stock = st.number_input('Conteo físico', min_value=0, step=1, key=f'{i}_number_input', on_change=handle_input_change(i))
             if int(inserted_stock) != stock_fisico:
                 st.error('Validacion')
