@@ -56,25 +56,15 @@ def get_lista_ordenes_padre(db='repl'):
 final_helper as(
 select 
 	post_parent,
-	count(case when post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end) as ordenes_activas,
+	count(case when post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces') then id else null end) as ordenes_activas,
 	count(case when post_status = 'wc-agrupar-pedidos' then id else null end) as pedidos_auditados,
-    group_concat(case when post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id else null end separator ', ') as hijos_en_proceso
+    group_concat(case when post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces') then id else null end separator ', ') as hijos_en_proceso
 from 
 	orders
 
 where post_parent != 0
 group by post_parent
 having ordenes_activas > 0
-),
-final_helper2 as(
-	select
-		id,
-		case when post_status not in ('wc-empaquetar','wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 1 else 0 end as ordenes_activas,
-		case when post_status = 'wc-agrupar-pedidos' then 1 else 0 end as pedidos_auditados,
-        'N/A' as hijos_en_proceso
-	from orders 
-	where post_parent = 0 and id not in (select distinct post_parent from orders)
-	having pedidos_auditados > 0
 ),
 ordenes_padres AS (
 	select
@@ -97,14 +87,11 @@ where
 	from wp_posts 
 	where post_type = 'shop_order' and post_parent != 0
     )
-    and post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial')
+    and post_status not in ('wc-empaquetar', 'wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces')
 )
 select post_parent as order_id, 
 hijos_en_proceso as hijos
 from final_helper 
-union 
-select id as order_id, hijos_en_proceso as hijos
-from final_helper2 
 union
 select
 	order_id,
@@ -112,6 +99,7 @@ select
 from
 	helper_3
 order by order_id desc
+
         """
         
         # Ejecutar la primera consulta
