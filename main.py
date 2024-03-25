@@ -8,7 +8,7 @@ import numpy as np
 st.set_page_config(
         page_title="Rintin",
 )
-import validacion_manejo_stock, manejo_stock, ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra, generar_bitacora, ingreso_pedidos_pickups
+import validacion_manejo_stock, manejo_stock, ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra, generar_bitacora, entrega_pedidos_pickup
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -67,7 +67,7 @@ class MultiApp:
                 # elif val == 'ismael':
                 #     menu=['Logout','Auditoria','Agrupacion']
                 elif val in ('francisco', 'JuanMa', 'daniel'):
-                    menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora', 'Ingreso Pedidos Pickup']
+                    menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora', 'Entrega Pedidos directo en Pickup']
 
             else:
                 #persona con permisos consedidos por el administrador
@@ -176,8 +176,8 @@ class MultiApp:
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Generar Bitacora',valEmail
                 event_instert(EventName,EventAction,EventUser)
-        if app == 'Ingreso Pedidos Pickup':
-            ingreso_pedidos_pickups.app()
+        if app == 'Entrega Pedidos directo en Pickup':
+            entrega_pedidos_pickup.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Ingreso Pedidos Pickup',valEmail
                 event_instert(EventName,EventAction,EventUser)

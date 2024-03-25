@@ -5,9 +5,24 @@ from fpdf import FPDF
 import streamlit as st
 import streamlit_shadcn_ui as ui
 from streamlit_searchbox import st_searchbox
+from integration.insert_to_S3 import insertOrderImage
 import base64
-import pandas as pd
-from db.db_ingreso_pedidos_pickup import ingreso_inconveniente, ingreso_entrega
+from db.db_entrega_pedidos_pickup import ingreso_entrega, insert_item_problem, insert_product_problem
+
+DIFF_REASONS = ['Producto faltante', 'Producto con falla', 'Cliente sin dinero']
+PROBLEM_REASONS = ['Producto faltante', 'Producto con falla']
+NO_ENTREGA_REASON = ['Sin contacto de cliente', 'Cliente sin dinero', 'No encuentro direccion']
+NEXT_STATUS_DICT = {
+	"Pendiente entrega": "Intento 1",
+	"Intento 1": "Intento 2",
+	"Intento 2": "Intento 3",
+	"Intento 3": "Fallido"
+}
+
+PAGOS_DICT = {
+	'woo-mercado-pago-basic': 'Pre-pagado',
+	'cheque': 'Pago contra-entrega'
+}
 
 async def update_status_wordpress(order_id, order_status):
 
@@ -37,19 +52,6 @@ def create_download_link(val, filename):
     b64 = base64.b64encode(val) 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Descargar PDF</a>'
 
-def ui_entregas():
-    if 'visible' not in st.session_state:
-        st.session_state['visible'] = True
-        st.rerun()
-    
-    st.header("Herramientas Operaciones")
-    st.divider()
-
-    if st.button('Entregas Oaxaca'):
-        st.session_state['current_view'] = 'pendiente_entrega_pickup'
-        st.rerun()
-
-
 def search_by_order(searchterm: str):
     
     # Search for the order_id given
@@ -66,23 +68,6 @@ def search_by_order(searchterm: str):
     st.session_state['visible']=False
 
     return data_filtrado['order_id'] if searchterm else []
-
-def search_bodega(searchterm: str):
-    
-    # Search for the bodega given
-
-    # Parameters:
-    # searchterm: a bodega where order is going to be picked (str)
-    # 'Recoleccion Oaxaca'
-
-    # Returns:
-    # A dataframe with the rows including the term searched
-
-    data = st.session_state['data']
-    data_filtrado = data[data['shipping_method'].str.contains(searchterm)]
-    st.session_state['visible']=False
-
-    return data_filtrado['shipping_method'] if searchterm else []
 
 def search_cliente(searchterm: str):
     
@@ -155,12 +140,15 @@ def ui_pendiente_entrega_pickup(data):
     st.header('Pendiente entrega en Pickup')
     st.divider()
 
-    filtro_bodega = st_searchbox(
-        label='Bodega a recolectar:',
-        search_function=search_bodega,
-        key=f"search_bodega",
-        rerun_on_update=True
-    )
+    filtro_bodega = st.selectbox('Bodega a recolectar',
+        options=[
+                'Recolección en bodega Ciudad de Mexico (Mixcalco)',
+                'Recolección en bodega OAXACA',
+                'Recolección en bodega Oaxaca Ciudad (JP Garcia)'
+                ],
+        index=None,
+        placeholder="Search ..."
+        )
 
     filtro_orden = st_searchbox(
         label='Número de pedido:',
@@ -411,9 +399,11 @@ def ui_descargar_bitacora(data_general, data_detalle):
 
     if st.button('Validar entrega'):
         st.session_state['children_id_pickup'] = data_general['pedidos_hijos'][0]
+        st.session_state['addres'] = data_general['shipping_addres'][0]
+        st.session_state['pay_method'] = data_general['pay_method'][0]
         st.session_state.current_view = 'validar_entrega'
 
-    # limpieza de estado dataframe
+        # limpieza de estado dataframe
         if 'data' in st.session_state:
                 del st.session_state['data']
         st.rerun()
@@ -425,107 +415,111 @@ def ui_descargar_bitacora(data_general, data_detalle):
         st.session_state.current_view = 'pendiente_entrega_pickup'
         st.rerun()
 
-def ui_validacion_entrega(order_id, phone, data: pd.DataFrame):
-    st.header(f"Pedido: {order_id}")
-    st.header(f"Teléfono: {phone}")
-    st.write('##')
-    st.write('##')
-
-    st.header("Detalle de orden:")
-    st.write('##')
-    
-    estados = []
-    objArry=[]
-    total_parcial = 0
-    total_esperado = 0
-    for i, pedido in data.iterrows():
-        col1, col2, col3, col4 = st.columns([3, 3, 6, 4])
-        with col1:
-            if pedido.img_url is not None:
-                st.image(pedido.img_url, use_column_width=True)
-            else:
-                st.write("Sin imagen")
-
-        with col2:
-            st.markdown(f'##### Nombre: {pedido.order_item_name}')
-            st.markdown(f'##### SKU: {pedido.sku}')         
-        with col3:
-            st.markdown(f'##### Cantidad: {pedido.line_qty}')
-        
-            cantidad_pickeada = st.number_input(f"Confirmados", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.line_qty))
-        
-        with col4:
-            # Comparar si la cantidad ingresada es igual a la cantidad requerida
-            if cantidad_pickeada == int(pedido.line_qty):
-                estado = 'OK'
-                st.success(estado)
-            elif cantidad_pickeada > int(pedido.line_qty):
-                cantidad_pickeada=0
-                estado = 'NO OK'
-                st.error(estado)
-            else:
-                estado = 'NO OK'                    
-                st.error(estado)
-            estados.append(estado)
-
-            if estado == 'NO OK':
-                dif = st.selectbox('Razon diferencias',
-                            options=[
-                                 'Faltante producto',
-                                 'Producto con falla?',
-                                 'Cliente no tiene dinero'
-                                 ],
-                            key=f"diferencia_{i}"
-                            )
-        st.divider()
-        total_parcial += cantidad_pickeada * float(pedido.unit_price)
-        total_esperado += int(pedido.line_qty) * float(pedido.unit_price)
-
-        if estado == 'NO OK':
-            objArry.append(
-                {
-                    "order_item_id": int(pedido.order_item_id),
-                    "cantidad_no_entregada": int(pedido.line_qty) - cantidad_pickeada,
-                    "razon_no_entrega": dif,
-                    "fecha": time.strftime('%Y-%m-%d %H:%M:%S')
-                }
-            )
-
-    col6, col7, col8, col9 = st.columns([5,4,4,3])
-
-    with col7:
-        st.markdown('##### Total a cobrar: ')
-    
-    with col8:
-        st.markdown(total_parcial)
-
-    with col9:
-        estado_entrega = True
-        if len(objArry) > 0:
-            estado_entrega = False
-            
-        if estado_entrega:
-            st.success(estado)
-        else:
-            st.error(estado)
-    
-    trigger_btn = st.button(label="Confirmar", key="trigger_btn")
-    respuesta = ui.alert_dialog(show=trigger_btn, title="Confirmación de Entrega", description=f'Confirmemos entrega del pedido padre #{str(order_id)} y los hijos {st.session_state.children_id_pickup}', confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
-    if respuesta:
-        razon_dif = ''
-        print(f"----- {len(objArry)}")
-        for objeto in objArry:
-            ingreso_inconveniente(objeto['order_item_id'], objeto['cantidad_no_entregada'], objeto['razon_no_entrega'], objeto['fecha'])
-            razon_dif = "item_order_id: " + str(objeto['order_item_id']) + " y razon_no_entrega: " + str(objeto['razon_no_entrega'])
-        
-        ingreso_entrega(int(order_id), float(total_esperado), float(total_parcial), razon_dif)
-        with st.spinner('Actualizando estado de orden a "Entregado"'):
-            r = asyncio.run(update_status_wordpress(order_id, 'delivered'))
-        st.session_state.current_view = 'finalizar_entrega'
-        st.rerun()
-    
+def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago):
     if st.button('Regresar'):
-        st.session_state.current_view = 'bitacora_pickup'
+        st.session_state.current_view = 'bitacora_pickup' 
+        st.rerun()
+    orders_dict = {}
+    children_orders = []
+    calculated_total = 0
+    total = 0
+    respuesta = False
+    validacion = True
+    st.write(f'### Pedido: {order_id}')
+    st.write(f'### Telefono cliente: {number_unified}')
+    st.write(f'### Dirección:')
+    st.write(address)
+    st.write('### Método de pago:')
+    if metodo_pago.lower() == 'prepaid':
+        st.write('Pre-pagado')
+    else:
+        st.write('Pago contra-entrega')
+    st.write('#### Productos de la orden')
+    order_items_con_falla = []
+    for i in range(len(order_items['order_item_id'])):
+        children_orders.append(order_items['order_item_id'][i])
+        if order_items['order_item_type'][i] == 'line_item':
+            st.image(order_items['img_url'][i])
+            st.write('#### Nombre de producto:')
+            st.write(order_items['order_item_name'][i])
+            st.write('#### SKU:')
+            st.write(order_items['sku'][i])
+            st.write('#### Cantidad:')
+            st.write(int(order_items['line_qty'][i]))
+            st.write('#### Precio:')
+            st.write(f"{(order_items['line_total'][i])}")
+            total += (int(order_items['line_qty'][i]) * int(float(order_items['line_total'][i])))
+            recieved = st.number_input('Cantidad recibida', min_value=0, max_value=int(order_items['line_qty'][i]), step=1, key=f'amount_{i}')
+            calculated_total += (recieved * int(float(order_items['line_total'][i])))
+            if recieved != int(order_items['line_qty'][i]):
+                reason = st.selectbox('Razón diferencia', options=DIFF_REASONS, key=f'select_{i}', index=None)
+                if reason is None:
+                    validacion = validacion and False
+                st.error('Validación')
+                order_items_con_falla.append({
+                    "order_item_id": order_items['order_item_id'][i],
+                    "cantidad_entregada": recieved,
+                    "razon_no_entrega": reason,
+                    "tipo": 0
+                })
+            else:
+                reason = ''
+                st.success('OK')
+            if st.checkbox('Paquete con problema', key=f'paquet_{i}'):
+                units_with_problem = st.number_input('Cantidad con problema', min_value=0, max_value=int(order_items['line_qty'][i]), key=f'cantidad_{i}')
+                problem_reason = st.selectbox('Razón problema', options=PROBLEM_REASONS, key=f'problem_{i}')
+                order_items_con_falla.append({
+                    "order_item_id": order_items['order_item_id'][i],
+                    "cantidad_entregada": units_with_problem,
+                    "razon_no_entrega": problem_reason,
+                    "tipo": 1
+                })
+        else:
+            st.write('### Envío: ' )
+            st.write(order_items['order_item_name'][i])
+            st.write('### Precio:')
+            st.write(order_items['line_total'][i])
+            total += int(order_items['line_total'][i])
+            calculated_total += int(order_items['line_total'][i])
+        if order_items['order_id'][i] in orders_dict:
+            orders_dict[order_items['order_id'][i]] += recieved
+        else:
+            orders_dict[order_items['order_id'][i]] = recieved
+    
+    st.write('---')
+    if metodo_pago.lower() == 'prepaid':
+        total = 0
+        calculated_total = 0
+    st.write(f'Total calculado a cobrar: ${calculated_total}')
+    st.write(f'Total a cobrar: ${total}')
+    value = st.number_input('Total recibido: ', min_value=0.00, step=0.01)
+    if value != float(total) and value != 0:
+        st.error('Validacion')
+    button = st.button('Confirmar entrega')
+    photo = st.file_uploader('Imagen de entrega', type=['png', 'jpg'])
+    if validacion:
+        respuesta = ui.alert_dialog(show=button, title="Confirmación de entrega de orden", description=f'Se entrego la orden {order_id}', confirm_label="Confirmar", cancel_label="Volver", key="respuesta_entrega")
+    else:
+        st.error('Se deben seleccionar todas las razones de no entrega en los productos')
+    if respuesta:
+        last_product_fail = ''
+        img_url = ''
+        if photo is not None:
+            img_url = insertOrderImage(photo, order_id, 'rintin-internal-apps')
+        for product in order_items_con_falla:
+            if product['tipo'] == 0:
+                insert_item_problem(product)
+            elif product['tipo'] == 1:
+                insert_product_problem(product)
+            if product['razon_no_entrega'] != '':
+                last_product_fail = product['razon_no_entrega']
+            
+        ingreso_entrega(order_id, total, calculated_total, last_product_fail, img_url)
+        for order in children_orders:
+            r = asyncio.run(update_status_wordpress(order, 'delivered'))
+        
+        r = asyncio.run(update_status_wordpress(order_id, 'delivered'))
+        st.session_state.current_view = 'finalizar_entrega'
         st.rerun()
 
 def ui_finalizar_entrega(order_id, children_order_id):
@@ -533,7 +527,7 @@ def ui_finalizar_entrega(order_id, children_order_id):
     st.write('---')
     
     if st.button('Regresar'):
-        st.session_state['current_view'] = 'ingreso_pedidos_pickups'
+        st.session_state['current_view'] = 'pendiente_entrega_pickup'
         if 'data' in st.session_state:
             del st.session_state['data']
         if 'order_id_pickup' in st.session_state:
@@ -542,4 +536,8 @@ def ui_finalizar_entrega(order_id, children_order_id):
             del st.session_state['children_id_pickup']
         if 'phone_pickup' in st.session_state:
             del st.session_state['phone_pickup']
+        if 'addres' in st.session_state:
+            del st.session_state['addres']
+        if 'pay_method' in st.session_state:
+            del st.session_state['pay_method']
         st.rerun()
