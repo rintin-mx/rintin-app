@@ -8,13 +8,14 @@ import pandas as pd
 import streamlit_shadcn_ui as ui
 import base64
 from fpdf import FPDF
-import asyncio
 import time
+import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
 from db.db_ingreso_ordenes_compra import updateOrdenCompraStatus
 from db.db_ordenes_compra import insertOrdenCompra, update_oi_values, update_product, updateOrdenCompra, deleteProducts
 from datetime import datetime
 import streamlit.components.v1 as components
+from integration.aws_integration import insert_product_to_db
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
@@ -22,6 +23,10 @@ async def update_status_wordpress(order_id, order_status):
 
 async def update_order_note__wordpress(order_id, order_notes):
     result = await endpoint_write_order_note(order_id, order_notes)
+    return result
+
+async def insert_post_to_db(data):
+    result = await insert_product_to_db(data)
     return result
 
 list_test = []
@@ -196,19 +201,35 @@ def UITTerminarOrdenCompra(parents, order_data):
             
     elif 'isSaved' not in st.session_state:
         if st.button('Terminar Orden de Compra'):
-            fechaCreacion = time.strftime('%Y-%m-%d %H:%M:%S')
-            orderDict = {
-                'codigo_seller': st.session_state['currentSellerId'],
-                'seller_name': st.session_state['currentSeller'],
-                'total_paquetes': len(st.session_state['dictProductos'][st.session_state['currentSeller']]),
-                'total_cost': total_cobro,
-                'bodega_recepcion': bodega_recepcion,
-                'orden_padre': orden_padre,
-                'usuario_creacion': st.session_state['username'],
-                'fecha_creacion': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            res = insertOrdenCompra(orderDict, st.session_state['dictProductos'][st.session_state['currentSeller']])
+            with st.spinner(f'Agregando información a base de datos...'):
+                fechaCreacion = time.strftime('%Y-%m-%d %H:%M:%S')
+                orderDict = {
+                    'codigo_seller': st.session_state['currentSellerId'],
+                    'seller_name': st.session_state['currentSeller'],
+                    'total_paquetes': len(st.session_state['dictProductos'][st.session_state['currentSeller']]),
+                    'total_cost': total_cobro,
+                    'bodega_recepcion': bodega_recepcion,
+                    'orden_padre': orden_padre,
+                    'usuario_creacion': st.session_state['username'],
+                    'fecha_creacion': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                res = insertOrdenCompra(orderDict, st.session_state['dictProductos'][st.session_state['currentSeller']])
+                for product in st.session_state['dictProductos'][st.session_state['currentSeller']]:
+                    json_data = {
+                        'post_title': product['nombre'],
+                        'meta:_units_per_pack': product['units_per_pack'],
+                        'meta:_cost_of_goods': product['costo'],
+                        'stock': product['cantidad_pack'],
+                        'SKU': product['sku'],
+                        'post_author': st.session_state['currentSellerId'],
+                        'meta:_dueno_producto': product['fabricante'],
+                        'meta:_proveedor': product['proveedor'],
+                        'meta:_brand': product['marca'],
+                        'post_status': 'pending',
+                        'stock_status': 'instock'
+                    }
+                    asyncio.run(insert_product_to_db(json_data))
             if(res):
                 st.session_state['ordenCompraId'] = res
                 st.session_state['fechaCreacionOrden'] = fechaCreacion
