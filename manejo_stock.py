@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 from db.db_manejo_stock import get_products_grouped_by_seller, get_products_by_proveedor_seller, get_products_in_active_orders
-from interface.ui_manejo_stock import confirmar_baja_proveedor, detalle_ordenes_por_seller, conteo_stock_por_seller, finalizar_manejo_stock
+from interface.ui_manejo_stock import detalle_ordenes_por_seller, conteo_stock_por_seller, finalizar_manejo_stock
 
 def app():
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'detalle_ordenes_por_seller'
-        if st.session_state.current_view in ('validacion_detalle_ordenes_por_seller', 'validacion_conteo_stock_por_seller', 'validacion_finalizar_manejo_stock', 'generar_guias_oax', 'generar_guias_oax_final', 'ingreso_entregador_oax', 'route_order_detail', 'confirmacion_route_order', 'entregas_oax', 'entrega_order_detail', 'generar_guias_final','generar_guias','pickFinal', 'recoleccionFinal', 'ingresoPickup', 'ingresoPickupFinal','final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups','ordenesCompraMenu','detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu','auditoria', 'ingresoOrdenesCompra'):
+        if st.session_state.current_view in ('ingreso_pedidos_pickups','pendiente_entrega_pickup','bitacora_pickup','validar_entrega','finalizar_entrega','validacion_detalle_ordenes_por_seller', 'validacion_conteo_stock_por_seller', 'validacion_finalizar_manejo_stock', 'generar_guias_oax', 'generar_guias_oax_final', 'ingreso_entregador_oax', 'route_order_detail', 'confirmacion_route_order', 'entregas_oax', 'entrega_order_detail', 'generar_guias_final','generar_guias','pickFinal', 'recoleccionFinal', 'ingresoPickup', 'ingresoPickupFinal','final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups','ordenesCompraMenu','detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','recoleccion','pendiente','ordenesAgrupar','agrupacion','ordenesCompraMenu','auditoria', 'ingresoOrdenesCompra'):
             st.session_state['current_view'] = 'detalle_ordenes_por_seller'
         if st.session_state['current_view'] == 'detalle_ordenes_por_seller':
             if 'products_by_proveedor_seller' in st.session_state:
@@ -44,9 +44,9 @@ def app():
                 order_items_in_active_orders = st.session_state['products_in_active_orders']
             if 'products_by_proveedor_seller' not in st.session_state:
                 products = get_products_by_proveedor_seller(seller_id, proveedor_id)
-                products['checked'] = False
                 products['active_count'] = int(0)
                 products['counted'] = 0
+                products['checked'] = False
                 products.set_index('product_id', inplace=True)
                 for i, product in products.iterrows():
                     try:
@@ -61,6 +61,4 @@ def app():
             conteo_stock_por_seller()
         elif st.session_state.current_view == 'finalizar_manejo_stock':
             finalizar_manejo_stock()
-        elif st.session_state.current_view == 'confirmar_baja_proveedor':
-            confirmar_baja_proveedor()
             

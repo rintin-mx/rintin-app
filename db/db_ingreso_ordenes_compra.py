@@ -234,6 +234,7 @@ def get_products(id, db='repl') -> dict:
 def updateOrdenCompraStatus(status, id):
     db ='prod'
     config = config_db(db)
+    current_time = time.strftime('%Y-%m-%d %H:%M:%S')
     try:
         connection = mysql.connector.connect(**config)
         
@@ -244,6 +245,8 @@ def updateOrdenCompraStatus(status, id):
             sql = "UPDATE orden_compra SET estado = %s WHERE id_orden_compra = %s"
             # Ejecutar la sentencia SQL
             cursor.execute(sql, (status, id))
+            sql = "UPDATE orden_compra SET fecha_edicion = %s WHERE id_orden_compra = %s"
+            cursor.execute(sql, (current_time, id))
             connection.commit()
             cursor.close()
             connection.close()

@@ -61,7 +61,7 @@ inner join wp_postmeta pm on post_id = id
 inner join wp_usermeta u1 on u1.user_id = post_author
 inner join wp_usermeta u2 on u2.user_id = pm.meta_value
 inner join wp_usermeta u3 on u3.user_id = post_author
-where post_type = 'product' and pm.meta_key = '_proveedor' and u1.meta_key = 'dokan_store_name' and u2.meta_key = 'dokan_store_name' and u3.meta_key = 'bodega' and u3.meta_value is not null and post_status != 'proceso_stock'
+where post_type = 'product' and pm.meta_key = '_proveedor' and u1.meta_key = 'dokan_store_name' and u2.meta_key = 'dokan_store_name' and u3.meta_key = 'bodega' and u3.meta_value is not null and (post_status = 'publish' or post_status = 'validacion')
         """
 
         cursor.execute(sql)
@@ -221,7 +221,7 @@ def get_products_in_active_orders(seller_id):
         return results_dict
     return {"product_id": [], "stock_count": []}
 
-def insert_to_stock_count_table(product_id, stock_fisico, stock_total):
+def insert_to_stock_count_table(product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, responsable):
     '''
     Insert the counted product into the stock_bodegas table
     
@@ -241,8 +241,8 @@ def insert_to_stock_count_table(product_id, stock_fisico, stock_total):
             cst_offset = timedelta(hours=-6)
             cst_time = current_utc_time + cst_offset
             mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
-            sql = "INSERT INTO stock_bodegas (product_id, stock_total, stock_fisico) VALUES (%s, %s, %s)"
-            cursor.execute(sql, (product_id, stock_fisico, stock_total))
+            sql = "INSERT INTO stock_bodegas (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, fecha, responsable, fuente) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'conteo')"
+            cursor.execute(sql, (product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, mysql_datetime_cst, responsable))
             connection.commit()
             cursor.close()
             connection.close()
@@ -318,6 +318,7 @@ def update_product_stock_on_db(product_id, actual_stock, new_stock):
     
     Parameters:
     product_id (int): Id of the product
+    actual_stock (int): Previous stock value
     new_stock (int): Stock value to insert
     
     Return: boolean

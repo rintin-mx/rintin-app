@@ -311,7 +311,7 @@ def insert_item_problem(product):
 		connection = mysql.connector.connect(**config)
 		if connection.is_connected():
 			cursor = connection.cursor(dictionary=True)
-			sql = "INSERT INTO inconvenientes_entregas (id_ruta, order_item_id, cantidad_entregada, razon_no_entrega, fecha) VALUES (%s, %s, %s, %s)"
+			sql = "INSERT INTO inconvenientes_entregas (order_item_id, cantidad_entregada, razon_no_entrega, fecha) VALUES (%s, %s, %s, %s)"
 			cursor.execute(sql, (product['order_item_id'], product['cantidad_entregada'], product['razon_no_entrega'], current_date))
 			connection.commit()
 			cursor.close()

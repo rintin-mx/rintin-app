@@ -44,7 +44,7 @@ def orderMsjString(objeto, status):
     linea=''
     ahora = datetime.now()
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
-    fuente='auditoria-wc-recolectar-2'
+    fuente='auditoria'
     insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail, 'wc-auditoria-2', 'wc-' + status, objeto['razon'])
     if objeto['otro_producto'] == '':
         linea = f"Producto: {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe audito {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}\nRazón de diferencia: {objeto['razon']}"
