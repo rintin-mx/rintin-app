@@ -177,6 +177,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(20, 10, f"Descuento", align="C")
         pdf.cell(20, 10, f"Sub Total", align="C")
         pdf.set_font('Arial', '', 10)
+        descuento_pedidos_cancelados = 0
         for i in range(len(data_detalle['suborder'])):
             pdf.ln()
 
@@ -216,6 +217,7 @@ def UIdetalleBitacora(data_general, data_detalle):
                 lineHt = 8
                 # Then draw the line
                 pdf.line(x, y + (lineHt / 4), x+width, y)
+                descuento_pedidos_cancelados += data_detalle['subtotal'][i]
         
         pdf.ln()
         pdf.ln()
@@ -223,7 +225,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Subtotal: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['sub_total'][0])}", align='R')
+        pdf.cell(30, 5, f"${str(float(data_general['sub_total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
@@ -241,7 +243,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Total a Pagar: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['total'][0])}", align='R')
+        pdf.cell(30, 5, f"${str(float(data_general['sub_total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
