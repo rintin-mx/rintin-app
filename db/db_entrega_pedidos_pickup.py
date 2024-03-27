@@ -98,105 +98,105 @@ def get_order_items(order_id, db='repl') -> dict:
 		cursor = conexion.cursor(dictionary=True)
 		sql =f"""
 
-with orders as (
-	select
-		id as order_id,
-        case when post_parent = 0 then id else post_parent end as post_parent
-	from
-		wp_posts
-	where id not in (select distinct post_parent from wp_posts where post_type = 'shop_order')
-	having
-		post_parent = {order_id}
-		
-),
-order_items as(
-	select order_item_id, orders.order_id, order_item_name, order_item_type
-	from wp_woocommerce_order_items
-	inner join orders on wp_woocommerce_order_items.order_id = orders.order_id
-    where order_item_type = 'line_item'
-    union 
-    select order_item_id, order_id, order_item_name, order_item_type
-	from wp_woocommerce_order_items
-    where (order_item_type = 'shipping' or order_item_type = 'fee') and order_id = {order_id}
-),
-order_item_meta as (
-	select
-		`wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-		max(
-			case
-				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-				else NULL
-			end
-		) AS `line_qty`,
-        max(
-			case
-				when `wp_woocommerce_order_itemmeta`.`meta_key` = 'cost' then `wp_woocommerce_order_itemmeta`.`meta_value`
-				else NULL
-			end
-		) AS `cost`,
-		max(
-			case
-				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
-				else NULL
-			end
-		) AS `product_id`,
-        max(
-			case
-				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_line_total' then `wp_woocommerce_order_itemmeta`.`meta_value`
-				else NULL
-			end
-		) AS `line_total`
-		
-		
-	from
-		`wp_woocommerce_order_itemmeta`
-		inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-	group by
-		`wp_woocommerce_order_itemmeta`.`order_item_id`
-),
-product_meta as(
-	select
-		post_id as product_id, 
-		max(
-			case
-				when `wp_postmeta`.`meta_key` = '_sku' then `wp_postmeta`.`meta_value`
-				else NULL
-			end
-		) AS `sku`,
-		max(
-			case
-				when `wp_postmeta`.`meta_key` = '_thumbnail_id' then `wp_postmeta`.`meta_value`
-				else NULL
-			end
-		) AS `image_id`,
-		max(
-			case
-				when `wp_postmeta`.`meta_key` = '_units_per_pack' then `wp_postmeta`.`meta_value`
-				else NULL
-			end
-		) AS `units_per_pack`
-	from wp_postmeta
-	inner join order_item_meta on order_item_meta.product_id = post_id
-	group by post_id
-)
-select
-	order_items.order_item_id,
-	order_items.order_item_name,
-	line_qty,
-	sku,
-	replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
-    order_items.order_id,
-    case 
-		when order_item_type = 'line_item' then line_total / line_qty
-        when order_item_type = 'shipping' then cost 
-        when order_item_type = 'fee' then line_total
-	end as line_total,
-    order_item_type
-from 
-	order_items
-	left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
-	left join product_meta on order_item_meta.product_id = product_meta.product_id
-	left join wp_posts on wp_posts.id = product_meta.image_id
+    with orders as (
+        select
+            id as order_id,
+            case when post_parent = 0 then id else post_parent end as post_parent
+        from
+            wp_posts
+        where id not in (select distinct post_parent from wp_posts where post_type = 'shop_order') and post_status != 'wc-cancelled'
+        having
+            post_parent = {order_id}
+            
+    ),
+    order_items as(
+        select order_item_id, orders.order_id, order_item_name, order_item_type
+        from wp_woocommerce_order_items
+        inner join orders on wp_woocommerce_order_items.order_id = orders.order_id
+        where order_item_type = 'line_item'
+        union 
+        select order_item_id, order_id, order_item_name, order_item_type
+        from wp_woocommerce_order_items
+        where (order_item_type = 'shipping' or order_item_type = 'fee') and order_id = {order_id}
+    ),
+    order_item_meta as (
+        select
+            `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
+            max(
+                case
+                    when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
+                    else NULL
+                end
+            ) AS `line_qty`,
+            max(
+                case
+                    when `wp_woocommerce_order_itemmeta`.`meta_key` = 'cost' then `wp_woocommerce_order_itemmeta`.`meta_value`
+                    else NULL
+                end
+            ) AS `cost`,
+            max(
+                case
+                    when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
+                    else NULL
+                end
+            ) AS `product_id`,
+            max(
+                case
+                    when `wp_woocommerce_order_itemmeta`.`meta_key` = '_line_total' then `wp_woocommerce_order_itemmeta`.`meta_value`
+                    else NULL
+                end
+            ) AS `line_total`
+            
+            
+        from
+            `wp_woocommerce_order_itemmeta`
+            inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
+        group by
+            `wp_woocommerce_order_itemmeta`.`order_item_id`
+    ),
+    product_meta as(
+        select
+            post_id as product_id, 
+            max(
+                case
+                    when `wp_postmeta`.`meta_key` = '_sku' then `wp_postmeta`.`meta_value`
+                    else NULL
+                end
+            ) AS `sku`,
+            max(
+                case
+                    when `wp_postmeta`.`meta_key` = '_thumbnail_id' then `wp_postmeta`.`meta_value`
+                    else NULL
+                end
+            ) AS `image_id`,
+            max(
+                case
+                    when `wp_postmeta`.`meta_key` = '_units_per_pack' then `wp_postmeta`.`meta_value`
+                    else NULL
+                end
+            ) AS `units_per_pack`
+        from wp_postmeta
+        inner join order_item_meta on order_item_meta.product_id = post_id
+        group by post_id
+    )
+    select
+        order_items.order_item_id,
+        order_items.order_item_name,
+        line_qty,
+        sku,
+        replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
+        order_items.order_id,
+        case 
+            when order_item_type = 'line_item' then line_total / line_qty
+            when order_item_type = 'shipping' then cost 
+            when order_item_type = 'fee' then line_total
+        end as line_total,
+        order_item_type
+    from 
+        order_items
+        left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
+        left join product_meta on order_item_meta.product_id = product_meta.product_id
+        left join wp_posts on wp_posts.id = product_meta.image_id
 
 		"""
 		cursor.execute(sql)
@@ -244,7 +244,12 @@ select
 from
 	wp_posts
 where
-	post_type = 'shop_order' and post_status in ('wc-pickup-4','wc-recepcion-2') and post_parent = 0
+	post_type = 'shop_order' and post_parent = 0 and post_status in ('wc-pickup-4','wc-recepcion-2') and ID not in (
+    select
+		distinct post_parent
+	from
+		wp_posts
+    ) and post_date >= '2023-11-25 15:05:39'
 ),
 children_orders as (
 select
@@ -253,7 +258,7 @@ select
 from
 	wp_posts
 where
-	post_type = 'shop_order' and post_parent != 0
+	post_type = 'shop_order' and post_parent != 0 and post_date >= '2023-11-25 15:05:39'
 group by
 	post_parent
 ), shipping_detail as (
@@ -331,184 +336,6 @@ left join
         # Nueva lista de nombres de columnas
         return ordenes_padres_e_hijos
     
-
-
-    # Get a list of products from their children orders to be validated
-
-    # Parameters:
-    # None
-
-    # Returns:
-    # Dataframe: a dataframe containing the query results 
-    # (product_id, product_name, qty, sku, img_url)
-
-    
-    config = config_db(db)
-    
-    try:
-        conexion = mysql.connector.connect(**config)
-        # Crear un cursor para ejecutar consultas
-        cursor = conexion.cursor(dictionary=True)
-        products_from_orders = f"""
-        with orders as (
-                    select
-                        id
-                    from
-                        wp_posts
-                    where
-                        id in ({orders_id})
-                        
-                ),
-                ordermeta as(
-                    select
-                        post_id as order_id,
-                        max(
-                            case
-                                when `meta_key` = '_dokan_vendor_id' then `meta_value`
-                                else NULL
-                            end
-                        ) AS `dokan_vendor_id`
-                    from
-                        wp_postmeta inner join orders on orders.id = post_id
-                    group by post_id
-                ),
-                order_items as(
-                    select order_item_id, ordermeta.order_id, order_item_name,dokan_vendor_id
-                    from wp_woocommerce_order_items
-                    inner join ordermeta on wp_woocommerce_order_items.order_id = ordermeta.order_id
-                    where order_item_type = 'line_item'
-                ),
-                order_item_meta as (
-                    select
-                        `wp_woocommerce_order_itemmeta`.`order_item_id` AS `order_item_id`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_qty' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `line_qty`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_line_subtotal' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `line_subtotal`,
-                        max(
-                            case
-                                when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `product_id`
-                        
-                    from
-                        `wp_woocommerce_order_itemmeta`
-                        inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-                    group by
-                        `wp_woocommerce_order_itemmeta`.`order_item_id`
-                ),
-                product_meta as(
-                    select
-                        post_id as product_id, 
-                        max(
-                            case
-                                when `wp_postmeta`.`meta_key` = '_sku' then `wp_postmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `sku`,
-                        max(
-                            case
-                                when `wp_postmeta`.`meta_key` = '_thumbnail_id' then `wp_postmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `image_id`,
-                        max(
-                            case
-                                when `wp_postmeta`.`meta_key` = '_units_per_pack' then `wp_postmeta`.`meta_value`
-                                else NULL
-                            end
-                        ) AS `units_per_pack`
-                    from wp_postmeta
-                    inner join order_item_meta on order_item_meta.product_id = post_id
-                    group by post_id
-                ),
-                seller_meta as(
-                select
-                user_id,
-                max(
-					case
-						when `wp_usermeta`.`meta_key` = 'bodega' then `wp_usermeta`.`meta_value`
-						else NULL
-					end
-				) AS `bodega`
-                
-                from
-                wp_usermeta
-                group by user_id
-                )
-                select
-                    order_items.order_item_name,
-                    line_qty,
-                    line_subtotal/line_qty as unit_price,
-                    sku,
-                    replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
-                    order_items.order_item_id
-                from 
-                    order_items
-                    left join order_item_meta on order_item_meta.order_item_id = order_items.order_item_id
-                    left join product_meta on order_item_meta.product_id = product_meta.product_id
-                    left join wp_posts on wp_posts.id = product_meta.image_id  
-                    left join seller_meta on seller_meta.user_id = order_items.dokan_vendor_id
-        """
-        
-        # Ejecutar la primera consulta
-        cursor.execute(products_from_orders)
-
-        # Obtener los resultados de la primera consulta
-        resultados_products_from_orders = cursor.fetchall()
-
-        # Convertir los resultados a un DataFrame de pandas
-        products_from_orders = pd.DataFrame(resultados_products_from_orders)
-
-    finally:
-        # Cerrar el cursor y la conexión
-        cursor.close()
-        conexion.close() 
-        # Nueva lista de nombres de columnas
-        return products_from_orders
-
-
-    config = config_db(db)
-    try:
-        connection = mysql.connector.connect(**config)
-        
-        if connection.is_connected():
-            cursor = connection.cursor(dictionary=True)
-
-            # Consulta SQL para insertar datos
-            # Sentencia SQL para insertar datos
-            sql = f"""
-            insert into inconvenientes_unitarios_entregas
-                (order_item_id, cantidad_no_entrega, razon_no_entrega, fecha, fuente)
-            values
-                ({order_item_id}, {cantidad_no_entregada}, '{razon_no_entrega}', '{fecha}', 'entrega_pickup')
-            """
-            # Ejecutar la sentencia SQL
-            cursor.execute(sql)
-            connection.commit()
-
-            print("Cambio insertado con éxito.")
-            
-
-    except Error as e:
-        print("Error al conectar a la base de datos:", e)
-
-    finally:
-        # Cerrar la conexión y el cursor
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-            print("Conexión a la base de datos cerrada.")
-
 def ingreso_entrega(order_id, total_a_recibir, total_recibido, razon_diferencia, img_url, db = 'prod'):
     config = config_db(db)
     try:
