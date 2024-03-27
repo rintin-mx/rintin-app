@@ -130,6 +130,14 @@ def search_by_filters(order_id: str, full_name: str, bodega: str, phone: str):
 
 def ui_pendiente_entrega_pickup(data):
     
+    # function to show a list of parent orders to pick up and some relevant info.
+
+    # Parameters:
+    # data: a Dataframe containing the Parent_order_id, children_order_id and some info from the parent id
+
+    # returns:
+    # the GUI showing a list of orders and filters to navigate through them
+
     data['order_id'] = data['order_id'].astype(str)
     st.session_state['data'] = data
     filtro_orden = ''
@@ -335,12 +343,16 @@ def ui_descargar_bitacora(data_general, data_detalle):
             pdf.cell(20, 5, f"{str(data_detalle['estado'][i])}", align="C")
             pdf.cell(20, 5, f"{str(data_detalle['suborder'][i])}", align="C")
             pdf.cell(25, 5, f"{str(data_detalle['shop'][i])}", align="C")
-            pdf.multi_cell(60, 5, f"{str(data_detalle['product_name'][i])}", align="C")
+            pdf.cell(60, 5, f"{str(data_detalle['product_name'][i])[0:28]}", align="C")
             y_2 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 125, y)
-            pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
-            y_3 = pdf.get_y()
+            y_3 = 0
+            if(data_detalle['changes'][i] == ''):
+                pdf.cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+            else:
+                pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+                y_3 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 145, y)
             pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
@@ -416,6 +428,19 @@ def ui_descargar_bitacora(data_general, data_detalle):
         st.rerun()
 
 def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago):
+
+    # function to show detailed info of the order wich is being picked and mechanisms to identify problems in products, payment and more
+
+    # Parameters:
+    # order_id: parent_order_id (str)
+    # number_unified: client phone number (str)
+    # address: client addres (str)
+    # order_items: dataframe with every item or product from the order, and it's info
+    # metodo_pago: payment_method to know if client will pay or order is already paid (str)
+
+    # returns:
+    # the GUI showing a list of products and tools to indicate troubles with the order or keep the common flow.
+
     if st.button('Regresar'):
         st.session_state.current_view = 'bitacora_pickup' 
         st.rerun()
@@ -523,6 +548,16 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         st.rerun()
 
 def ui_finalizar_entrega(order_id, children_order_id):
+
+    # function to show the ending of the process
+
+    # Parameters:
+    # order_id: parent_order_id (str)
+    # children_order_id: list of children_order_id (str)
+
+    # returns:
+    # the GUI showing success on orders flow.
+
     st.markdown(f'## Se actualizaró el pedido con número {order_id} e hijos {children_order_id} al estado Entregado')
     st.write('---')
     
