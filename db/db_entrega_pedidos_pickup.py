@@ -238,34 +238,25 @@ def get_lista_ordenes_padre(db='repl'):
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         ordenes_padres_e_hijos_sql = """
-        with unique_orders as (
+        with parent_orders as (
 select
-	ID as order_id,
-    post_status as post_status,
-    ID as children_orders
+	ID as order_id
 from
 	wp_posts
 where
-	post_type = 'shop_order' and post_parent = 0 and post_status in ('wc-pickup-4','wc-recepcion-2') and ID not in (
-    select
-		distinct post_parent
-	from
-		wp_posts
-    )
+	post_type = 'shop_order' and post_status in ('wc-pickup-4','wc-recepcion-2') and post_parent = 0
 ),
 children_orders as (
 select
 	post_parent as parent_id,
-    group_concat(ID) as children_order,
-    group_concat(case when post_status in ('wc-pickup-4','wc-recepcion-2') then 'valid' else 'unvalid' end) as children_statuses
+    group_concat(ID) as children_order
 from
 	wp_posts
 where
 	post_type = 'shop_order' and post_parent != 0
 group by
 	post_parent
-),
-shipping_detail as (
+), shipping_detail as (
   select
     wp_woocommerce_order_items.order_item_name AS order_item_name,
     wp_woocommerce_order_items.order_id AS order_id
@@ -311,30 +302,17 @@ left join
 	shipping_method on shipping_method.order_id = order_client_info.order_id
 )
 select
-	children_orders.parent_id as order_id,
+	parent_orders.order_id as order_id,
     helper.full_name as full_name,
     helper.phone as phone,
     helper.shipping_method as shipping_method,
-    children_orders.children_order as children_orders
+    case when children_orders.children_order is null then parent_orders.order_id else children_orders.children_order end as children_orders
 from
-	children_orders
+	parent_orders
 left join
-	helper on helper.order_id = children_orders.parent_id
-where
-	children_orders.children_statuses like '%valid%'
-
-union
-
-select
-	unique_orders.order_id,
-    helper.full_name,
-    helper.phone,
-    helper.shipping_method,
-    unique_orders.children_orders
-from
-	unique_orders
-join
-	helper on helper.order_id = unique_orders.order_id
+	children_orders on parent_orders.order_id = children_orders.parent_id
+left join
+	helper on helper.order_id = parent_orders.order_id
         """
         
         # Ejecutar la primera consulta
