@@ -7,6 +7,13 @@ import mysql.connector
 import pandas as pd
 import numpy as np
 import time
+import asyncio
+
+from integration.aws_integration import insert_product_to_db
+
+async def insert_post_to_db(data):
+    result = await insert_product_to_db(data)
+    return result
 
 def config_db(db='repl') -> dict:
     # Registrar el tiempo de inicio
@@ -65,6 +72,7 @@ def updateOrdenCompra(order_id, orderInfo, products):
         return False
     
 def insertOrdenCompra(orderInfo, products):
+    print('entro')
     db ='prod'
     config = config_db(db)
     start_time = time.time()
@@ -81,19 +89,32 @@ def insertOrdenCompra(orderInfo, products):
             connection.commit()
             insertedId = cursor.lastrowid
             for value in products:
-                sql = "INSERT INTO producto_orden_compra (sku_producto_wp, nombre_producto, tipo_producto, cost_of_goods, units_per_pack, foto, marca, fabricante, proveedor, fecha_creacion, fecha_edicion) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                cursor.execute(sql, (value['sku'], value['nombre'], value['tipo_producto'], value['costo'], value['units_per_pack'], value['img_url'], value['marca'], value['fabricante'], value['proveedor'], orderInfo['fecha_creacion'], orderInfo['fecha_edicion']))
-                connection.commit()
-                insertedProductId = cursor.lastrowid
+                json_data = {
+                    'post_title': value['nombre'] + ' ' + value['sku'],
+                    'meta:_units_per_pack': value['units_per_pack'],
+                    'meta:_cost_of_goods': value['costo'],
+                    'stock': value['cantidad_pack'],
+                    'SKU': value['sku_rintin'],
+                    'post_author': orderInfo['codigo_seller'],
+                    'meta:_dueno_producto': value['fabricante'],
+                    'meta:_proveedor': value['proveedor'],
+                    'meta:_brand': value['marca'],
+                    'post_status': 'pre_ingreso_oc',
+                    'stock_status': 'instock'
+                }
+                inserted_product_id = asyncio.run(insert_product_to_db(json_data))
+                print(inserted_product_id)
+                if inserted_product_id == 0:
+                    return False
                 sql = "INSERT INTO orden_compra_detalle_producto (id_producto_orden_compra, id_orden_compra, line_paquetes, line_cost, fecha_creacion, fecha_edicion) VALUES (%s, %s, %s, %s, %s, %s)"
-                cursor.execute(sql, (insertedProductId, insertedId, value['cantidad_pack'], value['costo'] * value['cantidad_pack'], orderInfo['fecha_creacion'], orderInfo['fecha_edicion']))
+                cursor.execute(sql, (inserted_product_id, insertedId, value['cantidad_pack'], value['costo'] * value['cantidad_pack'], orderInfo['fecha_creacion'], orderInfo['fecha_edicion']))
                 connection.commit()
-
             cursor.close()
             connection.close()
             return insertedId
             
     except Exception as e:
+        print(e)
         return False
 
 def get_order_info(id, db='repl')->dict:

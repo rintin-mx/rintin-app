@@ -24,9 +24,7 @@ def orderDetail(products):
     st.markdown('### Orden de Compra #' + str(ordenCompra['id_orden_compra']))
     st.markdown('### Seller: ' + str(ordenCompra['seller_name']))
     st.markdown('### Fecha de Creación: ' + str(ordenCompra['fecha_creacion']))
-    col1, col2, col3, col4, col5 = st.columns([2, 2, 1, 2, 2])
-    with col1:
-        st.markdown('Foto')
+    col2, col3, col4, col5 = st.columns([2, 1, 2, 2])
     with col2:
         st.markdown('Producto')
     with col3:
@@ -36,12 +34,7 @@ def orderDetail(products):
     with col5:
         st.markdown('Razón')
     for i in range(len(products['product_id'])):
-        col1, col2, col3, col4, col5 = st.columns([2, 2, 1, 2, 2])
-        with col1:
-            if products['foto'][i] != '':
-                st.image(products['foto'][i])
-            else:
-                st.text('Sin Imagen')
+        col2, col3, col4, col5 = st.columns([2, 1, 2, 2])
         with col2:
             st.text(products['nombre_producto'][i])
             st.text(products['sku_producto_wp'][i])

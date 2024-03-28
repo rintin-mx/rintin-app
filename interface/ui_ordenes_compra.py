@@ -9,25 +9,13 @@ import streamlit_shadcn_ui as ui
 import base64
 from fpdf import FPDF
 import time
-import asyncio
+
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
 from db.db_ingreso_ordenes_compra import updateOrdenCompraStatus
 from db.db_ordenes_compra import insertOrdenCompra, update_oi_values, update_product, updateOrdenCompra, deleteProducts
 from datetime import datetime
 import streamlit.components.v1 as components
 from integration.aws_integration import insert_product_to_db
-
-async def update_status_wordpress(order_id, order_status):
-    result = await endpoint_update_status_by_order_id(order_id, order_status)
-    return result
-
-async def update_order_note__wordpress(order_id, order_notes):
-    result = await endpoint_write_order_note(order_id, order_notes)
-    return result
-
-async def insert_post_to_db(data):
-    result = await insert_product_to_db(data)
-    return result
 
 list_test = []
 
@@ -215,26 +203,11 @@ def UITTerminarOrdenCompra(parents, order_data):
                     'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S')
                 }
                 res = insertOrdenCompra(orderDict, st.session_state['dictProductos'][st.session_state['currentSeller']])
-                for product in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                    json_data = {
-                        'post_title': product['nombre'],
-                        'meta:_units_per_pack': product['units_per_pack'],
-                        'meta:_cost_of_goods': product['costo'],
-                        'stock': product['cantidad_pack'],
-                        'SKU': product['sku'],
-                        'post_author': st.session_state['currentSellerId'],
-                        'meta:_dueno_producto': product['fabricante'],
-                        'meta:_proveedor': product['proveedor'],
-                        'meta:_brand': product['marca'],
-                        'post_status': 'pending',
-                        'stock_status': 'instock'
-                    }
-                    asyncio.run(insert_product_to_db(json_data))
-            if(res):
-                st.session_state['ordenCompraId'] = res
-                st.session_state['fechaCreacionOrden'] = fechaCreacion
-                st.session_state['isSaved'] = True
-                st.rerun()
+                if(res):
+                    st.session_state['ordenCompraId'] = res
+                    st.session_state['fechaCreacionOrden'] = fechaCreacion
+                    st.session_state['isSaved'] = True
+                    st.rerun()
     
     elif 'isSaved' in st.session_state:
         st.success('Orden guardada con éxito')
@@ -435,7 +408,7 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
     if button and csv_file is not None and seller is not None:
         try:
             csv_df = pd.read_csv(csv_file)
-            csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete', 'marca', 'dueno_producto', 'proveedor']]
+            csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete', 'marca', 'dueno_producto', 'proveedor', 'sku_rintin']]
             csv_dict = csv_df.to_dict(orient='list')
             #'Unidad', 'Paquete'
             tempArr = []
@@ -460,13 +433,15 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
                     'fabricante': csv_dict['dueno_producto'][i],
                     'fabricante_name': fabricante_name,
                     'proveedor': csv_dict['proveedor'][i],
-                    'proveedor_name': proveedor_name
+                    'proveedor_name': proveedor_name,
+                    'sku_rintin': csv_dict['sku_rintin'][i]
                 }
                 tempArr.append(productDict)
             st.session_state['dictProductos'][seller] = tempArr
             st.session_state['current_view'] = 'terminar_orden_compra'
             st.rerun()
         except Exception as e:
+            print(e)
             st.error('Hubo un error al procesar el archivo, revisa que siga el formato correctamente.')
     st.write(
             """<style>
