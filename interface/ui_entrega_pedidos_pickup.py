@@ -52,57 +52,6 @@ def create_download_link(val, filename):
     b64 = base64.b64encode(val) 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Descargar PDF</a>'
 
-def search_by_order(searchterm: str):
-    
-    # Search for the order_id given
-
-    # Parameters:
-    # searchterm: a order_id where order is going to be picked (str)
-    # parent_order_id or children_order_id
-
-    # Returns:
-    # A dataframe with the rows including the term searched
-
-    data = st.session_state['data']
-    data_filtrado = data[data['order_id'].str.contains(searchterm)|(data['children_orders'].str.contains(searchterm))]
-    st.session_state['visible']=False
-
-    return data_filtrado['order_id'] if searchterm else []
-
-def search_cliente(searchterm: str):
-    
-    # Search for the cliente given
-
-    # Parameters:
-    # searchterm: a full_name of the person who's going to pick up the order (str)
-    # 'Juan Pablo Jimenez'
-
-    # Returns:
-    # A dataframe with the rows including the term searched
-
-    data = st.session_state['data']
-    data_filtrado = data[data['full_name'].str.lower().str.contains(searchterm.lower())]
-    st.session_state['visible']=False
-
-    return data_filtrado['full_name'] if searchterm else []
-
-def search_phone(searchterm: str):
-    
-    # Search for the phone given
-
-    # Parameters:
-    # searchterm: a phone of the person who's going to pick up the order (str)
-    # '549485624'
-
-    # Returns:
-    # A dataframe with the rows including the term searched
-
-    data = st.session_state['data']
-    data_filtrado = data[data['phone'].str.contains(searchterm)]
-    st.session_state['visible']=False
-
-    return data_filtrado['phone'] if searchterm else []
-
 def search_by_filters(order_id: str, full_name: str, bodega: str, phone: str):
     
     # Search for the order_info with the parameters given
@@ -116,13 +65,14 @@ def search_by_filters(order_id: str, full_name: str, bodega: str, phone: str):
 
     data = st.session_state['data']
     if order_id != '' and order_id != None:
-        data = data[data['order_id'].str.contains(order_id)|(data['children_orders'].str.contains(order_id))]
+        for num in order_id.split(','):
+            data = data[data['order_id'].str.contains(num)|(data['children_orders'].str.contains(num))]
     if full_name != '' and full_name != None:
-        data = data[data['full_name'].str.contains(full_name)]
+        data = data[data['full_name'].str.contains(full_name, na = False)]
     if phone != '' and phone != None:
-        data = data[data['phone'].str.contains(phone)]
+        data = data[data['phone'].str.contains(phone, na = False)]
     if bodega != '' and bodega != None:
-        data = data[data['shipping_method'].str.contains(bodega)]
+        data = data[data['shipping_method'].str.contains(bodega, na = False)]
 
     st.session_state['visible']=False
 
@@ -132,10 +82,6 @@ def ui_pendiente_entrega_pickup(data):
     
     data['order_id'] = data['order_id'].astype(str)
     st.session_state['data'] = data
-    filtro_orden = ''
-    filtro_bodega = ''
-    filtro_cliente = ''
-    filtro_phone = ''
 
     st.header('Pendiente entrega en Pickup')
     st.divider()
@@ -149,35 +95,25 @@ def ui_pendiente_entrega_pickup(data):
         index=None,
         placeholder="Search ..."
         )
+    
+    orders = data['order_id'] + ',' + data['children_orders']
+    filtro_orden = st.selectbox('Número de pedido',
+        options=orders,
+        index=None,
+        placeholder="Search ..."
+        )
 
-    filtro_orden = st_searchbox(
-        label='Número de pedido:',
-        search_function=search_by_order,
-        key=f"search_orderid",
-        rerun_on_update=True
-    )
+    filtro_cliente = st.selectbox('Nombre de Cliente',
+        options=data['full_name'],
+        index=None,
+        placeholder="Search ..."
+        )
 
-    filtro_cliente = st_searchbox(
-        label='Nombre Cliente:',
-        search_function=search_cliente,
-        key=f"search_cliente",
-        rerun_on_update=True
-    )
-
-    filtro_phone = st_searchbox(
-        label='Teléfono Cliente:',
-        search_function=search_phone,
-        key=f"search_phone",
-        rerun_on_update=True
-    )
-
-    col1, col2 = st.columns([3, 3])
-
-    with col1:
-        find = st.button('Filtrar')
-
-        if find:
-            st.session_state['data'] = search_by_filters(filtro_orden, filtro_cliente, filtro_bodega, filtro_phone)
+    filtro_phone = st.selectbox('Número de teléfono de Cliente',
+        options=data['phone'],
+        index=None,
+        placeholder="Search ..."
+        )   
     
     st.write('#')
 
@@ -197,38 +133,26 @@ def ui_pendiente_entrega_pickup(data):
     with col6:
         st.markdown("<h5 style='color: black;'>TELÉFONO</h5>", unsafe_allow_html=True)
 
-    data = st.session_state['data']
+    if filtro_bodega is not None or filtro_cliente is not None or filtro_orden is not None or filtro_phone is not None:
+        st.session_state['data'] = search_by_filters(filtro_orden, filtro_cliente, filtro_bodega, filtro_phone)
 
-    if not data.empty:
-        for i, orden in data.iterrows():
-            st.divider()
-            col7, col8, col9, col10, col11 = st.columns([4,2,5,2,2])
-            with col7:
-                st.markdown(orden['full_name'])
-            with col8:
-                st.markdown(orden['order_id'])
-            with col9:
-                st.markdown(orden['children_orders'])
-            with col10:
-                st.markdown(orden['phone'])
-            with col11:
-                if st.button('Entrega', key=f'entregar_{i}'):
-                    st.session_state['order_id_pickup'] = orden['order_id']
-                    st.session_state['phone_pickup'] = orden['phone']
-                    st.session_state['current_view'] = 'bitacora_pickup'
-                    st.rerun()
-    
-    if st.button('Regresar'):
-        if 'data' in st.session_state:
-            del st.session_state['data']
-        if 'order_id_pickup' in st.session_state:
-            del st.session_state['order_id_pickup']
-        if 'children_id_pickup' in st.session_state:
-            del st.session_state['children_id_pickup']
-        if 'phone_pickup' in st.session_state:
-            del st.session_state['phone_pickup']
-        st.session_state.current_view = 'ingreso_pedidos_pickups'
-        st.rerun()
+    for i, orden in st.session_state['data'].iterrows():
+        st.divider()
+        col7, col8, col9, col10, col11 = st.columns([4,2,5,2,2])
+        with col7:
+            st.markdown(orden['full_name'])
+        with col8:
+            st.markdown(orden['order_id'])
+        with col9:
+            st.markdown(orden['children_orders'])
+        with col10:
+            st.markdown(orden['phone'])
+        with col11:
+            if st.button('Entrega', key=f'entregar_{i}'):
+                st.session_state['order_id_pickup'] = orden['order_id']
+                st.session_state['phone_pickup'] = orden['phone']
+                st.session_state.current_view = 'bitacora_pickup'
+                st.rerun()
 
 def ui_descargar_bitacora(data_general, data_detalle):
 
@@ -325,6 +249,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(20, 10, f"Descuento", align="C")
         pdf.cell(20, 10, f"Sub Total", align="C")
         pdf.set_font('Arial', '', 10)
+        descuento_pedidos_cancelados = 0
         for i in range(len(data_detalle['suborder'])):
             pdf.ln()
 
@@ -335,12 +260,16 @@ def ui_descargar_bitacora(data_general, data_detalle):
             pdf.cell(20, 5, f"{str(data_detalle['estado'][i])}", align="C")
             pdf.cell(20, 5, f"{str(data_detalle['suborder'][i])}", align="C")
             pdf.cell(25, 5, f"{str(data_detalle['shop'][i])}", align="C")
-            pdf.multi_cell(60, 5, f"{str(data_detalle['product_name'][i])}", align="C")
+            pdf.cell(60, 5, f"{str(data_detalle['product_name'][i])[0:28]}", align="C")
             y_2 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 125, y)
-            pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
-            y_3 = pdf.get_y()
+            y_3 = 0
+            if(data_detalle['changes'][i] == ''):
+                pdf.cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+            else:
+                pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+                y_3 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 145, y)
             pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
@@ -359,7 +288,8 @@ def ui_descargar_bitacora(data_general, data_detalle):
                 width = 275
                 lineHt = 8
                 # Then draw the line
-                pdf.line(x, y + (lineHt / 4), x+width, y)
+                pdf.line(x, y + (lineHt / 4), x+width, y + (lineHt / 4))
+                descuento_pedidos_cancelados += data_detalle['subtotal'][i]
         
         pdf.ln()
         pdf.ln()
@@ -367,7 +297,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Subtotal: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['sub_total'][0])}", align='R')
+        pdf.cell(30, 5, f"${str(float(data_general['sub_total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
@@ -385,7 +315,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Total a Pagar: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['total'][0])}", align='R')
+        pdf.cell(30, 5, f"${str(float(data_general['sub_total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
@@ -448,9 +378,9 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             st.write(int(order_items['line_qty'][i]))
             st.write('#### Precio:')
             st.write(f"{(order_items['line_total'][i])}")
-            total += (int(order_items['line_qty'][i]) * int(float(order_items['line_total'][i])))
+            total += (int(order_items['line_qty'][i]) * float(order_items['line_total'][i]))
             recieved = st.number_input('Cantidad recibida', min_value=0, max_value=int(order_items['line_qty'][i]), step=1, key=f'amount_{i}')
-            calculated_total += (recieved * int(float(order_items['line_total'][i])))
+            calculated_total += (recieved * float(order_items['line_total'][i]))
             if recieved != int(order_items['line_qty'][i]):
                 reason = st.selectbox('Razón diferencia', options=DIFF_REASONS, key=f'select_{i}', index=None)
                 if reason is None:
@@ -479,7 +409,7 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             st.write(order_items['order_item_name'][i])
             st.write('### Precio:')
             st.write(order_items['line_total'][i])
-            total += int(order_items['line_total'][i])
+            total += float(order_items['line_total'][i])
             calculated_total += int(order_items['line_total'][i])
         if order_items['order_id'][i] in orders_dict:
             orders_dict[order_items['order_id'][i]] += recieved
@@ -518,7 +448,6 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         for order in children_orders:
             r = asyncio.run(update_status_wordpress(order, 'delivered'))
         
-        r = asyncio.run(update_status_wordpress(order_id, 'delivered'))
         st.session_state.current_view = 'finalizar_entrega'
         st.rerun()
 
