@@ -12,13 +12,16 @@ async def make_post_request(url, data):
     Return:
     Endpoint response
     '''
+    headers = {'Content-Type': 'application/json'}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=data) as response:
+        async with session.post(url, json=data, headers = headers) as response:
             try:
+                print('try')
                 response_data = await response.json()
-                return response_data
+                print(response_data)
+                return response_data['id']
             except aiohttp.ContentTypeError:
-                return await response.text()
+                return 0
 
 
 async def insert_product_to_db(data):
