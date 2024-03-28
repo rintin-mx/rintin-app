@@ -448,7 +448,6 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         for order in children_orders:
             r = asyncio.run(update_status_wordpress(order, 'delivered'))
         
-        r = asyncio.run(update_status_wordpress(order_id, 'delivered'))
         st.session_state.current_view = 'finalizar_entrega'
         st.rerun()
 
