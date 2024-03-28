@@ -187,23 +187,23 @@ def ui_pendiente_entrega_pickup(data):
     if filtro_bodega is not None or filtro_cliente is not None or filtro_orden is not None or filtro_phone is not None:
         st.session_state['data'] = search_by_filters(filtro_orden, filtro_cliente, filtro_bodega, filtro_phone)
 
-        for i, orden in st.session_state['data'].iterrows():
-            st.divider()
-            col7, col8, col9, col10, col11 = st.columns([4,2,5,2,2])
-            with col7:
-                st.markdown(orden['full_name'])
-            with col8:
-                st.markdown(orden['order_id'])
-            with col9:
-                st.markdown(orden['children_orders'])
-            with col10:
-                st.markdown(orden['phone'])
-            with col11:
-                if st.button('Entrega', key=f'entregar_{i}'):
-                    st.session_state['order_id_pickup'] = orden['order_id']
-                    st.session_state['phone_pickup'] = orden['phone']
-                    st.session_state.current_view = 'bitacora_pickup'
-                    st.rerun()
+    for i, orden in st.session_state['data'].iterrows():
+        st.divider()
+        col7, col8, col9, col10, col11 = st.columns([4,2,5,2,2])
+        with col7:
+            st.markdown(orden['full_name'])
+        with col8:
+            st.markdown(orden['order_id'])
+        with col9:
+            st.markdown(orden['children_orders'])
+        with col10:
+            st.markdown(orden['phone'])
+        with col11:
+            if st.button('Entrega', key=f'entregar_{i}'):
+                st.session_state['order_id_pickup'] = orden['order_id']
+                st.session_state['phone_pickup'] = orden['phone']
+                st.session_state.current_view = 'bitacora_pickup'
+                st.rerun()
 
 def ui_descargar_bitacora(data_general, data_detalle):
 
@@ -311,12 +311,16 @@ def ui_descargar_bitacora(data_general, data_detalle):
             pdf.cell(20, 5, f"{str(data_detalle['estado'][i])}", align="C")
             pdf.cell(20, 5, f"{str(data_detalle['suborder'][i])}", align="C")
             pdf.cell(25, 5, f"{str(data_detalle['shop'][i])}", align="C")
-            pdf.multi_cell(60, 5, f"{str(data_detalle['product_name'][i])}", align="C")
+            pdf.cell(60, 5, f"{str(data_detalle['product_name'][i])[0:28]}", align="C")
             y_2 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 125, y)
-            pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
-            y_3 = pdf.get_y()
+            y_3 = 0
+            if(data_detalle['changes'][i] == ''):
+                pdf.cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+            else:
+                pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+                y_3 = pdf.get_y()
             # reposition of cursor to write after a multicell
             pdf.set_xy(x + 145, y)
             pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
@@ -362,7 +366,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Total a Pagar: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(float(data_general['total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
+        pdf.cell(30, 5, f"${str(float(data_general['sub_total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)

@@ -70,8 +70,8 @@ def insert_item_problem(product):
 		connection = mysql.connector.connect(**config)
 		if connection.is_connected():
 			cursor = connection.cursor(dictionary=True)
-			sql = "INSERT INTO inconvenientes_entregas (id_ruta, order_item_id, cantidad_entregada, razon_no_entrega, fecha) VALUES (%s, %s, %s, %s)"
-			cursor.execute(sql, (product['order_item_id'], product['cantidad_entregada'], product['razon_no_entrega'], current_date))
+			sql = "INSERT INTO inconvenientes_entregas (order_item_id, cantidad_entregada, razon_no_entrega, fecha, fuente) VALUES (%s, %s, %s, %s, %s)"
+			cursor.execute(sql, (product['order_item_id'], product['cantidad_entregada'], product['razon_no_entrega'], current_date, 'entrega_pickup'))
 			connection.commit()
 			cursor.close()
 			connection.close()
@@ -238,30 +238,36 @@ def get_lista_ordenes_padre(db='repl'):
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         ordenes_padres_e_hijos_sql = """
-        with parent_orders as (
+        with children_orders as (
 select
-	ID as order_id
+	post_parent as order_id,
+    group_concat(ID) as children_order,
+    group_concat(case when post_status in ('wc-pickup-4','wc-recepcion-2') then 'valid' else '-' end) as list_valid
 from
 	wp_posts
 where
-	post_type = 'shop_order' and post_parent = 0 and post_status in ('wc-pickup-4','wc-recepcion-2') and ID not in (
+	post_type = 'shop_order'
+group by
+	post_parent
+
+union
+
+select
+	ID as order_id,
+    ID as children_order,
+    'valid' as list_valid
+from
+	wp_posts
+where
+	post_type = 'shop_order' and post_status in ('wc-pickup-4','wc-recepcion-2') and ID not in(
     select
 		distinct post_parent
 	from
 		wp_posts
-    ) and post_date >= '2023-11-25 15:05:39'
-),
-children_orders as (
-select
-	post_parent as parent_id,
-    group_concat(ID) as children_order
-from
-	wp_posts
-where
-	post_type = 'shop_order' and post_parent != 0 and post_date >= '2023-11-25 15:05:39'
-group by
-	post_parent
-), shipping_detail as (
+	where post_type = 'shop_order'
+    )
+), 
+shipping_detail as (
   select
     wp_woocommerce_order_items.order_item_name AS order_item_name,
     wp_woocommerce_order_items.order_id AS order_id
@@ -303,21 +309,21 @@ select
     shipping_method.order_item_name as shipping_method
 from
 	order_client_info
-left join
+left join	
 	shipping_method on shipping_method.order_id = order_client_info.order_id
 )
 select
-	parent_orders.order_id as order_id,
+	children_orders.order_id as order_id,
     helper.full_name as full_name,
     helper.phone as phone,
-    helper.shipping_method as shipping_method,
-    case when children_orders.children_order is null then parent_orders.order_id else children_orders.children_order end as children_orders
+    case when helper.shipping_method is null then 'Otro' else helper.shipping_method end as shipping_method,
+    case when children_orders.children_order is null then children_orders.order_id else children_orders.children_order end as children_orders
 from
-	parent_orders
+	children_orders
 left join
-	children_orders on parent_orders.order_id = children_orders.parent_id
-left join
-	helper on helper.order_id = parent_orders.order_id
+	helper on helper.order_id = children_orders.order_id
+where
+	list_valid like '%valid%' and children_orders.order_id != 0
         """
         
         # Ejecutar la primera consulta
