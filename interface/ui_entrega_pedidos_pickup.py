@@ -52,57 +52,6 @@ def create_download_link(val, filename):
     b64 = base64.b64encode(val) 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Descargar PDF</a>'
 
-def search_by_order(searchterm: str):
-    
-    # Search for the order_id given
-
-    # Parameters:
-    # searchterm: a order_id where order is going to be picked (str)
-    # parent_order_id or children_order_id
-
-    # Returns:
-    # A dataframe with the rows including the term searched
-
-    data = st.session_state['data']
-    data_filtrado = data[data['order_id'].str.contains(searchterm)|(data['children_orders'].str.contains(searchterm))]
-    st.session_state['visible']=False
-
-    return data_filtrado['order_id'] if searchterm else []
-
-def search_cliente(searchterm: str):
-    
-    # Search for the cliente given
-
-    # Parameters:
-    # searchterm: a full_name of the person who's going to pick up the order (str)
-    # 'Juan Pablo Jimenez'
-
-    # Returns:
-    # A dataframe with the rows including the term searched
-
-    data = st.session_state['data']
-    data_filtrado = data[data['full_name'].str.lower().str.contains(searchterm.lower())]
-    st.session_state['visible']=False
-
-    return data_filtrado['full_name'] if searchterm else []
-
-def search_phone(searchterm: str):
-    
-    # Search for the phone given
-
-    # Parameters:
-    # searchterm: a phone of the person who's going to pick up the order (str)
-    # '549485624'
-
-    # Returns:
-    # A dataframe with the rows including the term searched
-
-    data = st.session_state['data']
-    data_filtrado = data[data['phone'].str.contains(searchterm)]
-    st.session_state['visible']=False
-
-    return data_filtrado['phone'] if searchterm else []
-
 def search_by_filters(order_id: str, full_name: str, bodega: str, phone: str):
     
     # Search for the order_info with the parameters given
