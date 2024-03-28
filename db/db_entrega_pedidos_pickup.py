@@ -246,7 +246,7 @@ select
 from
 	wp_posts
 where
-	post_type = 'shop_order'
+	post_type = 'shop_order' and post_parent != 0
 group by
 	post_parent
 
@@ -259,13 +259,16 @@ select
 from
 	wp_posts
 where
-	post_type = 'shop_order' and post_status in ('wc-pickup-4','wc-recepcion-2') and ID not in(
-    select
-		distinct post_parent
-	from
-		wp_posts
-	where post_type = 'shop_order'
+	post_type = 'shop_order' 
+    and post_status in ('wc-pickup-4','wc-recepcion-2') 
+    and ID not in(
+		select
+			distinct post_parent
+		from
+			wp_posts
+		where post_type = 'shop_order'
     )
+    and post_parent = 0
 ), 
 shipping_detail as (
   select
@@ -323,7 +326,7 @@ from
 left join
 	helper on helper.order_id = children_orders.order_id
 where
-	list_valid like '%valid%' and children_orders.order_id != 0
+	list_valid like '%valid%'
         """
         
         # Ejecutar la primera consulta
