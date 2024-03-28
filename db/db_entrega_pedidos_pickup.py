@@ -104,7 +104,7 @@ def get_order_items(order_id, db='repl') -> dict:
             case when post_parent = 0 then id else post_parent end as post_parent
         from
             wp_posts
-        where id not in (select distinct post_parent from wp_posts where post_type = 'shop_order') and post_status != 'wc-cancelled'
+        where id not in (select distinct post_parent from wp_posts where post_type = 'shop_order') and post_status in ('wc-pickup-4', 'wc-recepcion-2')
         having
             post_parent = {order_id}
             
@@ -344,7 +344,7 @@ where
         conexion.close() 
         # Nueva lista de nombres de columnas
         return ordenes_padres_e_hijos
-    
+
 def ingreso_entrega(order_id, total_a_recibir, total_recibido, razon_diferencia, img_url, db = 'prod'):
     config = config_db(db)
     try:
