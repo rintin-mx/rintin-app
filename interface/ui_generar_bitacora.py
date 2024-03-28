@@ -243,7 +243,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Total a Pagar: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(float(data_general['sub_total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
+        pdf.cell(30, 5, f"${str(float(data_general['total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
