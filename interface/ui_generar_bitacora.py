@@ -216,7 +216,7 @@ def UIdetalleBitacora(data_general, data_detalle):
                 width = 275
                 lineHt = 8
                 # Then draw the line
-                pdf.line(x, y + (lineHt / 4), x+width, y)
+                pdf.line(x, y + (lineHt / 4), x+width, y + (lineHt / 4))
                 descuento_pedidos_cancelados += data_detalle['subtotal'][i]
         
         pdf.ln()
