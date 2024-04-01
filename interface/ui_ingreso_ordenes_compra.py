@@ -60,7 +60,6 @@ def orderDetail(products):
             ingresos_pendientes += 1
         else:
             ingresos_faltantes += 1
-    print(objArry)
     
     if ingresos_pendientes > 0:
         msg = 'Ingresado a bodega con pendientes'
