@@ -203,7 +203,26 @@ def get_products(id, db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_products_ordenes_compra =f"""
-            select producto_orden_compra.id_producto_orden_compra as product_id, line_paquetes, line_cost, sku_producto_wp, nombre_producto, tipo_producto, cost_of_goods, units_per_pack, foto from orden_compra_detalle_producto inner join producto_orden_compra on orden_compra_detalle_producto.id_producto_orden_compra = producto_orden_compra.id_producto_orden_compra where id_orden_compra = {id}
+        select 
+            wp_posts.id as product_id, 
+            line_paquetes, 
+            line_cost, 
+            sku.meta_value as sku_producto_wp, 
+            post_name as nombre_producto, 
+            cost.meta_value as cost_of_goods, 
+            units_per_pack.meta_value as units_per_pack
+        from orden_compra_detalle_producto 
+        inner join wp_posts 
+        left join wp_postmeta units_per_pack on units_per_pack.post_id = wp_posts.id
+        left join wp_postmeta cost on cost.post_id = wp_posts.id
+        left join wp_postmeta sku on sku.post_id = wp_posts.id
+        on orden_compra_detalle_producto.id_producto_orden_compra = wp_posts.id 
+        where id_orden_compra = {id}
+        and units_per_pack.meta_key = '_units_per_pack'
+        and cost.meta_key = '_cost_of_goods'
+        and sku.meta_key = '_sku'
+
+
         """
         cursor.execute(wp_products_ordenes_compra)
 
@@ -227,7 +246,7 @@ def get_products(id, db='repl') -> dict:
         seconds = int(duration % 60)
         # Nueva lista de nombres de columnas
         #wp_seller=wp_seller[['user_id' 'dokan_store_name']]
-        wp_products.columns = ['product_id', 'line_paquetes', 'line_cost', 'sku_producto_wp', 'nombre_producto', 'tipo_producto', 'cost_of_goods', 'units_per_pack', 'foto']
+        wp_products.columns = ['product_id', 'line_paquetes', 'line_cost', 'sku_producto_wp', 'nombre_producto', 'cost_of_goods', 'units_per_pack']
         wp_products_general_dict = wp_products.to_dict(orient='list')
         return wp_products_general_dict
 

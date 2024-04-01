@@ -420,7 +420,11 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         st.session_state.current_view = 'bitacora_pickup' 
         st.rerun()
     orders_dict = {}
-    children_orders = []
+    children_orders = set(order_items['order_id'])
+    try:
+        children_orders.remove(int(order_id))
+    except:
+        pass
     calculated_total = 0
     total = 0
     respuesta = False
@@ -437,7 +441,6 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
     st.write('#### Productos de la orden')
     order_items_con_falla = []
     for i in range(len(order_items['order_item_id'])):
-        children_orders.append(order_items['order_item_id'][i])
         if order_items['order_item_type'][i] == 'line_item':
             st.image(order_items['img_url'][i])
             st.write('#### Nombre de producto:')
@@ -517,8 +520,6 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         ingreso_entrega(order_id, total, calculated_total, last_product_fail, img_url)
         for order in children_orders:
             r = asyncio.run(update_status_wordpress(order, 'delivered'))
-        
-        r = asyncio.run(update_status_wordpress(order_id, 'delivered'))
         st.session_state.current_view = 'finalizar_entrega'
         st.rerun()
 

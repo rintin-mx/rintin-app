@@ -442,7 +442,13 @@ select
 			when `meta_key` = '_line_total' then `meta_value`
 			else NULL
 		end
-	) AS `line_total`
+	) AS `line_total`,
+    max(
+		case
+			when `meta_key` = '_line_subtotal' then `meta_value`
+			else NULL
+		end
+	) AS `line_subtotal`
     from wp_woocommerce_order_itemmeta
     group by wp_woocommerce_order_itemmeta.order_item_id
 ),
@@ -452,6 +458,8 @@ select
 	order_items_detail.product_id as product_id,
     order_items_detail.qty as qty,
     order_items_detail.line_total as line_total,
+    order_items_detail.line_subtotal as line_subtotal,
+    order_items_detail.line_subtotal - order_items_detail.line_total as discount,
     tabla_producto.product_name as product_name
 from
 	order_items_detail
@@ -493,12 +501,8 @@ select
     cambios_productos.nuevo_producto_sku as changes,
     units_per_pack_absolute as units_per_pack,
     qty as qty_of_packs,
-    line_total / qty as pack_price,
-    case
-		when sale_price > 0 then price - sale_price
-        when regular_price > 0 then price - regular_price
-        when regular_price <= 0 or regular_price is null then 0
-	end AS discount
+    line_subtotal / qty as pack_price,
+    order_items_detail_2.discount as discount
 from
 	item_per_order
 left join order_status on item_per_order.order_id = order_status.suborder_id
