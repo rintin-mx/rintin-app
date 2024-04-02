@@ -84,7 +84,7 @@ ordermeta_helper as(
     from
         wp_postmeta
         inner join wp_posts on wp_posts.id = post_id
-	where post_status = 'wc-parcel'	
+	where post_status = 'wc-recepcion-2'	
     group by
         post_id, post_status
 	having dokan_vendor_id is not null
@@ -109,7 +109,7 @@ order_items as(
         inner join wp_posts on wp_posts.id = order_id
     where
         order_item_type = 'line_item'
-        and post_status = 'wc-parcel'
+        and post_status = 'wc-recepcion-2'
 ),
 order_item_meta as (
     select
@@ -152,9 +152,6 @@ group by
     seller_name,
     post_status,
     post_parent
-
-
-
         """
         # Ejecutar la primera consulta
         cursor.execute(wp_pickeo_sql)
