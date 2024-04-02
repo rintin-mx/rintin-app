@@ -38,7 +38,7 @@ def get_orders(db='repl') -> dict:
         wp_pickeo_sql = f"""
            with cps as (
 select
-        distinct codigos_postales.codigo_postal AS codigo_postal
+        distinct codigos_postales.codigo_postal AS codigo_postal, zonas_entrega.zona_entrega
     from
         (
             (
@@ -53,6 +53,18 @@ select
         )
     where
         zonas_entrega.zona_entrega like '%pickup%'
+),
+order_shipping as (
+	select
+		ID
+	from
+		wp_posts
+	where
+		post_parent in (
+		select 
+			distinct order_id
+		from wp_woocommerce_order_items where order_item_type = 'shipping' and order_item_name like '%oax%'
+    )
 ),
 ordermeta_helper as(
     select
@@ -72,19 +84,21 @@ ordermeta_helper as(
     from
         wp_postmeta
         inner join wp_posts on wp_posts.id = post_id
-	where post_status = 'wc-parcel'
+	where post_status = 'wc-parcel'	
     group by
         post_id, post_status
 	having dokan_vendor_id is not null
 ),
-ordermeta as (
+ordermeta as 
+(
 	select 
 		order_id,
         dokan_vendor_id,
         meta_value as seller_name
 	from ordermeta_helper
-    inner join cps on postcode = codigo_postal
+    left join cps on postcode = codigo_postal
     inner join wp_usermeta on dokan_vendor_id = user_id and meta_key = 'dokan_store_name'
+    where cps.zona_entrega like '%pickup%' or order_id in (select * from order_shipping)
 ),
 order_items as(
     select
@@ -138,6 +152,7 @@ group by
     seller_name,
     post_status,
     post_parent
+
 
 
         """
