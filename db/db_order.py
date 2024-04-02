@@ -185,24 +185,21 @@ product_meta as(
 	from product_meta_helper
     group by order_id
 )
-
 SELECT
-wp_posts.id as order_id,
+ordermeta.post_id as order_id,
 dokan_store_name as seller_name,
 proveedor AS proveedor,
 post_status AS estado,
 recoleccion_c_problemas,
 validacion_stock
 FROM
-wp_posts
-inner join product_meta on product_meta.order_id = wp_posts.id
-inner join order_comments_grouped on order_comments_grouped.id = wp_posts.id
-inner join wp_dokan_orders ON wp_dokan_orders.order_id = wp_posts.id
+ordermeta
+inner join product_meta on product_meta.order_id = ordermeta.post_id
+inner join order_comments_grouped on order_comments_grouped.id = ordermeta.post_id
 inner join users on users.user_id = seller_id
-	WHERE
-	users.bodega IN ('centro_cdmx', 'aj_cdmx', 'oaxaca')
+
 ORDER BY
-wp_posts.id ASC
+ordermeta.post_id ASC
         """
 
         # Ejecutar la primera consulta
