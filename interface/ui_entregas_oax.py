@@ -179,7 +179,6 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
     total = 0
     respuesta = False
     validacion = True
-    print(child_order_id)
     st.write(f'### Pedido: {order_id}')
     st.write(f'### Telefono cliente: {number_unified}')
     st.write(f'### Dirección:')
