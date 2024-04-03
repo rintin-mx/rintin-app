@@ -233,7 +233,12 @@ select
         else 'Prepaid'
 	end as pay_method,
     case 
-		when zona_entrega.zona_entrega is not null then 
+		when zona_entrega.zona_entrega is not null then zona_entrega.zona_entrega
+		else '' end AS zona,
+    Case
+		when shipping_method.order_item_name like '%Oaxaca%' then 'Bodega Oaxaca'
+		when shipping_method.order_item_name like '%Ciudad de Mexico%' then 'Bodega CDMX' COLLATE utf8mb4_general_ci
+        when zona_entrega.zona_entrega is not null then
 			case
 				When zona_entrega.zona_entrega = 'pickup-A' then 'Zona Centro'
 				When zona_entrega.zona_entrega = 'pickup-B' then 'Etla, Telix, Mazaltepec'
@@ -242,11 +247,7 @@ select
 				When zona_entrega.zona_entrega = 'pickup-E' then 'Ejutla'
 				When zona_entrega.zona_entrega = 'pickup-M' then 'Miahuatlan'
 			end
-		else '' end AS zona,
-    Case
-		when shipping_method.order_item_name like '%Oaxaca%' then 'Recoleccion en bodega Oaxaca'
-		when shipping_method.order_item_name like '%Ciudad de Mexico%' then 'Recoleccion en bodega CDMX' COLLATE utf8mb4_general_ci
-        When shipping_method.order_item_name not like 'Recolección en bodega%' then 
+        else
 			case 
 				when order_client_info.shipping_state = 'DF' or order_client_info.shipping_state = 'CDMX' or order_client_info.shipping_state = 'Ciudad de México' then 'Ciudad de México'
 				when order_client_info.shipping_state = 'MX' or order_client_info.shipping_state = 'Estado de México' or order_client_info.shipping_state = 'México' then 'México'
@@ -281,16 +282,6 @@ select
 				when order_client_info.shipping_state = 'GR' or order_client_info.shipping_state = 'Guerrero' then 'Guerrero'
 				when order_client_info.shipping_state = 'CL' then 'Colima'
 				when order_client_info.shipping_state = 'GT' then 'Guanajuato'
-			end
-		when zona_entrega.zona_entrega is not null then
-			case
-				When zona_entrega.zona_entrega = 'pickup-A' then 'Bodega OAX'
-				When zona_entrega.zona_entrega = 'pickup-B' then 'Bodega OAX'
-				When zona_entrega.zona_entrega = 'pickup-C' then 'Bodega OAX'
-				When zona_entrega.zona_entrega = 'pickup-D' then 'Bodega OAX'
-				When zona_entrega.zona_entrega = 'pickup-E' then 'Ejutla'
-				When zona_entrega.zona_entrega = 'pickup-M' then 'Miahuatlan'
-                else zona_entrega.estado
 			end
 	end AS destino,
     case when comentarios.comments is null then 'N/A' else comentarios.comments end AS comments,
