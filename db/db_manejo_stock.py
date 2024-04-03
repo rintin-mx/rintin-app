@@ -340,7 +340,7 @@ def update_product_stock_on_db(product_id, actual_stock, new_stock):
                 cursor.execute(sql)
                 try:
                     sql = f"DELETE from wp_term_relationships WHERE object_id = {product_id} and term_taxonomy_id = '212'"
-                    cursor.execute()
+                    cursor.execute(sql)
                 except Exception:
                     pass
                 sql = f"UPDATE wp_posts SET post_status = 'publish' WHERE id = {product_id}"

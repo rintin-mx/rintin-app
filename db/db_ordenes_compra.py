@@ -90,17 +90,17 @@ def insertOrdenCompra(orderInfo, products):
             insertedId = cursor.lastrowid
             for value in products:
                 json_data = {
-                    'post_title': value['nombre'] + ' ' + value['sku'],
+                    'post_title': value['nombre'],
                     'meta:_units_per_pack': value['units_per_pack'],
                     'meta:_cost_of_goods': value['costo'],
-                    'stock': value['cantidad_pack'],
+                    'stock': '0',
                     'SKU': value['sku_rintin'],
                     'post_author': orderInfo['codigo_seller'],
                     'meta:_dueno_producto': value['fabricante'],
                     'meta:_proveedor': value['proveedor'],
                     'meta:_brand': value['marca'],
                     'post_status': 'pre_ingreso_oc',
-                    'stock_status': 'instock'
+                    'stock_status': 'outofstock'
                 }
                 inserted_product_id = asyncio.run(insert_product_to_db(json_data))
                 print(inserted_product_id)
