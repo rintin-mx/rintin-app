@@ -197,7 +197,8 @@ ordermeta
 inner join product_meta on product_meta.order_id = ordermeta.post_id
 inner join order_comments_grouped on order_comments_grouped.id = ordermeta.post_id
 inner join users on users.user_id = seller_id
-
+WHERE
+	users.bodega IN ('centro_cdmx', 'aj_cdmx', 'oaxaca')
 ORDER BY
 ordermeta.post_id ASC
         """
