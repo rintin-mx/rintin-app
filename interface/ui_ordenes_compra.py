@@ -9,25 +9,13 @@ import streamlit_shadcn_ui as ui
 import base64
 from fpdf import FPDF
 import time
-import asyncio
+
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
 from db.db_ingreso_ordenes_compra import updateOrdenCompraStatus
 from db.db_ordenes_compra import insertOrdenCompra, update_oi_values, update_product, updateOrdenCompra, deleteProducts
 from datetime import datetime
 import streamlit.components.v1 as components
 from integration.aws_integration import insert_product_to_db
-
-async def update_status_wordpress(order_id, order_status):
-    result = await endpoint_update_status_by_order_id(order_id, order_status)
-    return result
-
-async def update_order_note__wordpress(order_id, order_notes):
-    result = await endpoint_write_order_note(order_id, order_notes)
-    return result
-
-async def insert_post_to_db(data):
-    result = await insert_product_to_db(data)
-    return result
 
 list_test = []
 
@@ -106,7 +94,7 @@ def UITTerminarOrdenCompra(parents, order_data):
         total_cobro = total_cobro + (float(value['costo']) * value['cantidad_pack'])
     if 'isSaved' not in st.session_state:    
         if st.button('Volver'):
-            st.session_state.current_view = 'ordenesCompra'
+            st.session_state.current_view = 'ordenesCompraMenu'
             st.rerun()
     tableArr = []
     for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
@@ -215,26 +203,11 @@ def UITTerminarOrdenCompra(parents, order_data):
                     'fecha_edicion': time.strftime('%Y-%m-%d %H:%M:%S')
                 }
                 res = insertOrdenCompra(orderDict, st.session_state['dictProductos'][st.session_state['currentSeller']])
-                for product in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                    json_data = {
-                        'post_title': product['nombre'],
-                        'meta:_units_per_pack': product['units_per_pack'],
-                        'meta:_cost_of_goods': product['costo'],
-                        'stock': product['cantidad_pack'],
-                        'SKU': product['sku'],
-                        'post_author': st.session_state['currentSellerId'],
-                        'meta:_dueno_producto': product['fabricante'],
-                        'meta:_proveedor': product['proveedor'],
-                        'meta:_brand': product['marca'],
-                        'post_status': 'pending',
-                        'stock_status': 'instock'
-                    }
-                    asyncio.run(insert_product_to_db(json_data))
-            if(res):
-                st.session_state['ordenCompraId'] = res
-                st.session_state['fechaCreacionOrden'] = fechaCreacion
-                st.session_state['isSaved'] = True
-                st.rerun()
+                if(res):
+                    st.session_state['ordenCompraId'] = res
+                    st.session_state['fechaCreacionOrden'] = fechaCreacion
+                    st.session_state['isSaved'] = True
+                    st.rerun()
     
     elif 'isSaved' in st.session_state:
         st.success('Orden guardada con éxito')
@@ -242,168 +215,10 @@ def UITTerminarOrdenCompra(parents, order_data):
             st.session_state.current_view = 'ordenesCompraMenu'
             st.rerun()
         
-# Vista de creación de producto
-def UITAddProduct(producto, fabricante, proveedores):
-    marcas = st.session_state.marcas
-    st.title('Producto Nuevo')
-    # Get product info
-    if (producto is not None):
-        nombreVal = producto['nombre']
-        skuVal = producto['sku']
-        tipo_product_indexVal = producto['tipo_product_index']
-        marcasIndex = producto['marcas_index']
-        fabricanteIndex = producto['fabricante_index']
-        proveedoresIndex = producto['proveedores_index']
-        costoVal = float(producto['costo'])
-        img_url = producto['img_url']
-        units_per_packVal =int(producto['units_per_pack'])
-        strBtn = 'Confirmar Edición'
-        product_id = None
-        if 'product_id' in producto:
-            product_id = producto['product_id']
-    else:
-        nombreVal = ''
-        skuVal = ''
-        tipo_product_indexVal = 0
-        marcasIndex = None
-        proveedoresIndex = None
-        fabricanteIndex = None
-        costoVal = 0.0
-        units_per_packVal = 0
-        strBtn = 'Confirmar Creación'
-
-    # Inputs
-    nombre = st.text_input('Nombre del producto', value=nombreVal)
-    sku = st.text_input('Codigo Producto Seller', value=skuVal)
-    
-    # Select inputs
-    
-    marca_text = None
-    disabled = False
-    if st.checkbox('Otra marca'):
-        marca_text = st.text_input('Marca Nueva')
-        marcasIndex = None
-        disabled = True
-    marca = st.selectbox('Marca', options=marcas, index=marcasIndex, disabled=disabled)
-    # Is new brand
-    
-    if marca is not None:
-        marcasIndex = marcas.index(marca)
-    else:
-        marcasIndex = None
-        st.session_state.current_marca_index = marcasIndex
-    
-    dueno_producto = st.selectbox('Dueño de producto', options=fabricante['meta_value'], index=fabricanteIndex)
-    if dueno_producto is not None:
-        fabricanteIndex = fabricante['meta_value'].index(dueno_producto)
-    else:
-        fabricanteIndex = None
-    proveedor = st.selectbox('Proveedor', options=proveedores['meta_value'], index=proveedoresIndex)
-    if proveedor is not None:
-        proveedoresIndex = proveedores['meta_value'].index(proveedor)
-    else:
-        proveedoresIndex = None
-    tipo_producto_list = ['Unidad', 'Paquete']
-    tipo_producto = st.selectbox('Tipo de producto', tipo_producto_list, index=tipo_product_indexVal)
-    tipo_product_index = tipo_producto_list.index(tipo_producto)
-    if tipo_producto == 'Paquete':
-        units_per_pack = st.number_input('Unidades por paquete', value=units_per_packVal)
-    else:
-        units_per_pack = 0
-    costo = st.number_input('Costo [Paquete/Unidad]', value=costoVal, min_value=0.00)
-    if producto is not None and img_url != '':
-        st.image(img_url)
-    input_file = st.file_uploader("Agrega la imagen del producto", accept_multiple_files=False)
-    if st.button(strBtn):
-        if nombre != '' and sku != '' and costo != 0:
-            if marca_text is not None:
-                marca = marca_text
-                marcas.append(marca_text)
-                st.session_state.marcas = marcas
-            productoDict = {
-                'nombre': nombre,
-                'sku': sku,
-                'tipo_producto': tipo_producto,
-                'tipo_product_index': tipo_product_index,
-                'costo': costo,
-                'units_per_pack': units_per_pack,
-                'marca': marca,
-                'marcas_index': marcasIndex,
-                'fabricante': fabricante['user_id'][fabricanteIndex],
-                'fabricante_index': fabricanteIndex,
-                'fabricante_name': fabricante['meta_value'][fabricanteIndex],
-                'proveedor': proveedores['user_id'][proveedoresIndex],
-                'proveedores_index': proveedoresIndex,
-                'proveedor_name': proveedores['meta_value'][proveedoresIndex]
-            }
-            if producto is not None:
-                if input_file is not None:
-                    res = insertImage(input_file, st.session_state['currentSellerId'], 'rintin-internal-apps')
-                    if res:
-                        productoDict['img_url'] = res
-                else:
-                    productoDict['img_url'] = img_url
-                if product_id is not None:
-                    productoDict['product_id'] = product_id
-                modificarProducto(productoDict)
-            else:
-                if input_file is not None:
-                    res = insertImage(input_file, st.session_state['currentSellerId'], 'rintin-internal-apps')
-                    if res:
-                        productoDict['img_url'] = res
-                else:
-                    productoDict['img_url'] = ''
-                agregarProducto(productoDict)
-        else:
-            st.error('Debes llenar todos los campos correctamente')
-
-def UITOrdenesCompraEdit(data):
-    if st.button('Volver'):
-        st.session_state.current_view = 'ordenesCompraMenu'
-        st.rerun()
-    st.title('Ordenes de compra')
-    st.write('---')
-    for i in range(len(data['id_orden_compra'])):
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.markdown('**Numero orden**')
-            st.text(str(data['id_orden_compra'][i]))
-            st.markdown('**Seller**')
-            st.text(str(data['seller_name'][i]))
-            
-        with col2:
-            st.markdown('**Fecha creación**')
-            st.text(str(data['fecha_creacion'][i]))
-            st.markdown('**Estado**')
-            st.text(str(data['estado'][i]))
-        with col3:
-            st.markdown('**Total**')
-            st.text(str(f"${data['total_cost'][i]:,}"))
-            st.text(' ')
-            st.text(' ')
-            if st.button('Editar', key=data['id_orden_compra'][i]):
-                st.session_state['ordenCompraId'] = data['id_orden_compra'][i]
-                st.session_state['fechaCreacionOrden'] = data['fecha_creacion'][i]
-                st.session_state['isEditing'] = True
-                st.session_state.current_view = 'ordenesCompra'
-                st.session_state['currentSeller'] = data['seller_name'][i]
-                st.rerun()
-            trigger_btn = ui.button(text="Eliminar", key=f"{str(data['id_orden_compra'][i])}_trigger_btn")
-            respuesta_auditoria=ui.alert_dialog(show=trigger_btn, title="Eliminar orden de compra", description=f"¿Estas seguro que deseas eliminar la orden de compra #{data['id_orden_compra'][i]}?", confirm_label="Confirmar", cancel_label="Volver", key=f"{str(data['id_orden_compra'][i])}_eliminar_orden_compra")
-            if respuesta_auditoria:
-                updateOrdenCompraStatus('trash', data['id_orden_compra'][i])
-                st.rerun()
-        with col4:
-            st.markdown('**Bodega Destino**')
-            st.text(bodega_destino[data['bodega_recepcion'][i]])
-        st.write('---')
 
 def UITOrdenesCompraMenu():
     
     st.title('Ordenes de compra')
-    if st.button('Creación ordenes de compra'):
-        st.session_state.current_view = 'ordenesCompra'
-        st.rerun()
     if st.button('Creación ordenes de compra por csv'):
         st.session_state.current_view = 'ordenesCompraCsv'
         st.rerun()
@@ -435,7 +250,7 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
     if button and csv_file is not None and seller is not None:
         try:
             csv_df = pd.read_csv(csv_file)
-            csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete', 'marca', 'dueno_producto', 'proveedor']]
+            csv_df = csv_df[['sku','nombre','paquetes', 'piezas_por_paquete', 'costo_por_paquete', 'marca', 'dueno_producto', 'proveedor', 'sku_rintin']]
             csv_dict = csv_df.to_dict(orient='list')
             #'Unidad', 'Paquete'
             tempArr = []
@@ -460,13 +275,15 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
                     'fabricante': csv_dict['dueno_producto'][i],
                     'fabricante_name': fabricante_name,
                     'proveedor': csv_dict['proveedor'][i],
-                    'proveedor_name': proveedor_name
+                    'proveedor_name': proveedor_name,
+                    'sku_rintin': csv_dict['sku_rintin'][i]
                 }
                 tempArr.append(productDict)
             st.session_state['dictProductos'][seller] = tempArr
             st.session_state['current_view'] = 'terminar_orden_compra'
             st.rerun()
         except Exception as e:
+            print(e)
             st.error('Hubo un error al procesar el archivo, revisa que siga el formato correctamente.')
     st.write(
             """<style>
@@ -476,132 +293,5 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
             </style>
             """,
             unsafe_allow_html=True
-        )     
+        )
 
-def UITOrdenesCompra(data, products):
-    # Título de la página
-    titleStr = 'Orden Compra'
-    disabled = False
-    if 'isEditing' in st.session_state:
-        disabled = True
-    if 'isEditing' in st.session_state and 'initialFetch' not in st.session_state:
-        st.session_state['oi_changes'] = True
-        st.session_state['deletedProducts'] = []
-        titleStr = 'Edicion Orden Compra'
-    if products is not None and 'initialFetch' not in st.session_state and 'isSaved' not in st.session_state:
-        if 'dictProductos' not in st.session_state:
-            st.session_state['dictProductos'] = {}
-            st.session_state['dictProductos'][st.session_state['currentSeller']] = []
-        tempArr = st.session_state['dictProductos'][st.session_state['currentSeller']]
-        
-        tipo_producto_list = ['Unidad', 'Paquete']
-        for i in range(len(products['nombre_producto'])):
-            tipo_product_index = tipo_producto_list.index(products['tipo_producto'][i])
-            tempDict = {
-                'product_id': products['product_id'][i],
-                'nombre': products['nombre_producto'][i],
-                'sku': products['sku_producto_wp'][i],
-                'tipo_producto': products['tipo_producto'][i],
-                'tipo_product_index': tipo_product_index,
-                'cantidad_pack': products['line_paquetes'][i],
-                'units_per_pack': products['units_per_pack'][i],
-                'costo': products['cost_of_goods'][i],
-                'img_url': products['foto'][i]
-            }
-            tempArr.append(tempDict)
-        st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
-        st.session_state['initialFetch'] = True;
-    if st.button('Volver'):
-        st.session_state.current_view = 'ordenesCompraMenu'
-        st.rerun()
-    st.title(titleStr)
-    
-
-    if 'currentSeller' not in st.session_state:
-        index = None
-    else:
-        index = data['dokan_store_name'].index(st.session_state['currentSeller'])
-    # Selector para el vendedor
-    
-    seller = st.selectbox('Seller', data['dokan_store_name'], index=index, disabled=disabled)
-    if seller is not None:
-        index = data['dokan_store_name'].index(seller)
-        st.session_state['currentSellerId'] = data['user_id'][index]
-        st.session_state['currentSeller'] = seller
-
-    # Sección de detalle de orden
-    st.subheader('Productos de la orden')
-    index = 0
-    with st.container():
-        if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
-            st.write("---")
-            for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    if 'img_url' in value and value['img_url'] != '':
-                        st.image(value['img_url'])
-                    else:    
-                        st.write("Sin imagen")
-                with col2:
-                    st.markdown('**SKU:** ' + value['sku'])
-                    st.markdown('**Costo:** ' + str(f"${value['costo']:,}"))
-                    st.markdown('**Tipo de producto:** ' + str(value['tipo_producto']))
-                    
-                with col3:
-                    qty_val = 1
-                    if 'cantidad_pack' in value:
-                        qty_val = value['cantidad_pack']
-                    qty = st.number_input('Cantidad', key=value['sku'] + 'input', value=qty_val)
-                    total = qty * value['costo']
-                    st.markdown('**Total:** ' + str(f"${total:,}"))
-                    if st.button('Editar Producto', key=value['sku']):
-                        if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
-                            tempArr = []
-                            for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                                tempDict = value
-                                tempDict['cantidad_pack'] = st.session_state[value['sku'] + 'input']
-                                tempArr.append(tempDict)
-                            st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
-                        editarProducto(index, st.session_state['currentSeller'])
-                    if st.button('Eliminar Producto', key=value['sku'] + 'eliminar'):
-                        if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
-                            tempArr = []
-                            for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                                tempDict = value
-                                tempDict['cantidad_pack'] = st.session_state[value['sku'] + 'input']
-                                tempArr.append(tempDict)
-                            st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
-                        if 'isEditing' in st.session_state:
-                            tempArrDeleted = st.session_state['deletedProducts']
-                            tempArrDeleted.append(value['product_id'])
-                            st.session_state['deletedProducts'] = tempArrDeleted
-                        tempArr = st.session_state['dictProductos'][st.session_state['currentSeller']]
-                        del tempArr[index]
-                        st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr;
-                        st.rerun()
-                st.write("---")
-                index = index + 1
-                
-    if 'currentSeller' in st.session_state:
-        if st.button('Agregar Producto'):
-            if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
-                tempArr = []
-                for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                    tempDict = value
-                    tempDict['cantidad_pack'] = st.session_state[value['sku'] + 'input']
-                    tempArr.append(tempDict)
-                st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
-            verDetalle(seller)
-            
-    if 'dictProductos' in st.session_state and 'currentSeller' in st.session_state and st.session_state['currentSeller'] in st.session_state['dictProductos']:
-        if st.button('Terminar Orden de Compra'):
-            tempArr = []
-            for value in st.session_state['dictProductos'][st.session_state['currentSeller']]:
-                tempDict = value
-                tempDict['cantidad_pack'] = st.session_state[value['sku'] + 'input']
-                tempArr.append(tempDict)
-            st.session_state['dictProductos'][st.session_state['currentSeller']] = tempArr
-            terminarOrden()
-
-                
-            

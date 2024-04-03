@@ -8,6 +8,7 @@ import mysql.connector
 import pandas as pd
 import numpy as np
 import time
+from datetime import datetime, timedelta
 
 def config_db(db='repl') -> dict:
     # Registrar el tiempo de inicio
@@ -105,24 +106,68 @@ def get_live_sellers(db='repl') -> dict:
         return None
 
 def insertOCItems(product_list, order_id, responsable):
+    """
+    Inserts the items of an order into the database table 'ingreso_items_ordenes_compra'.
+    
+    Parameters:
+    - product_list (list): A list of dictionaries containing the details of each product.
+    - order_id (int): The ID of the order.
+    - responsable (str): The name of the person responsible for the insertion.
+    
+    Returns:
+    - bool: True if the insertion is successful, False otherwise.
+    """
     db ='prod'
     config = config_db(db)
+    current_utc_time = datetime.utcnow()
+    cst_offset = timedelta(hours=-6)
+    cst_time = current_utc_time + cst_offset
+    mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
+    my_sql_datetime_utc = current_utc_time.strftime('%Y-%m-%d %H:%M:%S')
     try:
         connection = mysql.connector.connect(**config)
-        
         if connection.is_connected():
+            print(product_list)
             for value in product_list:
                 cursor = connection.cursor(dictionary=True)
-                # Consulta SQL para insertar datos
-                # Sentencia SQL para insertar datos
+                
                 sql = "INSERT INTO ingreso_items_ordenes_compra (id_orden_compra, id_producto_orden_compra, cantidad_ingreso, cantidad_no_ingreso, estado_ingreso, fecha, responsable) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                # Ejecutar la sentencia SQL
                 cursor.execute(sql, (order_id, value['product_id'], value['ingreso'], value['no_ingreso'], value['razon'], time.strftime('%Y-%m-%d %H:%M:%S'), responsable))
-                connection.commit()
+
+                sql = f"SELECT post_status FROM wp_posts WHERE ID = {value['product_id']}"
+                cursor.execute(sql)
+                post_status = cursor.fetchone()['post_status']
+                
+                if post_status != 'pre_ingreso_oc':
+                    sql = f"select meta_value from wp_postmeta where meta_key = '_stock' and post_id = {value['product_id']}"
+                
+                    cursor.execute(sql)
+                    stock = int(cursor.fetchone()['meta_value'])
+
+                    if stock is None or stock < 0:
+                        stock = 0
+                    if stock == 0:
+                        sql = f"DELETE from wp_term_relationships WHERE object_id = {value['product_id']} and term_taxonomy_id = '212'"
+                        cursor.execute(sql)
+
+                    new_stock = stock + value['ingreso']
+
+                    sql = 'UPDATE wp_postmeta SET meta_value = %s WHERE post_id = %s and meta_key = "_stock"'
+                    cursor.execute(sql, (new_stock, value['product_id']))
+
+                    if new_stock > 0:
+                        sql = 'UPDATE wp_postmeta SET meta_value = %s WHERE post_id = %s and meta_key = "_stock_status"'
+                        cursor.execute(sql, ('instock', value['product_id']))
+                
+                    sql = "INSERT INTO stock_log (product_id, previous_stock, new_stock, reason, modification_date, modification_date_mx) VALUES (%s, %s, %s, 'Aumento para producto antiguo por ingreso oc', %s, %s)"
+                    cursor.execute(sql, (value['product_id'], stock, new_stock, my_sql_datetime_utc, mysql_datetime_cst))
+
+            connection.commit()
             cursor.close()
             connection.close()
             return True
     except Exception as e:
+        print(e)
         return False
 
 def get_pending_products(id, db='repl') -> dict:
@@ -203,7 +248,26 @@ def get_products(id, db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_products_ordenes_compra =f"""
-            select producto_orden_compra.id_producto_orden_compra as product_id, line_paquetes, line_cost, sku_producto_wp, nombre_producto, tipo_producto, cost_of_goods, units_per_pack, foto from orden_compra_detalle_producto inner join producto_orden_compra on orden_compra_detalle_producto.id_producto_orden_compra = producto_orden_compra.id_producto_orden_compra where id_orden_compra = {id}
+        select 
+            wp_posts.id as product_id, 
+            line_paquetes, 
+            line_cost, 
+            sku.meta_value as sku_producto_wp, 
+            post_name as nombre_producto, 
+            cost.meta_value as cost_of_goods, 
+            units_per_pack.meta_value as units_per_pack
+        from orden_compra_detalle_producto 
+        inner join wp_posts 
+        left join wp_postmeta units_per_pack on units_per_pack.post_id = wp_posts.id
+        left join wp_postmeta cost on cost.post_id = wp_posts.id
+        left join wp_postmeta sku on sku.post_id = wp_posts.id
+        on orden_compra_detalle_producto.id_producto_orden_compra = wp_posts.id 
+        where id_orden_compra = {id}
+        and units_per_pack.meta_key = '_units_per_pack'
+        and cost.meta_key = '_cost_of_goods'
+        and sku.meta_key = '_sku'
+
+
         """
         cursor.execute(wp_products_ordenes_compra)
 
@@ -227,7 +291,7 @@ def get_products(id, db='repl') -> dict:
         seconds = int(duration % 60)
         # Nueva lista de nombres de columnas
         #wp_seller=wp_seller[['user_id' 'dokan_store_name']]
-        wp_products.columns = ['product_id', 'line_paquetes', 'line_cost', 'sku_producto_wp', 'nombre_producto', 'tipo_producto', 'cost_of_goods', 'units_per_pack', 'foto']
+        wp_products.columns = ['product_id', 'line_paquetes', 'line_cost', 'sku_producto_wp', 'nombre_producto', 'cost_of_goods', 'units_per_pack']
         wp_products_general_dict = wp_products.to_dict(orient='list')
         return wp_products_general_dict
 
