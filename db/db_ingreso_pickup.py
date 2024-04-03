@@ -36,37 +36,7 @@ def get_orders(db='repl') -> dict:
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         wp_pickeo_sql = f"""
-           with cps as (
-select
-        distinct codigos_postales.codigo_postal AS codigo_postal, zonas_entrega.zona_entrega
-    from
-        (
-            (
-                codigos_postales
-                join cobertura on(
-                    codigos_postales.id = cobertura.fk_id_codigo_postal
-                )
-            )
-            join zonas_entrega on(
-                cobertura.fk_id_zonas_entrega = zonas_entrega.id
-            )
-        )
-    where
-        zonas_entrega.zona_entrega like '%pickup%'
-),
-order_shipping as (
-	select
-		ID
-	from
-		wp_posts
-	where
-		post_parent in (
-		select 
-			distinct order_id
-		from wp_woocommerce_order_items where order_item_type = 'shipping' and order_item_name like '%oax%'
-    )
-),
-ordermeta_helper as(
+           with ordermeta_helper as(
     select
         post_id as order_id,
         max(
@@ -80,25 +50,28 @@ ordermeta_helper as(
 				when meta_key = '_shipping_postcode' then meta_value
 				else NULL
 			end
-		) AS postcode
+		) AS postcode,
+        max(
+			case
+				when meta_key = '_numero_guia_interno' then meta_value
+				else NULL
+			end
+		) AS numero_guia_interno
     from
         wp_postmeta
         inner join wp_posts on wp_posts.id = post_id
-	where post_status = 'wc-parcel'	
+	where post_status = 'wc-parcel'
     group by
         post_id, post_status
-	having dokan_vendor_id is not null
+	having dokan_vendor_id is not null and numero_guia_interno like '%oax%'
 ),
-ordermeta as 
-(
+ordermeta as (
 	select 
 		order_id,
         dokan_vendor_id,
         meta_value as seller_name
 	from ordermeta_helper
-    left join cps on postcode = codigo_postal
     inner join wp_usermeta on dokan_vendor_id = user_id and meta_key = 'dokan_store_name'
-    where cps.zona_entrega like '%pickup%' or order_id in (select * from order_shipping)
 ),
 order_items as(
     select
@@ -152,6 +125,7 @@ group by
     seller_name,
     post_status,
     post_parent
+
         """
         # Ejecutar la primera consulta
         cursor.execute(wp_pickeo_sql)
