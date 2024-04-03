@@ -166,7 +166,7 @@ select
 from 
 	wp_comments
 where 
-    comment_content like 'comentario interno%'
+    comment_content like '%comentario interno%'
 group by 
     order_id
 ),
