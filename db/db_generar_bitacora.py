@@ -150,6 +150,7 @@ select
     MAX(case When meta_key = '_shipping_address_index' then meta_value end) as shipping_addres,
     MAX(case When meta_key = '_billing_postcode' then meta_value end) as postcode,
     MAX(case When meta_key = '_shipping_address_2' then meta_value end) as shipping_addres_2,
+    MAX(case When meta_key = '_shipping_state' then meta_value end) as shipping_state,
     MAX(case When meta_key = '_billing_tipo_negocio_entrega' then meta_value end) as negocio_entrega,
     MAX(case When meta_key = '_billing_hora_preferente_entrega' then meta_value end) as hora_preferente,
     MAX(case When meta_key = '_order_shipping' then meta_value end) as order_shipping,
@@ -165,7 +166,7 @@ select
 from 
 	wp_comments
 where 
-    comment_content like '%comentario interno%'
+    comment_content like 'comentario interno%'
 group by 
     order_id
 ),
@@ -177,6 +178,7 @@ estado
 FROM wordpress.cobertura
 LEFT JOIN wordpress.codigos_postales ON wordpress.codigos_postales.id = fk_id_codigo_postal
 INNER JOIN wordpress.zonas_entrega ON wordpress.zonas_entrega.id = fk_id_zonas_entrega
+where zona_entrega like '%pickup%'
 ),
 shipping_detail as (
   select
@@ -230,15 +232,57 @@ select
 		When order_client_info.payment_method_title = 'cheque' or lcase(order_client_info.payment_method_title) = 'cod' then 'COD'
         else 'Prepaid'
 	end as pay_method,
-    zona_entrega.zona_entrega AS zona,
+    case 
+		when zona_entrega.zona_entrega is not null then zona_entrega.zona_entrega
+		else '' end AS zona,
     Case
-		When zona_entrega.zona_entrega = 'pickup-A' then 'Bodega OAX'
-        When zona_entrega.zona_entrega = 'pickup-B' then 'Bodega OAX'
-        When zona_entrega.zona_entrega = 'pickup-C' then 'Bodega OAX'
-        When zona_entrega.zona_entrega = 'pickup-D' then 'Bodega OAX'
-        When zona_entrega.zona_entrega = 'pickup-E' then 'Ejutla'
-        When zona_entrega.zona_entrega = 'pickup-M' then 'Miahuatlan'
-        else zona_entrega.estado
+		when shipping_method.order_item_name like '%Oaxaca%' then 'Bodega Oaxaca'
+		when shipping_method.order_item_name like '%Ciudad de Mexico%' then 'Bodega CDMX' COLLATE utf8mb4_general_ci
+        when zona_entrega.zona_entrega is not null then
+			case
+				When zona_entrega.zona_entrega = 'pickup-A' then 'Zona Centro'
+				When zona_entrega.zona_entrega = 'pickup-B' then 'Etla, Telix, Mazaltepec'
+				When zona_entrega.zona_entrega = 'pickup-C' then 'Tlacolula, Ixtaltepec, Tlapazola'
+				When zona_entrega.zona_entrega = 'pickup-D' then 'Ocotlan, Zimatlan'
+				When zona_entrega.zona_entrega = 'pickup-E' then 'Ejutla'
+				When zona_entrega.zona_entrega = 'pickup-M' then 'Miahuatlan'
+			end
+        else
+			case 
+				when order_client_info.shipping_state = 'DF' or order_client_info.shipping_state = 'CDMX' or order_client_info.shipping_state = 'Ciudad de México' then 'Ciudad de México'
+				when order_client_info.shipping_state = 'MX' or order_client_info.shipping_state = 'Estado de México' or order_client_info.shipping_state = 'México' then 'México'
+				when order_client_info.shipping_state = 'NL' then 'Nuevo León'
+				when order_client_info.shipping_state = 'NA' then 'Nayarit'
+				when order_client_info.shipping_state = 'GT' then 'Guanajuato'
+				when order_client_info.shipping_state = 'MI' then 'Michoacán'
+				when order_client_info.shipping_state = 'AG' then 'Aguascalientes'
+				when order_client_info.shipping_state = 'QR' then 'Quintana Roo'
+				when order_client_info.shipping_state = 'ZA' then 'Zacatecas'
+				when order_client_info.shipping_state = 'SI' then 'Sinaloa'
+				when order_client_info.shipping_state = 'JA' or order_client_info.shipping_state = 'Jalisco' then 'Jalisco'
+				when order_client_info.shipping_state = 'SO' or order_client_info.shipping_state = 'Sonora' then 'Sonora'
+				when order_client_info.shipping_state = 'HG' or order_client_info.shipping_state = 'Hidalgo' then 'Hidalgo'
+				when order_client_info.shipping_state = 'OA' or order_client_info.shipping_state = 'oaxaca' then 'Oaxaca'
+				when order_client_info.shipping_state = 'TM' then 'Tamaulipas'
+				when order_client_info.shipping_state = 'MO' or order_client_info.shipping_state = 'Morelos' then 'Morelos'
+				when order_client_info.shipping_state = 'VE' then 'Veracruz'
+				when order_client_info.shipping_state = 'CH' then 'Chihuahua'
+				when order_client_info.shipping_state = 'BS' then 'Baja California Sur'
+				when order_client_info.shipping_state = 'DG' then 'Durango'
+				when order_client_info.shipping_state = 'TB' then 'Tabasco'
+				when order_client_info.shipping_state = 'CO' then 'Coahuila'
+				when order_client_info.shipping_state = 'BC' then 'Baja California'
+				when order_client_info.shipping_state = 'SL' then 'San Luis Potosí'
+				when order_client_info.shipping_state = 'YU' then 'Yucatán'
+				when order_client_info.shipping_state = 'CM' then 'Campeche'
+				when order_client_info.shipping_state = 'TL' then 'Tlaxcala'
+				when order_client_info.shipping_state = 'QT' then 'Querétaro'
+				when order_client_info.shipping_state = 'PU' then 'Puebla'
+				when order_client_info.shipping_state = 'CH' then 'Chiapas'
+				when order_client_info.shipping_state = 'GR' or order_client_info.shipping_state = 'Guerrero' then 'Guerrero'
+				when order_client_info.shipping_state = 'CL' then 'Colima'
+				when order_client_info.shipping_state = 'GT' then 'Guanajuato'
+			end
 	end AS destino,
     case when comentarios.comments is null then 'N/A' else comentarios.comments end AS comments,
     shipping_method.order_item_name AS metodo_de_envio,
@@ -256,7 +300,6 @@ left join
 	subpedidos on order_client_info.order_id = subpedidos.post_parent
 join
 	wp_posts on order_client_info.order_id = wp_posts.ID
-
         """
         # Ejecutar la primera consulta
         cursor.execute(info_bitacora)
