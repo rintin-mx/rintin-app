@@ -112,9 +112,9 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.ln()
         pdf.cell(150, 27, str(data_general['order_id'][0]), align='C',border=1)
         pdf.set_font('Arial', '', 18)
-        pdf.multi_cell(125, 9, f"Destino:       {str(data_general['destino'][0])}" 
-                    + "\n" + f"Zona:         {str(data_general['zona'][0])}" 
-                    + "\n" + f"Fecha orden:  {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
+        pdf.multi_cell(125, 9, f"Destino: {str(data_general['destino'][0])}" 
+                    + "\n" + f"Zona: {str(data_general['zona'][0])}" 
+                    + "\n" + f"Fecha orden: {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
         pdf.set_font('Arial', '', 10)
         pdf.cell(20, 10, f"Cliente: ",border=1)
         pdf.set_font('Arial', 'B', 10)
