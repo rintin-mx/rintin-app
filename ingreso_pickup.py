@@ -11,9 +11,12 @@ def app():
             st.session_state['current_view'] = 'ingresoPickup'
         if st.session_state['current_view'] == 'ingresoPickup':
             orders = get_orders()
-            orders_dict = orders.to_dict(orient='list')
-            orders_for_filter = set(orders_dict['order_id'] + orders_dict['post_parent'])
-            ingresoPickup(orders, orders_for_filter)
+            if len(orders) > 0:
+                orders_dict = orders.to_dict(orient='list')
+                orders_for_filter = set(orders_dict['order_id'] + orders_dict['post_parent'])
+                ingresoPickup(orders, orders_for_filter)
+            else:
+                st.write('No hay pedidos disponibles para ingresar a pickup')
         elif st.session_state['current_view'] == 'ingresoPickupFinal':
             parentId = st.session_state.parentId
             childList = st.session_state.orderList
