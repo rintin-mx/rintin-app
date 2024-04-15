@@ -102,177 +102,177 @@ def UIdetalleBitacora(data_general, data_detalle):
     partition_index = str(data_general['shipping_addres'][0]).rfind('xico') + 4
     partition_index_comentarios = str(data_general['comentarios_entrega'][0]).lower().rfind(' se') + 1
 
-    #if st.button('Generar PDF'):
-    pdf = FPDF(orientation='L')
-    pdf.add_page()
-    pdf.image("imagen/rintin_logo.png", x = 10, y = 0, w = 60, h = 25)
-    pdf.image("imagen/frase_resalto_mitad.png", x = 100, y = 7, w = 230, h = 10)
-    pdf.set_font('Arial', 'B', 85)
-    pdf.cell(1, 10, '')
-    pdf.ln()
-    pdf.cell(150, 27, str(data_general['order_id'][0]), align='C',border=1)
-    pdf.set_font('Arial', '', 18)
-    pdf.multi_cell(125, 9, f"Destino: {str(data_general['destino'][0])}" 
-                + "\n" + f"Zona: {str(data_general['zona'][0])}" 
-                + "\n" + f"Fecha orden: {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(20, 10, f"Cliente: ",border=1)
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(70, 10, f"{str(data_general['full_name'][0])}",border=1,align='C')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(35, 10, f"Dirección cliente: ",border=1)
-    pdf.set_font('Arial', '', 8)
-    pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index]}"
-                    + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:]}",border=1,align='C')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(40, 10, f"Teléfono del cliente: ",border=1)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(40, 10, f"{str(data_general['phone'][0])}",border=1,align='C')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(45, 10, f"Comentarios de entrega: ",border=1)
-    pdf.set_font('Arial', '', 8)
-    pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios]}"
-                    + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:]}",border=1,align='C')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(40, 10, f"Método de pago: ",border=1)
-    pdf.set_font('Arial', 'B', 10)
-    if data_general['pay_method'][0] == 'Prepaid':
-        pdf.set_fill_color(79, 79, 79)
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(40, 10, f"{str(data_general['pay_method'][0])}",border=1,align='C', fill=True)
-    else:
-        pdf.cell(40, 10, f"{str(data_general['pay_method'][0])}",border=1,align='C', fill=False)
-    
-    pdf.set_text_color(0, 0, 0)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(45, 10, f"Metodo de envío: ",border=1)
-    pdf.set_font('Arial', 'B', 8)
-    if str(data_general['metodo_de_envio'][0]).startswith('Recolección'):
-        pdf.set_fill_color(79, 79, 79)
-        pdf.set_text_color(255, 255, 255)
-        pdf.cell(150, 10, f"{str(data_general['metodo_de_envio'][0])}", align="C",border=1, fill = True)
-    else:
-        pdf.cell(150, 10, f"{str(data_general['metodo_de_envio'][0])}", align="C",border=1, fill = False)
-    
-    pdf.set_text_color(0, 0, 0)
-    pdf.ln()
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(40, 10, f"Cantidad de pedidos: ",border=1)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(40, 10, f"{str(data_general['num_subpedidos'][0])}",border=1,align='C')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(45, 10, f"Comentarios internos: ",border=1)
-    pdf.set_font('Arial', '', 8)
-    pdf.cell(150, 10, f"{str(data_general['comments'][0])}", align="C",border=1)
-    pdf.ln()
-    pdf.set_font('Arial', 'B', 7)
-    pdf.cell(20, 10, f"Estado", align="C")
-    pdf.cell(20, 10, f"Suborden", align="C")
-    pdf.cell(25, 10, f"Tienda elegida", align="C")
-    pdf.cell(60, 10, f"Nombre del producto", align="C")
-    pdf.cell(20, 10, f"Cambios", align="C")
-    pdf.cell(30, 10, f"Piezas por paquete", align="C")
-    pdf.cell(30, 10, f"Cantidad paquetes", align="C")
-    pdf.cell(30, 10, f"Precio paquetes", align="C")
-    pdf.cell(20, 10, f"Descuento", align="C")
-    pdf.cell(20, 10, f"Sub Total", align="C")
-    pdf.set_font('Arial', '', 10)
-    subtotal = 0
-    descuentos = 0
-    for i in range(len(data_detalle['suborder'])):
-        if i%18 == 0 and i > 0:
-            pdf.add_page()
-            pdf.set_y(10)
-            pdf.set_font('Arial', 'B', 7)
-            pdf.cell(20, 10, f"Estado", align="C")
-            pdf.cell(20, 10, f"Suborden", align="C")
-            pdf.cell(25, 10, f"Tienda elegida", align="C")
-            pdf.cell(60, 10, f"Nombre del producto", align="C")
-            pdf.cell(20, 10, f"Cambios", align="C")
-            pdf.cell(30, 10, f"Piezas por paquete", align="C")
-            pdf.cell(30, 10, f"Cantidad paquetes", align="C")
-            pdf.cell(30, 10, f"Precio paquetes", align="C")
-            pdf.cell(20, 10, f"Descuento", align="C")
-            pdf.cell(20, 10, f"Sub Total", align="C")
-            pdf.set_font('Arial', '', 10)
-
+    if st.button('Generar PDF'):
+        pdf = FPDF(orientation='L')
+        pdf.add_page()
+        pdf.image("imagen/rintin_logo.png", x = 10, y = 0, w = 60, h = 25)
+        pdf.image("imagen/frase_resalto_mitad.png", x = 100, y = 7, w = 230, h = 10)
+        pdf.set_font('Arial', 'B', 85)
+        pdf.cell(1, 10, '')
         pdf.ln()
-
-        # Where the text starts, also where to start the strikethrough line.
-        x = pdf.get_x()
-        y = pdf.get_y()
-
-        pdf.cell(20, 5, f"{str(data_detalle['estado'][i])}", align="C")
-        pdf.cell(20, 5, f"{str(data_detalle['suborder'][i])}", align="C")
-        pdf.cell(25, 5, f"{str(data_detalle['shop'][i])}", align="C")
-        pdf.cell(60, 5, f"{str(data_detalle['product_name'][i])[0:28]}", align="C")
-        y_2 = pdf.get_y()
-        # reposition of cursor to write after a multicell
-        pdf.set_xy(x + 125, y)
-        y_3 = 0
-        if(data_detalle['changes'][i] == ''):
-            pdf.cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+        pdf.cell(150, 27, str(data_general['order_id'][0]), align='C',border=1)
+        pdf.set_font('Arial', '', 18)
+        pdf.multi_cell(125, 9, f"Destino: {str(data_general['destino'][0])}" 
+                    + "\n" + f"Zona: {str(data_general['zona'][0])}" 
+                    + "\n" + f"Fecha orden: {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(20, 10, f"Cliente: ",border=1)
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(70, 10, f"{str(data_general['full_name'][0])}",border=1,align='C')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(35, 10, f"Dirección cliente: ",border=1)
+        pdf.set_font('Arial', '', 8)
+        pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index]}"
+                        + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:]}",border=1,align='C')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(40, 10, f"Teléfono del cliente: ",border=1)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(40, 10, f"{str(data_general['phone'][0])}",border=1,align='C')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(45, 10, f"Comentarios de entrega: ",border=1)
+        pdf.set_font('Arial', '', 8)
+        pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios]}"
+                        + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:]}",border=1,align='C')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(40, 10, f"Método de pago: ",border=1)
+        pdf.set_font('Arial', 'B', 10)
+        if data_general['pay_method'][0] == 'Prepaid':
+            pdf.set_fill_color(79, 79, 79)
+            pdf.set_text_color(255, 255, 255)
+            pdf.cell(40, 10, f"{str(data_general['pay_method'][0])}",border=1,align='C', fill=True)
         else:
-            pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
-            y_3 = pdf.get_y()
-        # reposition of cursor to write after a multicell
-        pdf.set_xy(x + 145, y)
-        pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
-        pdf.cell(30, 5, f"{str(data_detalle['qty_of_packs'][i])}", align="C")
-        pdf.cell(30, 5, f"${str(round(data_detalle['pack_price'][i], 2))}", align="C")
-        pdf.cell(20, 5, f"${str(round(data_detalle['discount'][i], 2))}", align="C")
-        pdf.cell(20, 5, f"${str(round(data_detalle['subtotal'][i], 2))}", align="C")
-        if y_2 > y_3:
-            pdf.set_y(y_2)
+            pdf.cell(40, 10, f"{str(data_general['pay_method'][0])}",border=1,align='C', fill=False)
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(45, 10, f"Metodo de envío: ",border=1)
+        pdf.set_font('Arial', 'B', 8)
+        if str(data_general['metodo_de_envio'][0]).startswith('Recolección'):
+            pdf.set_fill_color(79, 79, 79)
+            pdf.set_text_color(255, 255, 255)
+            pdf.cell(150, 10, f"{str(data_general['metodo_de_envio'][0])}", align="C",border=1, fill = True)
         else:
-            pdf.set_y(y_3)
+            pdf.cell(150, 10, f"{str(data_general['metodo_de_envio'][0])}", align="C",border=1, fill = False)
+        
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln()
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(40, 10, f"Cantidad de pedidos: ",border=1)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(40, 10, f"{str(data_general['num_subpedidos'][0])}",border=1,align='C')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(45, 10, f"Comentarios internos: ",border=1)
+        pdf.set_font('Arial', '', 8)
+        pdf.cell(150, 10, f"{str(data_general['comments'][0])}", align="C",border=1)
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 7)
+        pdf.cell(20, 10, f"Estado", align="C")
+        pdf.cell(20, 10, f"Suborden", align="C")
+        pdf.cell(25, 10, f"Tienda elegida", align="C")
+        pdf.cell(60, 10, f"Nombre del producto", align="C")
+        pdf.cell(20, 10, f"Cambios", align="C")
+        pdf.cell(30, 10, f"Piezas por paquete", align="C")
+        pdf.cell(30, 10, f"Cantidad paquetes", align="C")
+        pdf.cell(30, 10, f"Precio paquetes", align="C")
+        pdf.cell(20, 10, f"Descuento", align="C")
+        pdf.cell(20, 10, f"Sub Total", align="C")
+        pdf.set_font('Arial', '', 10)
+        subtotal = 0
+        descuentos = 0
+        for i in range(len(data_detalle['suborder'])):
+            if i%18 == 0 and i > 0:
+                pdf.add_page()
+                pdf.set_y(10)
+                pdf.set_font('Arial', 'B', 7)
+                pdf.cell(20, 10, f"Estado", align="C")
+                pdf.cell(20, 10, f"Suborden", align="C")
+                pdf.cell(25, 10, f"Tienda elegida", align="C")
+                pdf.cell(60, 10, f"Nombre del producto", align="C")
+                pdf.cell(20, 10, f"Cambios", align="C")
+                pdf.cell(30, 10, f"Piezas por paquete", align="C")
+                pdf.cell(30, 10, f"Cantidad paquetes", align="C")
+                pdf.cell(30, 10, f"Precio paquetes", align="C")
+                pdf.cell(20, 10, f"Descuento", align="C")
+                pdf.cell(20, 10, f"Sub Total", align="C")
+                pdf.set_font('Arial', '', 10)
 
-        if data_detalle['estado'][i] != 'Cancelado':
-            subtotal += round(data_detalle['subtotal'][i], 2)
-            descuentos += round(data_detalle['discount'][i], 2)
-        else:
-            # values to draw a line where suborder is cancelled
-            pdf.set_line_width(0.25)
-            width = 275
-            lineHt = 8
-            # Then draw the line
-            pdf.line(x, y + (lineHt / 4), x+width, y + (lineHt / 4))
-    
-    pdf.ln()
-    pdf.ln()
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(205, 5, '')
-    pdf.cell(30, 5, "Subtotal: ", align='L')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(30, 5, f"${round(subtotal + descuentos,2)}", align='R')
-    pdf.ln()
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(205, 5, '')
-    pdf.cell(30, 5, "Descuentos: ", align='L')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(30, 5, f"${descuentos}", align='R')
-    pdf.ln()
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(205, 5, '')
-    pdf.cell(30, 5, "Envío: ", align='L')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(30, 5, f"${str(data_general['shipping'][0])}", align='R')
-    pdf.ln()
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(205, 5, '')
-    pdf.cell(30, 5, "Total a Pagar: ", align='L')
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]), 2)}", align='R')
-    pdf.ln()
-    pdf.ln()
-    pdf.set_font('Arial', 'B', 10)
-    pdf.set_xy(50, 180)
-    pdf.cell(100,5, 'Este detalle NO es referencia de lo que contiene el paquete ni del total a pagar', align='C')
-    pdf.image("imagen/frase_resalto_inicial.png", x = 10, y = 200, w = 200, h = 10)
-    pdf.image("imagen/rintin_telefono.png", x = 230, y = 190, w = 60, h = 28)
+            pdf.ln()
 
-    html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'Bitacora pedido ' + str(data_general['order_id'][0]))
-    st.markdown(html, unsafe_allow_html=True)
+            # Where the text starts, also where to start the strikethrough line.
+            x = pdf.get_x()
+            y = pdf.get_y()
+
+            pdf.cell(20, 5, f"{str(data_detalle['estado'][i])}", align="C")
+            pdf.cell(20, 5, f"{str(data_detalle['suborder'][i])}", align="C")
+            pdf.cell(25, 5, f"{str(data_detalle['shop'][i])}", align="C")
+            pdf.cell(60, 5, f"{str(data_detalle['product_name'][i])[0:28]}", align="C")
+            y_2 = pdf.get_y()
+            # reposition of cursor to write after a multicell
+            pdf.set_xy(x + 125, y)
+            y_3 = 0
+            if(data_detalle['changes'][i] == ''):
+                pdf.cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+            else:
+                pdf.multi_cell(20, 5, f"{str(data_detalle['changes'][i])}", align="C")
+                y_3 = pdf.get_y()
+            # reposition of cursor to write after a multicell
+            pdf.set_xy(x + 145, y)
+            pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
+            pdf.cell(30, 5, f"{str(data_detalle['qty_of_packs'][i])}", align="C")
+            pdf.cell(30, 5, f"${str(round(data_detalle['pack_price'][i], 2))}", align="C")
+            pdf.cell(20, 5, f"${str(round(data_detalle['discount'][i], 2))}", align="C")
+            pdf.cell(20, 5, f"${str(round(data_detalle['subtotal'][i], 2))}", align="C")
+            if y_2 > y_3:
+                pdf.set_y(y_2)
+            else:
+                pdf.set_y(y_3)
+
+            if data_detalle['estado'][i] != 'Cancelado':
+                subtotal += round(data_detalle['subtotal'][i], 2)
+                descuentos += round(data_detalle['discount'][i], 2)
+            else:
+                # values to draw a line where suborder is cancelled
+                pdf.set_line_width(0.25)
+                width = 275
+                lineHt = 8
+                # Then draw the line
+                pdf.line(x, y + (lineHt / 4), x+width, y + (lineHt / 4))
+        
+        pdf.ln()
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(205, 5, '')
+        pdf.cell(30, 5, "Subtotal: ", align='L')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(30, 5, f"${round(subtotal + descuentos,2)}", align='R')
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(205, 5, '')
+        pdf.cell(30, 5, "Descuentos: ", align='L')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(30, 5, f"${descuentos}", align='R')
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(205, 5, '')
+        pdf.cell(30, 5, "Envío: ", align='L')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(30, 5, f"${str(data_general['shipping'][0])}", align='R')
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(205, 5, '')
+        pdf.cell(30, 5, "Total a Pagar: ", align='L')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]), 2)}", align='R')
+        pdf.ln()
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.set_xy(50, 180)
+        pdf.cell(100,5, 'Este detalle NO es referencia de lo que contiene el paquete ni del total a pagar', align='C')
+        pdf.image("imagen/frase_resalto_inicial.png", x = 10, y = 200, w = 200, h = 10)
+        pdf.image("imagen/rintin_telefono.png", x = 230, y = 190, w = 60, h = 28)
+
+        html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'Bitacora pedido ' + str(data_general['order_id'][0]))
+        st.markdown(html, unsafe_allow_html=True)
 
     if st.button('Regresar al Inicio'):
         st.session_state.current_view = 'bitacora'
