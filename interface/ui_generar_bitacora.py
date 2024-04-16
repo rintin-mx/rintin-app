@@ -180,6 +180,22 @@ def UIdetalleBitacora(data_general, data_detalle):
         subtotal = 0
         descuentos = 0
         for i in range(len(data_detalle['suborder'])):
+            if i%18 == 0 and i > 0:
+                pdf.add_page()
+                pdf.set_y(10)
+                pdf.set_font('Arial', 'B', 7)
+                pdf.cell(20, 10, f"Estado", align="C")
+                pdf.cell(20, 10, f"Suborden", align="C")
+                pdf.cell(25, 10, f"Tienda elegida", align="C")
+                pdf.cell(60, 10, f"Nombre del producto", align="C")
+                pdf.cell(20, 10, f"Cambios", align="C")
+                pdf.cell(30, 10, f"Piezas por paquete", align="C")
+                pdf.cell(30, 10, f"Cantidad paquetes", align="C")
+                pdf.cell(30, 10, f"Precio paquetes", align="C")
+                pdf.cell(20, 10, f"Descuento", align="C")
+                pdf.cell(20, 10, f"Sub Total", align="C")
+                pdf.set_font('Arial', '', 10)
+
             pdf.ln()
 
             # Where the text starts, also where to start the strikethrough line.
