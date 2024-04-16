@@ -92,10 +92,10 @@ order_comments as(
 	select
 		id,
         case
-			when comment_content like '%a Recolec c/problema%' then 1 else 0
+			when comment_content like '%a Recolec c/problema%' or comment_content like '%a Preparando tu pedido - recp%' then 1 else 0
 		end as recoleccion_c_problemas,
         case
-			when comment_content like '%Validacion stock%' then 1 else 0
+			when comment_content like '%Validacion stock%' or comment_content like '%Preparando tu pedido - vs%' then 1 else 0
 		end as validacion_stock
 	from wp_comments
     inner join orders on comment_post_id = id
