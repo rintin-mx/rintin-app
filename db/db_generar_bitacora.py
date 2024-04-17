@@ -557,7 +557,7 @@ left join cambios_productos on item_per_order.order_item_id = cambios_productos.
 )
 select
 	case
-		when estado = 'wc-cancelled' then 'Cancelado'
+		when estado in ('wc-pendientes_ograma','wc-failed', 'wc-caducado','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then 'Cancelado'
         when estado = 'wc-contra-cargo' then 'Contra-cargo'
         when estado in ('delivered', 'wc-delivered') then 'Entregado'
         when estado in ('wc-pending', 'wc-processing', 'wc-completed', 'wc-parcel', 'wc-auditoria', 'wc-embarque',
