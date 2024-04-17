@@ -328,6 +328,22 @@ def ui_descargar_bitacora(data_general, data_detalle):
         subtotal = 0
         descuentos = 0
         for i in range(len(data_detalle['suborder'])):
+            if i%18 == 0 and i > 0:
+                pdf.add_page()
+                pdf.set_y(10)
+                pdf.set_font('Arial', 'B', 7)
+                pdf.cell(20, 10, f"Estado", align="C")
+                pdf.cell(20, 10, f"Suborden", align="C")
+                pdf.cell(25, 10, f"Tienda elegida", align="C")
+                pdf.cell(60, 10, f"Nombre del producto", align="C")
+                pdf.cell(20, 10, f"Cambios", align="C")
+                pdf.cell(30, 10, f"Piezas por paquete", align="C")
+                pdf.cell(30, 10, f"Cantidad paquetes", align="C")
+                pdf.cell(30, 10, f"Precio paquetes", align="C")
+                pdf.cell(20, 10, f"Descuento", align="C")
+                pdf.cell(20, 10, f"Sub Total", align="C")
+                pdf.set_font('Arial', '', 10)
+
             pdf.ln()
 
             # Where the text starts, also where to start the strikethrough line.
@@ -410,6 +426,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
         st.session_state['children_id_pickup'] = data_general['pedidos_hijos'][0]
         st.session_state['addres'] = data_general['shipping_addres'][0]
         st.session_state['pay_method'] = data_general['pay_method'][0]
+        st.session_state['discount'] = data_general['discount'][0]
         st.session_state.current_view = 'validar_entrega'
 
         # limpieza de estado dataframe
@@ -424,7 +441,8 @@ def ui_descargar_bitacora(data_general, data_detalle):
         st.session_state.current_view = 'pendiente_entrega_pickup'
         st.rerun()
 
-def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago):
+def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago, descuento):
+    descuento = '200'
     if st.button('Regresar'):
         st.session_state.current_view = 'bitacora_pickup' 
         st.rerun()
@@ -435,9 +453,8 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             children_orders.remove(int(order_id))
         except:
             pass
-    print(children_orders)
-    calculated_total = 0
-    total = 0
+    calculated_total = 0.0
+    total = 0.0
     respuesta = False
     validacion = True
     st.write(f'### Pedido: {order_id}')
@@ -462,9 +479,9 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             st.write(int(order_items['line_qty'][i]))
             st.write('#### Precio:')
             st.write(f"{(order_items['line_total'][i])}")
-            total += (int(order_items['line_qty'][i]) * int(float(order_items['line_total'][i])))
+            total += (float(order_items['line_qty'][i]) * round(float(order_items['line_total'][i]),2))
             recieved = st.number_input('Cantidad recibida', min_value=0, max_value=int(order_items['line_qty'][i]), step=1, key=f'amount_{i}')
-            calculated_total += (recieved * int(float(order_items['line_total'][i])))
+            calculated_total += (recieved * round(float(order_items['line_total'][i]),2))
             if recieved != int(order_items['line_qty'][i]):
                 reason = st.selectbox('Razón diferencia', options=DIFF_REASONS, key=f'select_{i}', index=None)
                 if reason is None:
@@ -493,8 +510,10 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             st.write(order_items['order_item_name'][i])
             st.write('### Precio:')
             st.write(order_items['line_total'][i])
-            total += int(order_items['line_total'][i])
-            calculated_total += int(order_items['line_total'][i])
+            st.write('### Descuentos:')
+            st.write(descuento)
+            total += round(float(order_items['line_total'][i]), 2)
+            calculated_total += round(float(order_items['line_total'][i]), 2)
         if order_items['order_id'][i] in orders_dict:
             orders_dict[order_items['order_id'][i]] += recieved
         else:
@@ -504,6 +523,13 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
     if metodo_pago.lower() == 'prepaid':
         total = 0
         calculated_total = 0
+
+    total -= float(descuento)
+    if calculated_total - float(descuento) < 0:
+        calculated_total = 0
+    else:
+        calculated_total = calculated_total - float(descuento)
+
     st.write(f'Total calculado a cobrar: ${calculated_total}')
     st.write(f'Total a cobrar: ${total}')
     value = st.number_input('Total recibido: ', min_value=0.00, step=0.01)
@@ -552,4 +578,6 @@ def ui_finalizar_entrega(order_id, children_order_id):
             del st.session_state['addres']
         if 'pay_method' in st.session_state:
             del st.session_state['pay_method']
+        if 'discount' in st.session_state:
+            del st.session_state['discount']
         st.rerun()
