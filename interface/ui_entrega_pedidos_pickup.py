@@ -430,10 +430,12 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         st.rerun()
     orders_dict = {}
     children_orders = set(order_items['order_id'])
-    try:
-        children_orders.remove(int(order_id))
-    except:
-        pass
+    if len(children_orders) > 1:
+        try:
+            children_orders.remove(int(order_id))
+        except:
+            pass
+    print(children_orders)
     calculated_total = 0
     total = 0
     respuesta = False
