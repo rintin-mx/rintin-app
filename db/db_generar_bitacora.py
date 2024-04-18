@@ -509,31 +509,11 @@ from
 inner join
 	tabla_producto on tabla_producto.product_id = order_items_detail.product_id
 ),
-prices AS (
-select 
-	post_id as product_id,
-    max(
-		case
-			when `meta_key` = '_regular_price' then `meta_value`
-			else NULL
-		end
-	) AS `regular_price`,
-    max(
-		case
-			when `meta_key` = '_price' then `meta_value`
-			else NULL
-		end
-	) AS `price`,
-    max(
-		case
-			when `meta_key` = '_sale_price' then `meta_value`
-			else NULL
-		end
-	) AS `sale_price`
-from 
-	wp_postmeta
-group by
-	post_id  
+cambios_productos as (
+select
+	order_item_id, nuevo_producto_sku
+from
+	cambios_productos
 ),
 final AS (
 select
@@ -552,7 +532,6 @@ left join order_status on item_per_order.order_id = order_status.suborder_id
 left join order_items_detail_2 on order_items_detail_2.order_item_id = item_per_order.order_item_id
 left join order_and_seller on item_per_order.order_id = order_and_seller.order_id
 left join unit_per_pack on unit_per_pack.product_id = order_items_detail_2.product_id
-left join prices on prices.product_id = order_items_detail_2.product_id
 left join cambios_productos on item_per_order.order_item_id = cambios_productos.order_item_id
 )
 select
