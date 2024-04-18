@@ -295,3 +295,36 @@ def UITOrdenesCompraCSV(data, fabricante, proveedores):
             unsafe_allow_html=True
         )
 
+def UITOrdenesCompraEdit(data):
+    if st.button('Volver'):
+        st.session_state.current_view = 'ordenesCompraMenu'
+        st.rerun()
+    st.title('Ordenes de compra')
+    st.write('---')
+    for i in range(len(data['id_orden_compra'])):
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.markdown('**Numero orden**')
+            st.text(str(data['id_orden_compra'][i]))
+            st.markdown('**Seller**')
+            st.text(str(data['seller_name'][i]))
+            
+        with col2:
+            st.markdown('**Fecha creación**')
+            st.text(str(data['fecha_creacion'][i]))
+            st.markdown('**Estado**')
+            st.text(str(data['estado'][i]))
+        with col3:
+            st.markdown('**Total**')
+            st.text(str(f"${data['total_cost'][i]:,}"))
+            st.text(' ')
+            st.text(' ')
+            trigger_btn = ui.button(text="Eliminar", key=f"{str(data['id_orden_compra'][i])}_trigger_btn")
+            respuesta_auditoria=ui.alert_dialog(show=trigger_btn, title="Eliminar orden de compra", description=f"¿Estas seguro que deseas eliminar la orden de compra #{data['id_orden_compra'][i]}?", confirm_label="Confirmar", cancel_label="Volver", key=f"{str(data['id_orden_compra'][i])}_eliminar_orden_compra")
+            if respuesta_auditoria:
+                updateOrdenCompraStatus('trash', data['id_orden_compra'][i])
+                st.rerun()
+        with col4:
+            st.markdown('**Bodega Destino**')
+            st.text(bodega_destino[data['bodega_recepcion'][i]])
+        st.write('---')

@@ -2,7 +2,7 @@
 import streamlit as st
 from db.db_user_interaction_events import event_instert   
 from db.db_ordenes_compra import get_live_sellers, get_ordenes_compra, get_products, get_parent_orders, get_order_info, get_brands, get_fabricantes, get_proveedores
-from interface.ui_ordenes_compra import UITOrdenesCompraCSV, UITTerminarOrdenCompra, UITOrdenesCompraMenu
+from interface.ui_ordenes_compra import UITOrdenesCompraCSV, UITTerminarOrdenCompra, UITOrdenesCompraMenu, UITOrdenesCompraEdit
 
 def app():
     if 'username' in st.session_state:
@@ -41,4 +41,10 @@ def app():
             else:
                 orderData = None
             UITTerminarOrdenCompra(data, orderData)
-            
+        elif st.session_state.current_view == 'editOrdenesCompra':
+            data = get_ordenes_compra()
+            if 'ordenCompraId' in st.session_state:
+                del st.session_state['ordenCompraId']
+            if 'isEditing' in st.session_state:
+                del st.session_state['isEditing']
+            UITOrdenesCompraEdit(data)

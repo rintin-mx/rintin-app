@@ -242,6 +242,8 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
     if no_entregue_btn and razon_no_entrega != None:
         update_route_order_status(route_id, order_id, NEXT_STATUS_DICT[estado], razon_no_entrega)
         if NEXT_STATUS_DICT[estado] == 'Fallido':
+            if len(child_order_id) > 1:
+                child_order_id.discard(order_id)
             for order in child_order_id:
                 asyncio.run(update_status_wordpress(order, 'devolucion_proces'))
         st.session_state.current_view = 'entregas_oax'
@@ -262,7 +264,7 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
     else:
         st.error('Se deben seleccionar todas las razones de no entrega en los productos')
     if respuesta:
-        if order_id in orders_dict:
+        if order_id in orders_dict and len(child_order_id) > 1:
             del orders_dict[order_id]
         img_url = ''
         if photo is not None:

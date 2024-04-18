@@ -112,9 +112,9 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.ln()
         pdf.cell(150, 27, str(data_general['order_id'][0]), align='C',border=1)
         pdf.set_font('Arial', '', 18)
-        pdf.multi_cell(125, 9, f"Destino:       {str(data_general['destino'][0])}" 
-                    + "\n" + f"Zona:         {str(data_general['zona'][0])}" 
-                    + "\n" + f"Fecha orden:  {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
+        pdf.multi_cell(125, 9, f"Destino: {str(data_general['destino'][0])}" 
+                    + "\n" + f"Zona: {str(data_general['zona'][0])}" 
+                    + "\n" + f"Fecha orden: {str(data_general['fecha_orden'][0])[0:10]}", align='L',border=1)
         pdf.set_font('Arial', '', 10)
         pdf.cell(20, 10, f"Cliente: ",border=1)
         pdf.set_font('Arial', 'B', 10)
@@ -177,8 +177,25 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(20, 10, f"Descuento", align="C")
         pdf.cell(20, 10, f"Sub Total", align="C")
         pdf.set_font('Arial', '', 10)
-        descuento_pedidos_cancelados = 0
+        subtotal = 0
+        descuentos = 0
         for i in range(len(data_detalle['suborder'])):
+            if i%18 == 0 and i > 0:
+                pdf.add_page()
+                pdf.set_y(10)
+                pdf.set_font('Arial', 'B', 7)
+                pdf.cell(20, 10, f"Estado", align="C")
+                pdf.cell(20, 10, f"Suborden", align="C")
+                pdf.cell(25, 10, f"Tienda elegida", align="C")
+                pdf.cell(60, 10, f"Nombre del producto", align="C")
+                pdf.cell(20, 10, f"Cambios", align="C")
+                pdf.cell(30, 10, f"Piezas por paquete", align="C")
+                pdf.cell(30, 10, f"Cantidad paquetes", align="C")
+                pdf.cell(30, 10, f"Precio paquetes", align="C")
+                pdf.cell(20, 10, f"Descuento", align="C")
+                pdf.cell(20, 10, f"Sub Total", align="C")
+                pdf.set_font('Arial', '', 10)
+
             pdf.ln()
 
             # Where the text starts, also where to start the strikethrough line.
@@ -202,22 +219,24 @@ def UIdetalleBitacora(data_general, data_detalle):
             pdf.set_xy(x + 145, y)
             pdf.cell(30, 5, f"{str(int(data_detalle['units_per_pack'][i]))}", align="C")
             pdf.cell(30, 5, f"{str(data_detalle['qty_of_packs'][i])}", align="C")
-            pdf.cell(30, 5, f"${str(data_detalle['pack_price'][i])}", align="C")
-            pdf.cell(20, 5, f"${str(data_detalle['discount'][i])}", align="C")
-            pdf.cell(20, 5, f"${str(data_detalle['subtotal'][i])}", align="C")
+            pdf.cell(30, 5, f"${str(round(data_detalle['pack_price'][i], 2))}", align="C")
+            pdf.cell(20, 5, f"${str(round(data_detalle['discount'][i], 2))}", align="C")
+            pdf.cell(20, 5, f"${str(round(data_detalle['subtotal'][i], 2))}", align="C")
             if y_2 > y_3:
                 pdf.set_y(y_2)
             else:
                 pdf.set_y(y_3)
 
-            if data_detalle['estado'][i] == 'Cancelado':
+            if data_detalle['estado'][i] != 'Cancelado':
+                subtotal += round(data_detalle['subtotal'][i], 2)
+                descuentos += round(data_detalle['discount'][i], 2)
+            else:
                 # values to draw a line where suborder is cancelled
                 pdf.set_line_width(0.25)
                 width = 275
                 lineHt = 8
                 # Then draw the line
                 pdf.line(x, y + (lineHt / 4), x+width, y + (lineHt / 4))
-                descuento_pedidos_cancelados += data_detalle['subtotal'][i]
         
         pdf.ln()
         pdf.ln()
@@ -225,13 +244,13 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Subtotal: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(float(data_general['sub_total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
+        pdf.cell(30, 5, f"${round(subtotal,2)}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Descuentos: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['discount'][0])}", align='R')
+        pdf.cell(30, 5, f"${data_general['discount'][0]}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
@@ -243,7 +262,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Total a Pagar: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(float(data_general['total'][0]) - float(descuento_pedidos_cancelados))}", align='R')
+        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]) - float(data_general['discount'][0]), 2)}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
