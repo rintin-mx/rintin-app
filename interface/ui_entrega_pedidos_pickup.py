@@ -376,7 +376,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
                 pdf.set_y(y_3)
 
             if data_detalle['estado'][i] != 'Cancelado':
-                subtotal += round(data_detalle['subtotal'][i], 2)
+                subtotal += round(data_detalle['pack_price'][i], 2) * int(data_detalle['qty_of_packs'][i])
                 descuentos += round(data_detalle['discount'][i], 2)
             else:
                 # values to draw a line where suborder is cancelled
@@ -392,13 +392,13 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Subtotal: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${round(subtotal + descuentos,2)}", align='R')
+        pdf.cell(30, 5, f"${round(subtotal,2)}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Descuentos: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${descuentos}", align='R')
+        pdf.cell(30, 5, f"${str(data_general['discount'][0])}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
@@ -410,7 +410,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(205, 5, '')
         pdf.cell(30, 5, "Total a Pagar: ", align='L')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]), 2)}", align='R')
+        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]) - float(data_general['discount'][0]), 2)}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
@@ -442,7 +442,6 @@ def ui_descargar_bitacora(data_general, data_detalle):
         st.rerun()
 
 def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago, descuento):
-    descuento = '200'
     if st.button('Regresar'):
         st.session_state.current_view = 'bitacora_pickup' 
         st.rerun()
@@ -520,11 +519,12 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             orders_dict[order_items['order_id'][i]] = recieved
     
     st.write('---')
+    
+    total -= float(descuento)
     if metodo_pago.lower() == 'prepaid':
         total = 0
         calculated_total = 0
 
-    total -= float(descuento)
     if calculated_total - float(descuento) < 0:
         calculated_total = 0
     else:
