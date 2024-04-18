@@ -180,7 +180,7 @@ def UIdetalleBitacora(data_general, data_detalle):
         subtotal = 0
         descuentos = 0
         for i in range(len(data_detalle['suborder'])):
-            if i%18 == 0 and i > 0:
+            if (i%28 == 0 and i > 0) or i == 10:
                 pdf.add_page()
                 pdf.set_y(10)
                 pdf.set_font('Arial', 'B', 7)
@@ -228,7 +228,7 @@ def UIdetalleBitacora(data_general, data_detalle):
                 pdf.set_y(y_3)
 
             if data_detalle['estado'][i] != 'Cancelado':
-                subtotal += round(data_detalle['subtotal'][i], 2)
+                subtotal += round(data_detalle['pack_price'][i], 2)
                 descuentos += round(data_detalle['discount'][i], 2)
             else:
                 # values to draw a line where suborder is cancelled
