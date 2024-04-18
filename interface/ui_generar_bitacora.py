@@ -228,7 +228,7 @@ def UIdetalleBitacora(data_general, data_detalle):
                 pdf.set_y(y_3)
 
             if data_detalle['estado'][i] != 'Cancelado':
-                subtotal += round(data_detalle['pack_price'][i], 2)
+                subtotal += round(data_detalle['pack_price'][i], 2) * int(data_detalle['qty_of_packs'][i])
                 descuentos += round(data_detalle['discount'][i], 2)
             else:
                 # values to draw a line where suborder is cancelled
