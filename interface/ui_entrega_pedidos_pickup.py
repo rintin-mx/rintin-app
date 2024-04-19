@@ -311,7 +311,7 @@ def ui_descargar_bitacora(data_general, data_detalle, fees):
         pdf.set_font('Arial', '', 10)
         pdf.cell(45, 10, f"Comentarios internos: ",border=1)
         pdf.set_font('Arial', '', 8)
-        pdf.cell(150, 10, f"{str(data_general['comments'][0])}", align="C",border=1)
+        pdf.cell(150, 10, f"{str(data_general['comments'][0])[20:]}", align="C",border=1)
         pdf.ln()
         pdf.set_font('Arial', 'B', 7)
         pdf.cell(20, 10, f"Estado", align="C")
@@ -337,7 +337,7 @@ def ui_descargar_bitacora(data_general, data_detalle, fees):
             elif 'adelanto' in fees['name'][i].lower():
                 adelanto -= (float(fees['fee_amount'][i]))
         for i in range(len(data_detalle['suborder'])):
-            if (i%28 == 0 and i > 0) or i == 10:
+            if (i%18 == 10):
                 pdf.add_page()
                 pdf.set_y(10)
                 pdf.set_font('Arial', 'B', 7)
