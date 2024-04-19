@@ -230,7 +230,7 @@ def ui_pendiente_entrega_pickup(data):
         st.session_state.current_view = 'ingreso_pedidos_pickups'
         st.rerun()
 
-def ui_descargar_bitacora(data_general, data_detalle):
+def ui_descargar_bitacora(data_general, data_detalle, fees):
 
     # Show a second UI where user can download the pdf file of the "bitacora"
 
@@ -326,9 +326,18 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(20, 10, f"Sub Total", align="C")
         pdf.set_font('Arial', '', 10)
         subtotal = 0
-        descuentos = 0
+        adelanto = 0
+        envio = float(data_general['shipping'][0])
+        descuentos_totales = float(data_general['discount'][0])
+        for i in range(len(fees['name'])):
+            if 'descuento' in fees['name'][i].lower():
+                descuentos_totales -= (float(fees['fee_amount'][i]))
+            elif 'envío' in fees['name'][i].lower():
+                envio += (float(fees['fee_amount'][i]))
+            elif 'adelanto' in fees['name'][i].lower():
+                adelanto -= (float(fees['fee_amount'][i]))
         for i in range(len(data_detalle['suborder'])):
-            if i%18 == 0 and i > 0:
+            if (i%28 == 0 and i > 0) or i == 10:
                 pdf.add_page()
                 pdf.set_y(10)
                 pdf.set_font('Arial', 'B', 7)
@@ -377,7 +386,6 @@ def ui_descargar_bitacora(data_general, data_detalle):
 
             if data_detalle['estado'][i] != 'Cancelado':
                 subtotal += round(data_detalle['pack_price'][i], 2) * int(data_detalle['qty_of_packs'][i])
-                descuentos += round(data_detalle['discount'][i], 2)
             else:
                 # values to draw a line where suborder is cancelled
                 pdf.set_line_width(0.25)
@@ -390,27 +398,33 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Subtotal: ", align='L')
+        pdf.cell(30, 5, "Subtotal: ", align='R')
         pdf.set_font('Arial', '', 10)
         pdf.cell(30, 5, f"${round(subtotal,2)}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Descuentos: ", align='L')
+        pdf.cell(30, 5, "Descuentos: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['discount'][0])}", align='R')
+        pdf.cell(30, 5, f"$-{descuentos_totales}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Envío: ", align='L')
+        pdf.cell(30, 5, "Adelantos: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['shipping'][0])}", align='R')
+        pdf.cell(30, 5, f"$-{adelanto}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Total a Pagar: ", align='L')
+        pdf.cell(30, 5, "Envío: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]) - float(data_general['discount'][0]), 2)}", align='R')
+        pdf.cell(30, 5, f"${envio}", align='R')
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(205, 5, '')
+        pdf.cell(30, 5, "Total a Pagar: ", align='R')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(30, 5, f"${round(subtotal + envio - descuentos_totales - adelanto)}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
@@ -422,23 +436,11 @@ def ui_descargar_bitacora(data_general, data_detalle):
         html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'Bitacora pedido ' + str(data_general['order_id'][0]))
         st.markdown(html, unsafe_allow_html=True)
 
-    if st.button('Validar entrega'):
-        st.session_state['children_id_pickup'] = data_general['pedidos_hijos'][0]
-        st.session_state['addres'] = data_general['shipping_addres'][0]
-        st.session_state['pay_method'] = data_general['pay_method'][0]
-        st.session_state['discount'] = data_general['discount'][0]
-        st.session_state.current_view = 'validar_entrega'
-
-        # limpieza de estado dataframe
+    if st.button('Regresar al Inicio'):
+        st.session_state.current_view = 'bitacora'
+    # limpieza de estado dataframe
         if 'data' in st.session_state:
                 del st.session_state['data']
-        st.rerun()
-    
-    if st.button('Regresar'):
-        if 'children_id_pickup' in st.session_state:
-            del st.session_state['children_id_pickup']
-
-        st.session_state.current_view = 'pendiente_entrega_pickup'
         st.rerun()
 
 def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago, descuento):
