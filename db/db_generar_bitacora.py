@@ -509,12 +509,6 @@ from
 inner join
 	tabla_producto on tabla_producto.product_id = order_items_detail.product_id
 ),
-cambios_productos as (
-select
-	order_item_id, nuevo_producto_sku
-from
-	cambios_productos
-),
 final AS (
 select
 	post_status as estado,
