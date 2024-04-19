@@ -82,7 +82,7 @@ def UITodosLosPedidos(data):
         else:
             st.info('Debes seleccionar un order_id para continuar', icon="ℹ️")
 
-def UIdetalleBitacora(data_general, data_detalle):
+def UIdetalleBitacora(data_general, data_detalle, fees):
 
     # Show a second UI where user can download the pdf file of the "bitacora"
 
@@ -178,7 +178,8 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(20, 10, f"Sub Total", align="C")
         pdf.set_font('Arial', '', 10)
         subtotal = 0
-        descuentos = 0
+        descuento_por_cupon = float(data_general['discount'][0])
+        descuentos_totales = descuento_por_cupon
         for i in range(len(data_detalle['suborder'])):
             if (i%28 == 0 and i > 0) or i == 10:
                 pdf.add_page()
@@ -229,7 +230,6 @@ def UIdetalleBitacora(data_general, data_detalle):
 
             if data_detalle['estado'][i] != 'Cancelado':
                 subtotal += round(data_detalle['pack_price'][i], 2) * int(data_detalle['qty_of_packs'][i])
-                descuentos += round(data_detalle['discount'][i], 2)
             else:
                 # values to draw a line where suborder is cancelled
                 pdf.set_line_width(0.25)
@@ -242,27 +242,35 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Subtotal: ", align='L')
+        pdf.cell(30, 5, "Subtotal: ", align='R')
         pdf.set_font('Arial', '', 10)
         pdf.cell(30, 5, f"${round(subtotal,2)}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Descuentos: ", align='L')
+        pdf.cell(30, 5, "Descuentos por cupon: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${data_general['discount'][0]}", align='R')
+        pdf.cell(30, 5, f"$-{descuento_por_cupon}", align='R')
         pdf.ln()
+        for i in range(len(fees['name'])):
+            pdf.set_font('Arial', 'B', 10)
+            pdf.cell(205, 5, '')
+            pdf.cell(30, 5, f"{fees['name'][i]}: ", align='R')
+            pdf.set_font('Arial', '', 10)
+            pdf.cell(30, 5, f"${(float(fees['fee_amount'][i]))}", align='R')
+            pdf.ln()
+            descuentos_totales -= (float(fees['fee_amount'][i]))
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Envío: ", align='L')
+        pdf.cell(30, 5, "Envío: ", align='R')
         pdf.set_font('Arial', '', 10)
         pdf.cell(30, 5, f"${str(data_general['shipping'][0])}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Total a Pagar: ", align='L')
+        pdf.cell(30, 5, "Total a Pagar: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]) - float(data_general['discount'][0]), 2)}", align='R')
+        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]) - descuentos_totales)}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)

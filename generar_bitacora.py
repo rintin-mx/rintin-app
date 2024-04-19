@@ -1,7 +1,7 @@
 import streamlit as st
 
 from interface.ui_generar_bitacora import UITodosLosPedidos, UIdetalleBitacora
-from db.db_generar_bitacora import get_lista_ordenes_padre, get_order_bitacora, get_suborders_bitacora
+from db.db_generar_bitacora import get_lista_ordenes_padre, get_fees_bitacora, get_order_bitacora, get_suborders_bitacora
 from db.db_user_interaction_events import event_instert
 
 def app():
@@ -23,11 +23,11 @@ def app():
         if st.session_state.current_view == 'detalle_bitacora':
             if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='bitacora','acceso a las vista detalleBitacora',st.session_state.useremail
-                event_instert(EventName,EventAction,EventUser)  
+                event_instert(EventName,EventAction,EventUser)
                 data_general=get_order_bitacora(int(st.session_state['Order_id_bitacora']))
-                print(data_general['pedidos_hijos'][0])
                 data_detalle=get_suborders_bitacora(data_general['pedidos_hijos'][0])
-                UIdetalleBitacora(data_general,data_detalle)
+                fees = get_fees_bitacora(int(st.session_state['Order_id_bitacora']))
+                UIdetalleBitacora(data_general,data_detalle, fees)
     
     else:
                 st.image("imagen/logo_imagen_no_loguado.png", width=300)
