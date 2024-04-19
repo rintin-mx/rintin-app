@@ -154,7 +154,7 @@ with orders as (
         union 
         select order_item_id, order_id, order_item_name, order_item_type
         from wp_woocommerce_order_items
-        where (order_item_type = 'shipping' or order_item_type = 'fee') and order_id = {order_id}
+        where (order_item_type = 'shipping') and order_id = {order_id}
     ),
     order_item_meta as (
         select
@@ -226,7 +226,6 @@ with orders as (
         case 
             when order_item_type = 'line_item' then line_subtotal / line_qty
             when order_item_type = 'shipping' then cost 
-            when order_item_type = 'fee' then line_subtotal
         end as line_subtotal,
         order_item_type
     from 
