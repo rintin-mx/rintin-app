@@ -80,6 +80,44 @@ def insert_item_problem(product):
 	except Exception as e:
 		return False
 
+def get_fees_bitacora(order_id, db='Repl'):
+    """
+    Retrieves fee information from the database for a given order ID.
+
+    Args:
+        order_id (int): The ID of the order.
+        db (str, optional): The name of the database. Defaults to 'Repl'.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the order ID, fee name, and fee amount.
+    """
+    config = config_db(db)
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        fees = f"""
+            select order_item_name as 'name', meta_value as fee_amount
+            from wp_woocommerce_order_items oi
+            inner join wp_woocommerce_order_itemmeta om on oi.order_item_id = om.order_item_id
+            where order_id = {order_id}
+            and meta_key = '_fee_amount'
+            and order_item_type = 'fee' 
+        """
+        cursor.execute(fees)
+        resultados_fees = cursor.fetchall()
+        
+    finally:
+        cursor.close()
+        conexion.close()
+    if len(resultados_fees) > 0:
+        fees = pd.DataFrame(resultados_fees)
+        fees = fees[['name', 'fee_amount']]
+        fees = fees.to_dict(orient='list')
+    else:
+        fees = {'name': [], 'fee_amount': []}
+    return fees
+
 def get_order_items(order_id, db='repl') -> dict:
      
     # Get a list of order_items and their info

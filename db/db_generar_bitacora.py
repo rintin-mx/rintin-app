@@ -159,16 +159,6 @@ from
 	wp_postmeta
 where post_id = {order_id}
 ),
-order_item_fees as (
-	select
-		order_id,
-        meta_value as fee_amount
-	from wp_woocommerce_order_items
-    inner join wp_woocommerce_order_itemmeta on wp_woocommerce_order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
-    where order_id = {order_id}
-    and order_item_type = 'fee'
-    and meta_key = '_fee_amount'
-),
 comentarios AS (
 select 
 	comment_post_ID as order_id,
@@ -229,7 +219,7 @@ select
     order_client_info.billing_phone AS phone,
     wp_posts.post_date AS fecha_orden,
     order_client_info.sub_total - order_client_info.order_shipping + order_client_info.discount AS sub_total,
-    case when fee_amount is not null and fee_amount < 0 then order_client_info.discount - fee_amount else order_client_info.discount end AS discount,
+    order_client_info.discount AS discount,
     order_client_info.order_shipping AS shipping,
     order_client_info.sub_total AS total,
     order_client_info.shipping_addres AS shipping_addres,
@@ -310,8 +300,6 @@ left join
 	subpedidos on order_client_info.order_id = subpedidos.post_parent
 join
 	wp_posts on order_client_info.order_id = wp_posts.ID
-left join
-	order_item_fees on order_item_fees.order_id = order_client_info.order_id
         """
         # Ejecutar la primera consulta
         cursor.execute(info_bitacora)
@@ -331,6 +319,44 @@ left join
     # Nueva lista de nombres de columnas
     info_bitacora.columns = ['order_id','full_name','phone','fecha_orden','sub_total','discount','shipping','total', 'shipping_addres', 'comentarios_entrega', 'pay_method', 'zona', 'destino', 'comments', 'metodo_de_envio', 'num_subpedidos', 'pedidos_hijos']
     return info_bitacora
+
+def get_fees_bitacora(order_id, db='Repl'):
+    """
+    Retrieves fee information from the database for a given order ID.
+
+    Args:
+        order_id (int): The ID of the order.
+        db (str, optional): The name of the database. Defaults to 'Repl'.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the order ID, fee name, and fee amount.
+    """
+    config = config_db(db)
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        fees = f"""
+            select order_item_name as 'name', meta_value as fee_amount
+            from wp_woocommerce_order_items oi
+            inner join wp_woocommerce_order_itemmeta om on oi.order_item_id = om.order_item_id
+            where order_id = {order_id}
+            and meta_key = '_fee_amount'
+            and order_item_type = 'fee' 
+        """
+        cursor.execute(fees)
+        resultados_fees = cursor.fetchall()
+        
+    finally:
+        cursor.close()
+        conexion.close()
+    if len(resultados_fees) > 0:
+        fees = pd.DataFrame(resultados_fees)
+        fees = fees[['name', 'fee_amount']]
+        fees = fees.to_dict(orient='list')
+    else:
+        fees = {'name': [], 'fee_amount': []}
+    return fees
 
 def get_suborders_bitacora(orders_id, db='Repl'):
 
