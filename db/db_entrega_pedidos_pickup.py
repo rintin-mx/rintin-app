@@ -97,8 +97,7 @@ def get_order_items(order_id, db='repl') -> dict:
 		# Crear un cursor para ejecutar consultas
 		cursor = conexion.cursor(dictionary=True)
 		sql =f"""
-
-    with orders as (
+with orders as (
         select
             id as order_id,
             case when post_parent = 0 then id else post_parent end as post_parent
@@ -142,10 +141,10 @@ def get_order_items(order_id, db='repl') -> dict:
             ) AS `product_id`,
             max(
                 case
-                    when `wp_woocommerce_order_itemmeta`.`meta_key` = '_line_total' then `wp_woocommerce_order_itemmeta`.`meta_value`
+                    when `wp_woocommerce_order_itemmeta`.`meta_key` = '_line_subtotal' then `wp_woocommerce_order_itemmeta`.`meta_value`
                     else NULL
                 end
-            ) AS `line_total`
+            ) AS `line_subtotal`
             
             
         from
@@ -187,10 +186,10 @@ def get_order_items(order_id, db='repl') -> dict:
         replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
         order_items.order_id,
         case 
-            when order_item_type = 'line_item' then line_total / line_qty
+            when order_item_type = 'line_item' then line_subtotal / line_qty
             when order_item_type = 'shipping' then cost 
-            when order_item_type = 'fee' then line_total
-        end as line_total,
+            when order_item_type = 'fee' then line_subtotal
+        end as line_subtotal,
         order_item_type
     from 
         order_items
