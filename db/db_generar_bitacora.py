@@ -159,6 +159,16 @@ from
 	wp_postmeta
 where post_id = {order_id}
 ),
+order_item_fees as (
+	select
+		order_id,
+        meta_value as fee_amount
+	from wp_woocommerce_order_items
+    inner join wp_woocommerce_order_itemmeta on wp_woocommerce_order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
+    where order_id = {order_id}
+    and order_item_type = 'fee'
+    and meta_key = '_fee_amount'
+),
 comentarios AS (
 select 
 	comment_post_ID as order_id,
@@ -219,7 +229,7 @@ select
     order_client_info.billing_phone AS phone,
     wp_posts.post_date AS fecha_orden,
     order_client_info.sub_total - order_client_info.order_shipping + order_client_info.discount AS sub_total,
-    order_client_info.discount AS discount,
+    case when fee_amount is not null and fee_amount < 0 then order_client_info.discount - fee_amount else order_client_info.discount end AS discount,
     order_client_info.order_shipping AS shipping,
     order_client_info.sub_total AS total,
     order_client_info.shipping_addres AS shipping_addres,
@@ -300,6 +310,8 @@ left join
 	subpedidos on order_client_info.order_id = subpedidos.post_parent
 join
 	wp_posts on order_client_info.order_id = wp_posts.ID
+left join
+	order_item_fees on order_item_fees.order_id = order_client_info.order_id
         """
         # Ejecutar la primera consulta
         cursor.execute(info_bitacora)
