@@ -435,7 +435,16 @@ def ui_descargar_bitacora(data_general, data_detalle, fees):
 
         html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'Bitacora pedido ' + str(data_general['order_id'][0]))
         st.markdown(html, unsafe_allow_html=True)
+    if st.button('Validar entrega'):
+        st.session_state['children_id_pickup'] = data_general['pedidos_hijos'][0]
+        st.session_state['addres'] = data_general['shipping_addres'][0]
+        st.session_state['pay_method'] = data_general['pay_method'][0]
+        st.session_state.current_view = 'validar_entrega'
 
+        # limpieza de estado dataframe
+        if 'data' in st.session_state:
+                del st.session_state['data']
+        st.rerun()
     if st.button('Regresar al Inicio'):
         st.session_state.current_view = 'bitacora'
     # limpieza de estado dataframe
