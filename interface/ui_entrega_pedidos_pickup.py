@@ -436,9 +436,16 @@ def ui_descargar_bitacora(data_general, data_detalle, fees):
         html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'Bitacora pedido ' + str(data_general['order_id'][0]))
         st.markdown(html, unsafe_allow_html=True)
     if st.button('Validar entrega'):
+        descuentos_totales = float(data_general['discount'][0])
+        for i in range(len(fees['name'])):
+            if 'descuento' in fees['name'][i].lower():
+                descuentos_totales -= (float(fees['fee_amount'][i]))
+            elif 'adelanto' in fees['name'][i].lower():
+                descuentos_totales -= (float(fees['fee_amount'][i]))
         st.session_state['children_id_pickup'] = data_general['pedidos_hijos'][0]
         st.session_state['addres'] = data_general['shipping_addres'][0]
         st.session_state['pay_method'] = data_general['pay_method'][0]
+        st.session_state['discount'] = descuentos_totales
         st.session_state.current_view = 'validar_entrega'
 
         # limpieza de estado dataframe
@@ -541,10 +548,10 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
     else:
         calculated_total = calculated_total - float(descuento)
 
-    st.write(f'Total calculado a cobrar: ${calculated_total}')
-    st.write(f'Total a cobrar: ${total}')
+    st.write(f'Total calculado a cobrar: ${round(calculated_total, 2)}')
+    st.write(f'Total a cobrar: ${round(total, 2)}')
     value = st.number_input('Total recibido: ', min_value=0.00, step=0.01)
-    if value != float(total) and value != 0:
+    if value != round(float(total), 2) and value != 0:
         st.error('Validacion')
     button = st.button('Confirmar entrega')
     photo = st.file_uploader('Imagen de entrega', type=['png', 'jpg'])
