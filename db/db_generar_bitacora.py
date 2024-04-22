@@ -233,12 +233,12 @@ select
         else 'Prepaid'
 	end as pay_method,
     case 
-		when zona_entrega.zona_entrega is not null then zona_entrega.zona_entrega
+		when zona_entrega.zona_entrega is not null and shipping_method.order_item_name != 'Paqueteria Estandar' then zona_entrega.zona_entrega
 		else '' end AS zona,
     Case
 		when shipping_method.order_item_name like '%Oaxaca%' then 'Bodega Oaxaca'
 		when shipping_method.order_item_name like '%Ciudad de Mexico%' then 'Bodega CDMX' COLLATE utf8mb4_general_ci
-        when zona_entrega.zona_entrega is not null then
+        when zona_entrega.zona_entrega is not null and shipping_method.order_item_name != 'Paqueteria Estandar' then
 			case
 				When zona_entrega.zona_entrega = 'pickup-A' then 'Zona Centro'
 				When zona_entrega.zona_entrega = 'pickup-B' then 'Etla, Telix, Mazaltepec'
@@ -319,6 +319,44 @@ join
     # Nueva lista de nombres de columnas
     info_bitacora.columns = ['order_id','full_name','phone','fecha_orden','sub_total','discount','shipping','total', 'shipping_addres', 'comentarios_entrega', 'pay_method', 'zona', 'destino', 'comments', 'metodo_de_envio', 'num_subpedidos', 'pedidos_hijos']
     return info_bitacora
+
+def get_fees_bitacora(order_id, db='Repl'):
+    """
+    Retrieves fee information from the database for a given order ID.
+
+    Args:
+        order_id (int): The ID of the order.
+        db (str, optional): The name of the database. Defaults to 'Repl'.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the order ID, fee name, and fee amount.
+    """
+    config = config_db(db)
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        fees = f"""
+            select order_item_name as 'name', meta_value as fee_amount
+            from wp_woocommerce_order_items oi
+            inner join wp_woocommerce_order_itemmeta om on oi.order_item_id = om.order_item_id
+            where order_id = {order_id}
+            and meta_key = '_fee_amount'
+            and order_item_type = 'fee' 
+        """
+        cursor.execute(fees)
+        resultados_fees = cursor.fetchall()
+        
+    finally:
+        cursor.close()
+        conexion.close()
+    if len(resultados_fees) > 0:
+        fees = pd.DataFrame(resultados_fees)
+        fees = fees[['name', 'fee_amount']]
+        fees = fees.to_dict(orient='list')
+    else:
+        fees = {'name': [], 'fee_amount': []}
+    return fees
 
 def get_suborders_bitacora(orders_id, db='Repl'):
 

@@ -1,7 +1,7 @@
 import streamlit as st
 
 from interface.ui_entrega_pedidos_pickup import ui_pendiente_entrega_pickup, ui_descargar_bitacora, ui_validacion_entrega, ui_finalizar_entrega
-from db.db_entrega_pedidos_pickup import get_lista_ordenes_padre, get_order_items
+from db.db_entrega_pedidos_pickup import get_fees_bitacora, get_lista_ordenes_padre, get_order_items
 from db.db_user_interaction_events import event_instert
 from db.db_generar_bitacora import get_order_bitacora, get_suborders_bitacora
 
@@ -27,13 +27,14 @@ def app():
                 event_instert(EventName,EventAction,EventUser)
                 data_general=get_order_bitacora(st.session_state['order_id_pickup'])
                 data_detalle=get_suborders_bitacora(data_general['pedidos_hijos'][0])
-                ui_descargar_bitacora(data_general,data_detalle)
+                fees = get_fees_bitacora(int(st.session_state['order_id_pickup']))
+                ui_descargar_bitacora(data_general,data_detalle, fees)
         if st.session_state.current_view == 'validar_entrega':
              if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='validar_entrega','acceso a las vista validar_entrega',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
                 data = get_order_items(st.session_state['order_id_pickup'])
-                ui_validacion_entrega(st.session_state['order_id_pickup'], st.session_state['phone_pickup'], st.session_state['addres'], data, st.session_state['pay_method'])
+                ui_validacion_entrega(st.session_state['order_id_pickup'], st.session_state['phone_pickup'], st.session_state['addres'], data, st.session_state['pay_method'], st.session_state['discount'])
         if st.session_state.current_view == 'finalizar_entrega':
              if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='finalizar_entrega','acceso a las vista finalizar_entrega',st.session_state.useremail

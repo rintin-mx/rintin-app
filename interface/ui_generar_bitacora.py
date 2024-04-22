@@ -82,7 +82,7 @@ def UITodosLosPedidos(data):
         else:
             st.info('Debes seleccionar un order_id para continuar', icon="ℹ️")
 
-def UIdetalleBitacora(data_general, data_detalle):
+def UIdetalleBitacora(data_general, data_detalle, fees):
 
     # Show a second UI where user can download the pdf file of the "bitacora"
 
@@ -178,9 +178,18 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.cell(20, 10, f"Sub Total", align="C")
         pdf.set_font('Arial', '', 10)
         subtotal = 0
-        descuentos = 0
+        adelanto = 0
+        envio = float(data_general['shipping'][0])
+        descuentos_totales = float(data_general['discount'][0])
+        for i in range(len(fees['name'])):
+            if 'descuento' in fees['name'][i].lower():
+                descuentos_totales -= (float(fees['fee_amount'][i]))
+            elif 'envío' in fees['name'][i].lower():
+                envio += (float(fees['fee_amount'][i]))
+            elif 'adelanto' in fees['name'][i].lower():
+                adelanto -= (float(fees['fee_amount'][i]))
         for i in range(len(data_detalle['suborder'])):
-            if i%18 == 0 and i > 0:
+            if (i%28 == 0 and i > 0) or i == 10:
                 pdf.add_page()
                 pdf.set_y(10)
                 pdf.set_font('Arial', 'B', 7)
@@ -228,8 +237,7 @@ def UIdetalleBitacora(data_general, data_detalle):
                 pdf.set_y(y_3)
 
             if data_detalle['estado'][i] != 'Cancelado':
-                subtotal += round(data_detalle['subtotal'][i], 2)
-                descuentos += round(data_detalle['discount'][i], 2)
+                subtotal += round(data_detalle['pack_price'][i], 2) * int(data_detalle['qty_of_packs'][i])
             else:
                 # values to draw a line where suborder is cancelled
                 pdf.set_line_width(0.25)
@@ -242,27 +250,33 @@ def UIdetalleBitacora(data_general, data_detalle):
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Subtotal: ", align='L')
+        pdf.cell(30, 5, "Subtotal: ", align='R')
         pdf.set_font('Arial', '', 10)
         pdf.cell(30, 5, f"${round(subtotal,2)}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Descuentos: ", align='L')
+        pdf.cell(30, 5, "Descuentos: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${data_general['discount'][0]}", align='R')
+        pdf.cell(30, 5, f"$-{descuentos_totales}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Envío: ", align='L')
+        pdf.cell(30, 5, "Adelantos: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['shipping'][0])}", align='R')
+        pdf.cell(30, 5, f"$-{adelanto}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Total a Pagar: ", align='L')
+        pdf.cell(30, 5, "Envío: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]) - float(data_general['discount'][0]), 2)}", align='R')
+        pdf.cell(30, 5, f"${envio}", align='R')
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(205, 5, '')
+        pdf.cell(30, 5, "Total a Pagar: ", align='R')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(30, 5, f"${round(subtotal + envio - descuentos_totales - adelanto)}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)

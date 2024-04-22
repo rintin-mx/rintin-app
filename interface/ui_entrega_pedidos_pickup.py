@@ -230,7 +230,7 @@ def ui_pendiente_entrega_pickup(data):
         st.session_state.current_view = 'ingreso_pedidos_pickups'
         st.rerun()
 
-def ui_descargar_bitacora(data_general, data_detalle):
+def ui_descargar_bitacora(data_general, data_detalle, fees):
 
     # Show a second UI where user can download the pdf file of the "bitacora"
 
@@ -326,8 +326,33 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.cell(20, 10, f"Sub Total", align="C")
         pdf.set_font('Arial', '', 10)
         subtotal = 0
-        descuentos = 0
+        adelanto = 0
+        envio = float(data_general['shipping'][0])
+        descuentos_totales = float(data_general['discount'][0])
+        for i in range(len(fees['name'])):
+            if 'descuento' in fees['name'][i].lower():
+                descuentos_totales -= (float(fees['fee_amount'][i]))
+            elif 'envío' in fees['name'][i].lower():
+                envio += (float(fees['fee_amount'][i]))
+            elif 'adelanto' in fees['name'][i].lower():
+                adelanto -= (float(fees['fee_amount'][i]))
         for i in range(len(data_detalle['suborder'])):
+            if (i%28 == 0 and i > 0) or i == 10:
+                pdf.add_page()
+                pdf.set_y(10)
+                pdf.set_font('Arial', 'B', 7)
+                pdf.cell(20, 10, f"Estado", align="C")
+                pdf.cell(20, 10, f"Suborden", align="C")
+                pdf.cell(25, 10, f"Tienda elegida", align="C")
+                pdf.cell(60, 10, f"Nombre del producto", align="C")
+                pdf.cell(20, 10, f"Cambios", align="C")
+                pdf.cell(30, 10, f"Piezas por paquete", align="C")
+                pdf.cell(30, 10, f"Cantidad paquetes", align="C")
+                pdf.cell(30, 10, f"Precio paquetes", align="C")
+                pdf.cell(20, 10, f"Descuento", align="C")
+                pdf.cell(20, 10, f"Sub Total", align="C")
+                pdf.set_font('Arial', '', 10)
+
             pdf.ln()
 
             # Where the text starts, also where to start the strikethrough line.
@@ -360,8 +385,7 @@ def ui_descargar_bitacora(data_general, data_detalle):
                 pdf.set_y(y_3)
 
             if data_detalle['estado'][i] != 'Cancelado':
-                subtotal += round(data_detalle['subtotal'][i], 2)
-                descuentos += round(data_detalle['discount'][i], 2)
+                subtotal += round(data_detalle['pack_price'][i], 2) * int(data_detalle['qty_of_packs'][i])
             else:
                 # values to draw a line where suborder is cancelled
                 pdf.set_line_width(0.25)
@@ -374,27 +398,33 @@ def ui_descargar_bitacora(data_general, data_detalle):
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Subtotal: ", align='L')
+        pdf.cell(30, 5, "Subtotal: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${round(subtotal + descuentos,2)}", align='R')
+        pdf.cell(30, 5, f"${round(subtotal,2)}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Descuentos: ", align='L')
+        pdf.cell(30, 5, "Descuentos: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${descuentos}", align='R')
+        pdf.cell(30, 5, f"$-{descuentos_totales}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Envío: ", align='L')
+        pdf.cell(30, 5, "Adelantos: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${str(data_general['shipping'][0])}", align='R')
+        pdf.cell(30, 5, f"$-{adelanto}", align='R')
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
         pdf.cell(205, 5, '')
-        pdf.cell(30, 5, "Total a Pagar: ", align='L')
+        pdf.cell(30, 5, "Envío: ", align='R')
         pdf.set_font('Arial', '', 10)
-        pdf.cell(30, 5, f"${round(subtotal + float(data_general['shipping'][0]), 2)}", align='R')
+        pdf.cell(30, 5, f"${envio}", align='R')
+        pdf.ln()
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(205, 5, '')
+        pdf.cell(30, 5, "Total a Pagar: ", align='R')
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(30, 5, f"${round(subtotal + envio - descuentos_totales - adelanto)}", align='R')
         pdf.ln()
         pdf.ln()
         pdf.set_font('Arial', 'B', 10)
@@ -405,26 +435,31 @@ def ui_descargar_bitacora(data_general, data_detalle):
 
         html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'Bitacora pedido ' + str(data_general['order_id'][0]))
         st.markdown(html, unsafe_allow_html=True)
-
     if st.button('Validar entrega'):
+        descuentos_totales = float(data_general['discount'][0])
+        for i in range(len(fees['name'])):
+            if 'descuento' in fees['name'][i].lower():
+                descuentos_totales -= (float(fees['fee_amount'][i]))
+            elif 'adelanto' in fees['name'][i].lower():
+                descuentos_totales -= (float(fees['fee_amount'][i]))
         st.session_state['children_id_pickup'] = data_general['pedidos_hijos'][0]
         st.session_state['addres'] = data_general['shipping_addres'][0]
         st.session_state['pay_method'] = data_general['pay_method'][0]
+        st.session_state['discount'] = descuentos_totales
         st.session_state.current_view = 'validar_entrega'
 
         # limpieza de estado dataframe
         if 'data' in st.session_state:
                 del st.session_state['data']
         st.rerun()
-    
-    if st.button('Regresar'):
-        if 'children_id_pickup' in st.session_state:
-            del st.session_state['children_id_pickup']
-
-        st.session_state.current_view = 'pendiente_entrega_pickup'
+    if st.button('Regresar al Inicio'):
+        st.session_state.current_view = 'bitacora'
+    # limpieza de estado dataframe
+        if 'data' in st.session_state:
+                del st.session_state['data']
         st.rerun()
 
-def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago):
+def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo_pago, descuento):
     if st.button('Regresar'):
         st.session_state.current_view = 'bitacora_pickup' 
         st.rerun()
@@ -435,9 +470,8 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             children_orders.remove(int(order_id))
         except:
             pass
-    print(children_orders)
-    calculated_total = 0
-    total = 0
+    calculated_total = 0.0
+    total = 0.0
     respuesta = False
     validacion = True
     st.write(f'### Pedido: {order_id}')
@@ -462,9 +496,9 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             st.write(int(order_items['line_qty'][i]))
             st.write('#### Precio:')
             st.write(f"{(order_items['line_total'][i])}")
-            total += (int(order_items['line_qty'][i]) * int(float(order_items['line_total'][i])))
+            total += (float(order_items['line_qty'][i]) * round(float(order_items['line_total'][i]),2))
             recieved = st.number_input('Cantidad recibida', min_value=0, max_value=int(order_items['line_qty'][i]), step=1, key=f'amount_{i}')
-            calculated_total += (recieved * int(float(order_items['line_total'][i])))
+            calculated_total += (recieved * round(float(order_items['line_total'][i]),2))
             if recieved != int(order_items['line_qty'][i]):
                 reason = st.selectbox('Razón diferencia', options=DIFF_REASONS, key=f'select_{i}', index=None)
                 if reason is None:
@@ -493,21 +527,31 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
             st.write(order_items['order_item_name'][i])
             st.write('### Precio:')
             st.write(order_items['line_total'][i])
-            total += int(order_items['line_total'][i])
-            calculated_total += int(order_items['line_total'][i])
+            st.write('### Descuentos:')
+            st.write(descuento)
+            total += round(float(order_items['line_total'][i]), 2)
+            calculated_total += round(float(order_items['line_total'][i]), 2)
         if order_items['order_id'][i] in orders_dict:
             orders_dict[order_items['order_id'][i]] += recieved
         else:
             orders_dict[order_items['order_id'][i]] = recieved
     
     st.write('---')
+    
+    total -= float(descuento)
     if metodo_pago.lower() == 'prepaid':
         total = 0
         calculated_total = 0
-    st.write(f'Total calculado a cobrar: ${calculated_total}')
-    st.write(f'Total a cobrar: ${total}')
+
+    if calculated_total - float(descuento) < 0:
+        calculated_total = 0
+    else:
+        calculated_total = calculated_total - float(descuento)
+
+    st.write(f'Total calculado a cobrar: ${round(calculated_total, 2)}')
+    st.write(f'Total a cobrar: ${round(total, 2)}')
     value = st.number_input('Total recibido: ', min_value=0.00, step=0.01)
-    if value != float(total) and value != 0:
+    if value != round(float(total), 2) and value != 0:
         st.error('Validacion')
     button = st.button('Confirmar entrega')
     photo = st.file_uploader('Imagen de entrega', type=['png', 'jpg'])
@@ -552,4 +596,6 @@ def ui_finalizar_entrega(order_id, children_order_id):
             del st.session_state['addres']
         if 'pay_method' in st.session_state:
             del st.session_state['pay_method']
+        if 'discount' in st.session_state:
+            del st.session_state['discount']
         st.rerun()
