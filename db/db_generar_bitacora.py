@@ -233,12 +233,12 @@ select
         else 'Prepaid'
 	end as pay_method,
     case 
-		when zona_entrega.zona_entrega is not null then zona_entrega.zona_entrega
+		when zona_entrega.zona_entrega is not null and shipping_method.order_item_name != 'Paqueteria Estandar' then zona_entrega.zona_entrega
 		else '' end AS zona,
     Case
 		when shipping_method.order_item_name like '%Oaxaca%' then 'Bodega Oaxaca'
 		when shipping_method.order_item_name like '%Ciudad de Mexico%' then 'Bodega CDMX' COLLATE utf8mb4_general_ci
-        when zona_entrega.zona_entrega is not null then
+        when zona_entrega.zona_entrega is not null and shipping_method.order_item_name != 'Paqueteria Estandar' then
 			case
 				When zona_entrega.zona_entrega = 'pickup-A' then 'Zona Centro'
 				When zona_entrega.zona_entrega = 'pickup-B' then 'Etla, Telix, Mazaltepec'
