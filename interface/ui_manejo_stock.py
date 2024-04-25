@@ -252,8 +252,9 @@ def conteo_stock_por_seller():
         st.markdown(f'### Seller: {current_group_info["seller_name"]}')
         st.markdown(f'### Proveedor: {current_group_info["proveedor_name"]}')
         st.write('<div class="container_2"></div>', unsafe_allow_html=True)
+        
         for i, product in filtered_products.iterrows():
-            stock_fisico = int(product['active_count']) + int(product['stock'])
+            stock_fisico = int(product['active_count']) + int(float(product['stock']))
             st.write('---')
             if product["img_url"] is not  None:
                 st.image(product["img_url"], use_column_width=False, width=200 )
@@ -265,5 +266,5 @@ def conteo_stock_por_seller():
             inserted_stock = st.number_input('Conteo físico', min_value=0, step=1, key=f'{i}_number_input', on_change=handle_input_change(i))
             if int(inserted_stock) != stock_fisico:
                 st.error('Validacion')
-            st.checkbox('Contado', key=f'{i}_checkbox', on_change=check_box_change_handler(i, product['cost'], inserted_stock, stock_fisico, int(product['stock']), product["sku"], product['active_count']))
+            st.checkbox('Contado', key=f'{i}_checkbox', on_change=check_box_change_handler(i, product['cost'], inserted_stock, stock_fisico, int(float(product['stock'])), product["sku"], product['active_count']))
 
