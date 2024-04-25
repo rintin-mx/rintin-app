@@ -91,7 +91,5 @@ def UIfinalizarActualizacion(shr_prod_sku, shr_new_stock):
             del st.session_state['shr_prod_sku']
         if 'shr_new_stock' in st.session_state:
             del st.session_state['shr_new_stock']
-
-        show_info = not show_info
         
         st.rerun()
