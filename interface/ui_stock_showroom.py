@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from db.db_stock_showroom import create_stock_showroom, get_one_product_info, update_stock_showroom
+from db.db_stock_showroom import get_one_product_info, update_stock_showroom
 
 def UIstartPage():
     st.write("###")
@@ -39,49 +39,47 @@ def UIvisualizarShowroom(data):
             st.write(f"**Seller**: {data['seller'][i]}")
             st.divider()
 
-def UIactualizarShowroom(lista):
+def UIactualizarShowroom():
     st.header("Busca un producto")
     st.write("###")
     if st.button("Regresar"):
         st.session_state['current_view'] = 'showroom'
         st.rerun()
 
-    lista = pd.DataFrame(lista).dropna()
-
-    sku_seleccionado = st.selectbox("Ingresa el SKU", options = lista['sku'])
+    sku_seleccionado = st.text_input("Ingresa el SKU:")
 
     if sku_seleccionado != '':
         st.divider()
         
         info_producto = get_one_product_info(sku_seleccionado)
-        st.image(info_producto['img_url'][0], width=400)
-        st.write(f"**SKU**: {info_producto['sku'][0]}")
-        st.write(f"**Proveedor**: {info_producto['proveedor'][0]}")
-        st.write(f"**Dueño del producto**: {info_producto['dueno_producto'][0]}")
-        st.write(f"**Marca del producto**: {info_producto['marca'][0]}")
-        st.write(f"**Stock real**: {info_producto['real_stock'][0]}")
-        if info_producto['stock_showroom'][0] is None:
-            st.write("**Stock en showroom**: 0")
+        if pd.DataFrame(info_producto).empty:
+            st.warning("## Este SKU no exitse. Verifique que sea el correcto o ingrese uno diferente.")
         else:
-            st.write(f"**Stock en showroom**: {info_producto['stock_showroom'][0]}")
-        st.write(f"**Nombre del producto**: {info_producto['product_name'][0]}")
-        st.write(f"**Seller**: {info_producto['seller'][0]}")
-        new_stock = st.number_input('Nuevo Stock en Showroom', min_value=0, step=1)
-        print(info_producto['stock_showroom'][0])
-
-        if st.button("**Actualizar stock en showroom**"):
-            
+            st.image(info_producto['img_url'][0], width=400)
+            st.write(f"**SKU**: {info_producto['sku'][0]}")
+            st.write(f"**Proveedor**: {info_producto['proveedor'][0]}")
+            st.write(f"**Dueño del producto**: {info_producto['dueno_producto'][0]}")
+            st.write(f"**Marca del producto**: {info_producto['marca'][0]}")
+            st.write(f"**Stock real**: {info_producto['real_stock'][0]}")
             if info_producto['stock_showroom'][0] is None:
-                create_stock_showroom(info_producto['product_id'][0], new_stock)
-                print('-creado')
+                st.write("**Stock en showroom**: 0")
             else:
-                update_stock_showroom(info_producto['product_id'][0], new_stock)
-                print('-actualizado')
-            
-            st.session_state.current_view = 'finalizar_actualizacion'
-            st.session_state.shr_prod_sku = info_producto['sku'][0]
-            st.session_state.shr_new_stock = new_stock
-            st.rerun()
+                st.write(f"**Stock en showroom**: {info_producto['stock_showroom'][0]}")
+            st.write(f"**Nombre del producto**: {info_producto['product_name'][0]}")
+            st.write(f"**Seller**: {info_producto['seller'][0]}")
+            new_stock = st.number_input('Nuevo Stock en Showroom', min_value=0, step=1)
+
+            if st.button("**Actualizar stock en showroom**"):
+                
+                if info_producto['stock_showroom'][0] is None:
+                    update_stock_showroom(info_producto['product_id'][0], new_stock, True)
+                else:
+                    update_stock_showroom(info_producto['product_id'][0], new_stock, False)
+                
+                st.session_state.current_view = 'finalizar_actualizacion'
+                st.session_state.shr_prod_sku = info_producto['sku'][0]
+                st.session_state.shr_new_stock = new_stock
+                st.rerun()
 
 def UIfinalizarActualizacion(shr_prod_sku, shr_new_stock):
     st.markdown(f'## Se actualizó el producto con sku {shr_prod_sku} a una cantidad en showroom {shr_new_stock}.')
@@ -93,5 +91,7 @@ def UIfinalizarActualizacion(shr_prod_sku, shr_new_stock):
             del st.session_state['shr_prod_sku']
         if 'shr_new_stock' in st.session_state:
             del st.session_state['shr_new_stock']
+
+        show_info = not show_info
         
         st.rerun()
