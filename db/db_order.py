@@ -257,13 +257,19 @@ ordermeta as(
 				when `meta_key` = '_dokan_vendor_id' then `meta_value`
 				else NULL
 			end
-		) AS `dokan_vendor_id`
+		) AS `dokan_vendor_id`,
+        max(
+			case
+				when `meta_key` = '_stock_shr' then `meta_value`
+				else NULL
+			end
+		) AS `stock_showroom`
 	from
 		wp_postmeta inner join orders on orders.id = post_id
 	group by post_id
 ),
 order_items as(
-	select order_item_id, ordermeta.order_id, order_item_name
+	select order_item_id, ordermeta.order_id, ordermeta.stock_showroom, order_item_name
 	from wp_woocommerce_order_items
 	inner join ordermeta on wp_woocommerce_order_items.order_id = ordermeta.order_id
 	where order_item_type = 'line_item'
@@ -282,8 +288,8 @@ order_item_meta as (
 				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
 				else NULL
 			end
-		) AS `product_id`
-		
+		) AS `product_id`,
+		stock_showroom
 	from
 		`wp_woocommerce_order_itemmeta`
 		inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
@@ -316,7 +322,8 @@ product_meta as(
 				when `wp_postmeta`.`meta_key` = '_units_per_pack' then `wp_postmeta`.`meta_value`
 				else NULL
 			end
-		) AS `units_per_pack`
+		) AS `units_per_pack`,
+        stock_showroom
 	from wp_postmeta
 	inner join order_item_meta on order_item_meta.product_id = post_id
 	group by post_id
@@ -332,6 +339,7 @@ select
 	order_items.order_item_name,
     order_items.order_item_id,
 	line_qty,
+    product_meta.stock_showroom,
 	sku,
 	units_per_pack,
 	replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
@@ -369,9 +377,9 @@ order by meta_value
     # Nueva lista de nombres de columnas
    #order_id,order_item_name,line_qty,sku,img_url, estado
     if len(wp_pickeo) > 0:
-        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','sku','img_url','units_per_pack','product_id', 'proveedor', 'order_item_id']]
+        wp_pickeo = wp_pickeo[['order_id','order_item_name','line_qty','stock_showroom','sku','img_url','units_per_pack','product_id', 'proveedor', 'order_item_id']]
         # Nueva lista de nombres de columnas
-        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','SKU','Imagen','units_per_pack','product_id', 'proveedor', 'order_item_id']
+        wp_pickeo.columns = ['order_id', 'Producto','Cantidad','Stock_Showroom','SKU','Imagen','units_per_pack','product_id', 'proveedor', 'order_item_id']
         print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
         wp_pickeo_general_dict = wp_pickeo.to_dict(orient='list')
         return wp_pickeo_general_dict
