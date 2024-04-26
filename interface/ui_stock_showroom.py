@@ -47,8 +47,8 @@ def UIactualizarShowroom():
         st.rerun()
 
     sku_seleccionado = st.text_input("Ingresa el SKU:")
-
-    if sku_seleccionado != '':
+    confirm_btn = st.button("Buscar")
+    if sku_seleccionado != '' and confirm_btn:
         st.divider()
         
         info_producto = get_one_product_info(sku_seleccionado)
