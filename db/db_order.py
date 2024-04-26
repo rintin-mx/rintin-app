@@ -247,7 +247,6 @@ with orders as (
 		wp_posts
 	where
 		post_status = 'wc-recolectar-2' and id={id}
-		
 ),
 ordermeta as(
 	select
@@ -257,19 +256,13 @@ ordermeta as(
 				when `meta_key` = '_dokan_vendor_id' then `meta_value`
 				else NULL
 			end
-		) AS `dokan_vendor_id`,
-        max(
-			case
-				when `meta_key` = '_stock_shr' then `meta_value`
-				else NULL
-			end
-		) AS `stock_showroom`
+		) AS `dokan_vendor_id`
 	from
 		wp_postmeta inner join orders on orders.id = post_id
 	group by post_id
 ),
 order_items as(
-	select order_item_id, ordermeta.order_id, ordermeta.stock_showroom, order_item_name
+	select order_item_id, ordermeta.order_id, order_item_name
 	from wp_woocommerce_order_items
 	inner join ordermeta on wp_woocommerce_order_items.order_id = ordermeta.order_id
 	where order_item_type = 'line_item'
@@ -288,8 +281,7 @@ order_item_meta as (
 				when `wp_woocommerce_order_itemmeta`.`meta_key` = '_product_id' then `wp_woocommerce_order_itemmeta`.`meta_value`
 				else NULL
 			end
-		) AS `product_id`,
-		stock_showroom
+		) AS `product_id`
 	from
 		`wp_woocommerce_order_itemmeta`
 		inner join order_items on order_items.order_item_id = wp_woocommerce_order_itemmeta.order_item_id
@@ -323,7 +315,12 @@ product_meta as(
 				else NULL
 			end
 		) AS `units_per_pack`,
-        stock_showroom
+        max(
+			case
+				when `meta_key` = '_stock_shr' then `meta_value`
+				else NULL
+			end
+		) AS `stock_showroom`
 	from wp_postmeta
 	inner join order_item_meta on order_item_meta.product_id = post_id
 	group by post_id
