@@ -166,6 +166,8 @@ def UIDetallePedido(data_deta,idPedido):
             if has_substitute:
                 st.warning(f'##### SKU de reemplazo: {substitute}')
             st.write("")  # Espacio extra
+            if pedido.Stock_Showroom != None:
+                st.warning(f"**Stock en showroom:** {pedido.Stock_Showroom}")  #--------------
 
         with col4:
             cantidad_pickeada = st.number_input(f"Cantidad pickeada", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad))
