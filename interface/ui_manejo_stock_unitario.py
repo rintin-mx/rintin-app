@@ -115,7 +115,7 @@ def finalizar_manejo_stock_unitario(producto):
         st.session_state['is_generated'] = False
     st.write('---')
     st.markdown(f"### Producto revisado: {producto['sku']}")
-    if producto['need_val']:
+    if producto['need_val'] and producto['difference'] * producto['costo'] > 2000:
         val = 'Necesita validación'
     else:
         val = 'No necesita validación'
