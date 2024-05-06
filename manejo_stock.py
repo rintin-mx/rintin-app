@@ -32,7 +32,6 @@ def app():
                     id_concat=('id', lambda x: ', '.join(map(str, x)))
                     ).reset_index()
                 sellers = list(data_pd['seller_name'].unique())
-                print(grouped_by_seller_proveedor)
                 detalle_ordenes_por_seller(grouped_by_seller_proveedor, sellers)
         elif st.session_state['current_view'] == 'conteo_stock_por_seller':
             seller_id = st.session_state['current_group_info']['seller_id']
