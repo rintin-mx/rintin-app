@@ -7,6 +7,7 @@ import pandas as pd
 import base64
 from db.db_creacion_productos_ia import get_urls
 from integration.gpt_prompt import messages, client
+import os
 
 
 def create_download_link(val, filename):
@@ -97,7 +98,9 @@ def ingreso_imagenes():
                 reply = response.choices[0].message.content
                 rows = reply.splitlines()
 
-                with open('creation_file.csv', 'w', newline='', encoding='utf-8') as file:
+                os.remove("creation_file.csv")
+
+                with open('creation_file.csv', 'w', encoding='utf-8') as file:
                     writer = csv.writer(file)
                     for i in range (len(rows)):
                         if i != 0 and i != len(rows)-1:
