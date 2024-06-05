@@ -40,6 +40,8 @@ def UIvisualizarShowroom(data):
             st.divider()
 
 def UIactualizarShowroom():
+    if 'is_clicked' not in st.session_state:
+        st.session_state['is_clicked'] = False
     st.header("Busca un producto")
     st.write("###")
     if st.button("Regresar"):
@@ -47,8 +49,9 @@ def UIactualizarShowroom():
         st.rerun()
 
     sku_seleccionado = st.text_input("Ingresa el SKU:")
-    confirm_btn = st.button("Buscar")
-    if sku_seleccionado != '' and confirm_btn:
+    confirm_btn = st.button("Buscar", key='confirm_btn')
+    if st.session_state.confirm_btn or st.session_state.is_clicked:
+        st.session_state.is_clicked = True
         st.divider()
         
         info_producto = get_one_product_info(sku_seleccionado)
@@ -79,6 +82,7 @@ def UIactualizarShowroom():
                 st.session_state.current_view = 'finalizar_actualizacion'
                 st.session_state.shr_prod_sku = info_producto['sku'][0]
                 st.session_state.shr_new_stock = new_stock
+                st.session_state.is_clicked = False
                 st.rerun()
 
 def UIfinalizarActualizacion(shr_prod_sku, shr_new_stock):

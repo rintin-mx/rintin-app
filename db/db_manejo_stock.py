@@ -111,6 +111,7 @@ select
     and pm.meta_value = {proveedor_id}
     and post_author ={seller_id}
     and post_status != 'proceso_stock'
+    
 ),
 product_meta as(
 	select
@@ -265,7 +266,6 @@ def update_product_status_bulk(product_id_list):
     Return: boolean
     '''
     config = config_db('prod')
-    print(product_id_list)
     try:
         connection = mysql.connector.connect(**config)
         if connection.is_connected():
@@ -284,7 +284,7 @@ def update_product_status_bulk(product_id_list):
             connection.close()
         return False
 
-def update_product_status(product_id):
+def update_product_status(product_id, status):
     '''
     Update of product status to proceso_stock
     
@@ -298,7 +298,7 @@ def update_product_status(product_id):
         connection = mysql.connector.connect(**config)
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True, buffered=True)
-            sql = f"UPDATE wp_posts SET post_status = 'proceso_stock' WHERE id = {product_id}"
+            sql = f"UPDATE wp_posts SET post_status = '{status}' WHERE id = {product_id}"
             cursor.execute(sql)
             connection.commit()
             cursor.close()
