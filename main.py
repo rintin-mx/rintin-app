@@ -8,7 +8,7 @@ import numpy as np
 st.set_page_config(
         page_title="Rintin",
 )
-import validacion_manejo_stock, manejo_stock, ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra, generar_bitacora, entrega_pedidos_pickup, stock_showroom, manejo_stock_unitario
+import validacion_manejo_stock, manejo_stock, ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra, generar_bitacora, entrega_pedidos_pickup, stock_showroom, manejo_stock_unitario, creacion_producto_ia
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -67,7 +67,7 @@ class MultiApp:
                 # elif val == 'ismael':
                 #     menu=['Logout','Auditoria','Agrupacion']
                 elif val in ('francisco', 'JuanMa', 'daniel'):
-                    menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora', 'Entrega Pedidos directo en Pickup', 'Stock Showroom', 'Manejo Stock Unitario']
+                    menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora', 'Entrega Pedidos directo en Pickup', 'Stock Showroom', 'Manejo Stock Unitario', 'Creacion Productos IA']
 
             else:
                 #persona con permisos consedidos por el administrador
@@ -190,6 +190,11 @@ class MultiApp:
             manejo_stock_unitario.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Manejo Stock Unitario',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Creacion Productos IA':
+            creacion_producto_ia.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Creacion Productos IA',valEmail
                 event_instert(EventName,EventAction,EventUser)
 
     run() 
