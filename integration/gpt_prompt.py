@@ -29,11 +29,11 @@ messages=[
         Marca (Si no aparece marca, dejar en blanco),
         Material_composicion_y_porcentajes (Si aparece en la imagen información de la composición del producto, sino dejar vacío),
         Importado_o_hecho_en_mexico (Coloca "Importado" o "Hecho en méxico"),
-        Colores_presentes_en_producto (varios colores (escribe los colores que identifiques), un color),
+        Colores_presentes_en_producto (varios colores (escribe los colores que identifiques SIN USAR COMAS PARA SEPARARLOS. SEPARALOS CON GUIONES), un color),
         Tallas (Si se muestra en la imagen, sino dejar vacío),
         Observaciones (Coloca observaciones que te parezcan relevantes del producto en no más de 20 palabras)
 
-        responde únicamente colocando esta información en un csv en formato tabla donde cada línea representa 1 producto o 1 imagen que ha sido enviada junto con este mensaje y no coloques tíldes en la información de respuesta. A demás, si vas a hacer un listado, no coloques comas para separar los items de la lista. Sepáralos a través de guiones. Por último, no te saltes campos. Si no tienes respuesta para un campo, dejalo vacío.
+        responde únicamente colocando esta información en un csv en formato tabla donde cada línea representa 1 producto o 1 imagen que ha sido enviada junto con este mensaje y no coloques tíldes en la información de respuesta. A demás, MUY MUY MUY IMPORTANTE si vas a hacer un listado, SEPARA LOS ELEMENTOS DE LAS LISTAS POR GUIONES, NUNCA POR COMAS. Por último, no te saltes campos. Si no tienes respuesta para un campo, dejalo vacío pero NO TE SALTES NINGUN CAMPO.
         """
       },
     ],

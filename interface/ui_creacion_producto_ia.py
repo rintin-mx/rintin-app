@@ -10,6 +10,8 @@ from integration.gpt_prompt import messages, client
 import os
 
 
+pd.set_option('display.max_columns', None)
+
 def create_download_link(val, filename):
     # Generate a link to download the csv
 
@@ -30,10 +32,16 @@ def send_prompt():
     Inputs: Ninguna
     Outputs: Completition (Combinación de prompt y versión para enviar a la API de GPT en el formato correcto para recibir su respuesta)
     """
-    chat_completion = client.chat.completions.create(
-        messages = messages,
-        model="gpt-4o"
-    )
+    try:
+        chat_completion = client.chat.completions.create(
+            messages = messages,
+            model="gpt-4o"
+        )
+
+    except Exception as e:
+        print(e)
+        chat_completion = False
+
     return chat_completion
 
 def ingreso_imagenes():
@@ -95,27 +103,39 @@ def ingreso_imagenes():
                     messages[0]["content"].append(images[i])
 
                 response = send_prompt()
-                reply = response.choices[0].message.content
-                rows = reply.splitlines()
 
-                os.remove("creation_file.csv")
+                if response == False:
+                    st.error("Error de envío de imágenes. Escoja menos imágenes a enviar para reducir la carga.")
+                else:
+                    
+                    reply = response.choices[0].message.content
+                    rows = reply.splitlines()[1:-1]
+                    labels = rows[0].split(",")
+                    df = pd.DataFrame(columns = labels)
+                    for i in range(len(rows) - 1):
+                        splitted_line = rows[i+1].split(",")
+                        if len(splitted_line) < len(labels):
+                            diff = len(labels) - len(splitted_line)
+                            for j in range(diff):
+                                splitted_line.append("")
 
-                with open('creation_file.csv', 'w', encoding='utf-8') as file:
-                    writer = csv.writer(file)
-                    for i in range (len(rows)):
-                        if i != 0 and i != len(rows)-1:
-                            splitted_row = rows[i].split(',')
-                            writer.writerow(splitted_row)
+                        if len(splitted_line) > len(labels):
+                            splitted_line = splitted_line[0:len(labels)]
 
-            st.session_state['current_view'] = 'revision_de_informacion'
-            st.session_state['creacion_productos_urls'] = urls
-            st.rerun()
+                        temporal_df = pd.DataFrame([splitted_line], columns = labels)
+                        df = pd.concat([df, temporal_df], ignore_index=True)
+                        
+                    st.session_state['response_df'] = df
+                    st.session_state['current_view'] = 'revision_de_informacion'
+                    st.session_state['creacion_productos_urls'] = urls
+                    st.rerun()
+            
 
     else:
         if not day_off:
             st.warning("Estas añadiendo más de 30 productos para generar información, por favor no excedas los 30 productos")
 
-def revision_info(urls):
+def revision_info(urls, df):
 
     """
     Función que permite al usuario descargar el csv generado para la creación de productos
@@ -124,8 +144,12 @@ def revision_info(urls):
     Outputs: Link de descarga del csv que contiene las propiedades de los productos
     """
 
-    answer_data = pd.read_csv("creation_file.csv")
+    answer_data = df
+
+    #print(answer_data)
+
     answer_data["Foto"] = urls
+
     answer_data.to_csv("creation_file.csv", index = False)
 
     st.title("Revisión de información.")
@@ -139,5 +163,10 @@ def revision_info(urls):
             st.markdown(html, unsafe_allow_html=True)
 
     if st.button("Volver"):
+        if 'creacion_productos_urls' in st.session_state:
+            del st.session_state['creacion_productos_urls']
+        if 'response_df' in st.session_state:
+            del st.session_state['response_df']
+        
         st.session_state['current_view'] = 'creacion_producto_ia'
         st.rerun()
