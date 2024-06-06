@@ -17,4 +17,4 @@ def app():
             ingreso_imagenes()
 
         if st.session_state.current_view == 'revision_de_informacion':
-            revision_info(st.session_state['creacion_productos_urls'])
+            revision_info(st.session_state['creacion_productos_urls'], st.session_state['response_df'])
