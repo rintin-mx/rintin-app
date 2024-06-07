@@ -123,8 +123,6 @@ def ingreso_imagenes():
                     },
                 )
 
-    #print(f"urls: {len(urls)}, images: {len(images)}")
-
     if len(images) <= 30 and not day_off:
 
         if st.button("Avanzar"):
@@ -179,12 +177,25 @@ def revision_info(urls, df):
 
     #print(answer_data)
 
+    st.title("Revisión de información.")
+    st.write("##")
+
+    st.write(f"Imágenes adjuntadas: {len(urls)}")
+    st.write(f"Descripciones recibidas: {len(answer_data['Categoria_padre'])}")
+
+    if len(urls) > len(answer_data['Categoria_padre']):
+        urls = urls[0:len(answer_data['Categoria_padre'])]
+        st.warning("Considerar que pueden faltar descripciones de imágenes adjuntas debido a que la IA puede cometer errores.")
+
+    if len(urls) < len(answer_data['Categoria_padre']):
+        diff = len(answer_data['Categoria_padre']) - len(urls)
+        st.warning("Considerar que pueden faltar descripciones de imágenes adjuntas debido a que la IA puede cometer errores.")
+        for i in range(diff):
+            urls.append("")
+
     answer_data["Foto"] = urls
 
     answer_data.to_csv("creation_file.csv", index = False)
-
-    st.title("Revisión de información.")
-    st.write("##")
 
     if st.button("Descargar información"):
 
