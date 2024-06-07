@@ -2,12 +2,10 @@ import sys
 sys.path.append('..')
 import streamlit as st
 from openai import OpenAI
-import csv
 import pandas as pd
 import base64
 from db.db_creacion_productos_ia import get_urls
-from integration.gpt_prompt import messages, client
-import os
+from integration.gpt_prompt import client
 
 
 pd.set_option('display.max_columns', None)
@@ -25,7 +23,7 @@ def create_download_link(val, filename):
     b64 = base64.b64encode(val) 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.csv">Descargar CSV</a>'
 
-def send_prompt():
+def send_prompt(new_message):
     """
     Función que toma el prompt, las imágenes y la versión de GPT para hacer la petición
 
@@ -34,7 +32,7 @@ def send_prompt():
     """
     try:
         chat_completion = client.chat.completions.create(
-            messages = messages,
+            messages = new_message,
             model="gpt-4o"
         )
 
@@ -51,6 +49,38 @@ def ingreso_imagenes():
     Inputs: Ninguno
     Outputs: csv conteniendo características importantes de cada producto enviado
     """
+
+    prompt_messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text",
+                "text": """
+                    Extrae de los productos en las imágenes: 
+                    codigo_de_producto (si no se encuentra, dejar vacío), 
+                    Categoria_padre (Hombre, mujer, niño/niña, unisex, productos varios),
+                    Categoria_hijo (Ropa, calzado, Maquillaje, Bolsas/Mochilas/carteras, accesorios, escolar/profesional, papeleria),
+                    Subcategoria_1 (Ropa Interior,Pantalones,Pantuflas,Sandalias,Tenis,Carteras,Jeans,Chalecos,Bolsas,Pijamas,Vestidos,Blusas,Ropa Deportiva,Sueters,Chamarras,Conjuntos,Playeras,Pants,Leggings,Sudaderas,Gorras/Viseras/Sombreros,Faldas,Shorts,Calcetines/calceteria,Bermudas,Ponchos/Capas/Kimonos,Camisas,Ropa de Maternidad,Trajes de Baño,Tops,Botas y Botines,Palazzo,Impermeables,Jumpsuit,Mangas,Lenceria,Mochilas,Joggers,Bufanda,Saco),
+                    Subcategoria_2 (Tenis Casual,Corte Skinny,Corte Acampanado,Tenis Deportivo,Mochilas,Chamarra Mezclilla,Corte Wide Leg,Corte Mom,Pijamas,Ropa térmica,Corte Colombiano,Conjunto,Crop Top,Leggings,Boxers,Cacheteros,Brasier,Pantaletas,Falda,Short,Protectores,Corte Vaquero,Baby Dalls,Faja,Overol,Tops,Corte Cargo,Corte Recto,Corte Stretch,Tanga,Bikini,Calcetines tobillo,Trusa,Medias,Calcetines Altos,Calcetines cortos,Camiseta,Corset,Calcetines Medios,Bolsa Formal,Body,Corte Extra Skinny,Corte Slim Fit,Corte Regular Fit,Licras,Top niña,Talla Extra,Chaleco Mezclilla,Vestidos largos,Vestidos cortos),
+                    Subcategoria_3 (Escoge entre estas opciones o deja vacío: Algodón, Encaje, Microfibra, Sin costura),
+                    Tipo_de_producto (Escoge entre estas opciones o deja vacío: Linea continua, Promocion, Novedad),
+                    Nombre_de_producto (Si existe uno en la imágen colócalo, sino, creea un nombre como lo haría un experto en ecomerce Mexicano en no más de 5 palabras),
+                    Venta_por_unidad_o_paquete (escribir paquete si es por paquete y unidad si se vende por unidad),
+                    Tipo_de_unidad (Kit, Piezas, Paquetes),
+                    Unidades_por_paquete (si lo incluye la imagen, sino dejar vacío),
+                    Marca (Si no aparece marca, dejar en blanco),
+                    Material_composicion_y_porcentajes (Si aparece en la imagen información de la composición del producto, sino dejar vacío),
+                    Importado_o_hecho_en_mexico (Coloca "Importado" o "Hecho en méxico"),
+                    Colores_presentes_en_producto (varios colores (escribe los colores que identifiques SIN USAR COMAS PARA SEPARARLOS. SEPARALOS CON GUIONES), un color),
+                    Tallas (Si se muestra en la imagen, sino dejar vacío),
+                    Observaciones (Coloca observaciones que te parezcan relevantes del producto en no más de 20 palabras)
+
+                    responde únicamente colocando esta información en un csv en formato tabla donde cada línea representa 1 producto o 1 imagen que ha sido enviada junto con este mensaje y no coloques tíldes en la información de respuesta. A demás, MUY MUY MUY IMPORTANTE si vas a hacer un listado, SEPARA LOS ELEMENTOS DE LAS LISTAS POR GUIONES, NUNCA POR COMAS. Por último, no te saltes campos. Si no tienes respuesta para un campo, dejalo vacío pero NO TE SALTES NINGUN CAMPO.
+                    """
+                },
+            ],
+        }
+    ]
 
     st.title("Ingreso de Imágenes")
 
@@ -93,6 +123,8 @@ def ingreso_imagenes():
                     },
                 )
 
+    #print(f"urls: {len(urls)}, images: {len(images)}")
+
     if len(images) <= 30 and not day_off:
 
         if st.button("Avanzar"):
@@ -100,9 +132,9 @@ def ingreso_imagenes():
             with st.spinner(f'Generando propiedades'):
 
                 for i in range(len(images)):
-                    messages[0]["content"].append(images[i])
+                    prompt_messages[0]["content"].append(images[i])
 
-                response = send_prompt()
+                response = send_prompt(prompt_messages)
 
                 if response == False:
                     st.error("Error de envío de imágenes. Escoja menos imágenes a enviar para reducir la carga.")
@@ -130,7 +162,6 @@ def ingreso_imagenes():
                     st.session_state['creacion_productos_urls'] = urls
                     st.rerun()
             
-
     else:
         if not day_off:
             st.warning("Estas añadiendo más de 30 productos para generar información, por favor no excedas los 30 productos")
