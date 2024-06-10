@@ -97,6 +97,8 @@ def ingreso_imagenes():
     images = []
     urls = []
 
+    next_button = st.button("Avanzar")
+
     st.divider()
 
     for i in range(len(img_list['url'])):
@@ -125,28 +127,32 @@ def ingreso_imagenes():
 
     if len(images) <= 30 and not day_off:
 
-        if st.button("Avanzar"):
+        if next_button:
 
             with st.spinner(f'Generando propiedades'):
+                
+                labels = ["codigo_de_producto", "Categoria_padre", "Categoria_hijo", "Subcategoria_1", "Subcategoria_2", "Subcategoria_3", "Tipo_de_producto", "Nombre_de_producto",
+                          "Venta_por_unidad_o_paquete", "Tipo_de_unidad", "Unidades_por_paquete", "Marca", "Material_composicion_y_porcentajes", "Importado_o_hecho_en_mexico",
+                          "Colores_presentes_en_producto", "Tallas", "Observaciones"]
+                df = pd.DataFrame(columns = labels)
 
                 for i in range(len(images)):
                     prompt_messages[0]["content"].append(images[i])
+                    #print(prompt_messages[0]["content"])
+                    response = send_prompt(prompt_messages)
 
-                response = send_prompt(prompt_messages)
+                    if response == False:
+                        st.error("Error de envío de imágenes. Escoja menos imágenes a enviar para reducir la carga.")
+                    else:    
+                        reply = response.choices[0].message.content
+                        rows = reply.splitlines()[1:-1]
 
-                if response == False:
-                    st.error("Error de envío de imágenes. Escoja menos imágenes a enviar para reducir la carga.")
-                else:
-                    
-                    reply = response.choices[0].message.content
-                    rows = reply.splitlines()[1:-1]
-                    labels = rows[0].split(",")
-                    df = pd.DataFrame(columns = labels)
-                    for i in range(len(rows) - 1):
-                        splitted_line = rows[i+1].split(",")
+                        splitted_line = rows[1].split(",")
+                        splitted_line.append(urls[i])
+
                         if len(splitted_line) < len(labels):
                             diff = len(labels) - len(splitted_line)
-                            for j in range(diff):
+                            for k in range(diff):
                                 splitted_line.append("")
 
                         if len(splitted_line) > len(labels):
@@ -155,10 +161,12 @@ def ingreso_imagenes():
                         temporal_df = pd.DataFrame([splitted_line], columns = labels)
                         df = pd.concat([df, temporal_df], ignore_index=True)
                         
-                    st.session_state['response_df'] = df
-                    st.session_state['current_view'] = 'revision_de_informacion'
-                    st.session_state['creacion_productos_urls'] = urls
-                    st.rerun()
+                    prompt_messages[0]["content"].pop(1)
+
+                st.session_state['response_df'] = df
+                st.session_state['current_view'] = 'revision_de_informacion'
+                st.session_state['creacion_productos_urls'] = urls
+                st.rerun()
             
     else:
         if not day_off:
@@ -181,7 +189,7 @@ def revision_info(urls, df):
     st.write("##")
 
     st.write(f"Imágenes adjuntadas: {len(urls)}")
-    st.write(f"Descripciones recibidas: {len(answer_data['Categoria_padre'])}")
+    #st.write(f"Descripciones recibidas: {len(answer_data['Categoria_padre'])}")
 
     if len(urls) > len(answer_data['Categoria_padre']):
         urls = urls[0:len(answer_data['Categoria_padre'])]
