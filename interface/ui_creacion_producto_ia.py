@@ -5,10 +5,15 @@ from openai import OpenAI
 import pandas as pd
 import base64
 from db.db_creacion_productos_ia import get_urls
-from integration.gpt_prompt import client
 
 
 pd.set_option('display.max_columns', None)
+
+key = "sk-proj-Tw1KNpopjJ5E9hxFrRtsT3BlbkFJlQIbd2Z8Jq0VExcGvMNG"
+
+client = OpenAI(
+    api_key=key,
+)
 
 def create_download_link(val, filename):
     # Generate a link to download the csv
@@ -36,12 +41,16 @@ def send_prompt(new_message):
             model="gpt-4o"
         )
 
+        if len(chat_completion.choices[0].message.content.splitlines()) < 4:
+            return "Empty"
+        else:
+            return chat_completion
+
     except Exception as e:
         print(e)
-        chat_completion = False
+        return False
 
-    return chat_completion
-
+    
 def ingreso_imagenes():
     """
     Función que permite al usuario ingresar URL's de productos para que GPT las analice
@@ -98,6 +107,8 @@ def ingreso_imagenes():
     urls = []
 
     next_button = st.button("Avanzar")
+    placeholder = st.empty()
+    next_spinner = st.spinner("Generando propiedades")
 
     st.divider()
 
@@ -124,26 +135,36 @@ def ingreso_imagenes():
                         },
                     },
                 )
-
+    
     if len(images) <= 30 and not day_off:
 
         if next_button:
 
-            with st.spinner(f'Generando propiedades'):
+            with placeholder, next_spinner:
                 
                 labels = ["codigo_de_producto", "Categoria_padre", "Categoria_hijo", "Subcategoria_1", "Subcategoria_2", "Subcategoria_3", "Tipo_de_producto", "Nombre_de_producto",
                           "Venta_por_unidad_o_paquete", "Tipo_de_unidad", "Unidades_por_paquete", "Marca", "Material_composicion_y_porcentajes", "Importado_o_hecho_en_mexico",
-                          "Colores_presentes_en_producto", "Tallas", "Observaciones"]
+                          "Colores_presentes_en_producto", "Tallas", "Observaciones", "Foto"]
                 df = pd.DataFrame(columns = labels)
 
                 for i in range(len(images)):
                     prompt_messages[0]["content"].append(images[i])
-                    #print(prompt_messages[0]["content"])
+
                     response = send_prompt(prompt_messages)
 
                     if response == False:
                         st.error("Error de envío de imágenes. Escoja menos imágenes a enviar para reducir la carga.")
-                    else:    
+
+                    if response == "Empty":
+                        row = []
+                        for j in range(len(labels) - 1):
+                            row.append("")
+                        
+                        row.append(urls[i])
+                        temporal_df = pd.DataFrame([row], columns = labels)
+                        df = pd.concat([df, temporal_df], ignore_index=True)
+                    
+                    else:
                         reply = response.choices[0].message.content
                         rows = reply.splitlines()[1:-1]
 
@@ -172,6 +193,7 @@ def ingreso_imagenes():
         if not day_off:
             st.warning("Estas añadiendo más de 30 productos para generar información, por favor no excedas los 30 productos")
 
+
 def revision_info(urls, df):
 
     """
@@ -183,25 +205,14 @@ def revision_info(urls, df):
 
     answer_data = df
 
-    #print(answer_data)
-
     st.title("Revisión de información.")
     st.write("##")
 
     st.write(f"Imágenes adjuntadas: {len(urls)}")
-    #st.write(f"Descripciones recibidas: {len(answer_data['Categoria_padre'])}")
 
-    if len(urls) > len(answer_data['Categoria_padre']):
-        urls = urls[0:len(answer_data['Categoria_padre'])]
-        st.warning("Considerar que pueden faltar descripciones de imágenes adjuntas debido a que la IA puede cometer errores.")
-
-    if len(urls) < len(answer_data['Categoria_padre']):
-        diff = len(answer_data['Categoria_padre']) - len(urls)
-        st.warning("Considerar que pueden faltar descripciones de imágenes adjuntas debido a que la IA puede cometer errores.")
-        for i in range(diff):
-            urls.append("")
-
-    answer_data["Foto"] = urls
+    for i in range(len(answer_data["Foto"])):
+        if answer_data.loc[i, "Foto"][:8] != 'https://':
+            answer_data.loc[i, "Foto"] = urls[i]
 
     answer_data.to_csv("creation_file.csv", index = False)
 
