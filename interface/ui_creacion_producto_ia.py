@@ -11,9 +11,7 @@ pd.set_option('display.max_columns', None)
 
 key = "sk-proj-Tw1KNpopjJ5E9hxFrRtsT3BlbkFJlQIbd2Z8Jq0VExcGvMNG"
 
-client = OpenAI(
-    api_key=key,
-)
+client = OpenAI(api_key=key)
 
 def create_download_link(val, filename):
     # Generate a link to download the csv
@@ -41,10 +39,12 @@ def send_prompt(new_message):
             model="gpt-4o"
         )
 
-        if len(chat_completion.choices[0].message.content.splitlines()) < 4:
+        reply = chat_completion.choices[0].message.content.splitlines()
+        label_index = reply.index('codigo_de_producto, Categoria_padre, Categoria_hijo, Subcategoria_1, Subcategoria_2, Subcategoria_3, Tipo_de_producto, Nombre_de_producto, Venta_por_unidad_o_paquete, Tipo_de_unidad, Unidades_por_paquete, Marca, Material_composicion_y_porcentajes, Importado_o_hecho_en_mexico, Colores_presentes_en_producto, Tallas, Observaciones')
+        if len(reply) - 1 < label_index + 1:
             return "Empty"
         else:
-            return chat_completion
+            return reply[label_index:label_index+2]
 
     except Exception as e:
         print(e)
@@ -65,26 +65,35 @@ def ingreso_imagenes():
             "content": [
                 {"type": "text",
                 "text": """
-                    Extrae de los productos en las imágenes: 
-                    codigo_de_producto (si no se encuentra, dejar vacío), 
-                    Categoria_padre (Hombre, mujer, niño/niña, unisex, productos varios),
-                    Categoria_hijo (Ropa, calzado, Maquillaje, Bolsas/Mochilas/carteras, accesorios, escolar/profesional, papeleria),
-                    Subcategoria_1 (Ropa Interior,Pantalones,Pantuflas,Sandalias,Tenis,Carteras,Jeans,Chalecos,Bolsas,Pijamas,Vestidos,Blusas,Ropa Deportiva,Sueters,Chamarras,Conjuntos,Playeras,Pants,Leggings,Sudaderas,Gorras/Viseras/Sombreros,Faldas,Shorts,Calcetines/calceteria,Bermudas,Ponchos/Capas/Kimonos,Camisas,Ropa de Maternidad,Trajes de Baño,Tops,Botas y Botines,Palazzo,Impermeables,Jumpsuit,Mangas,Lenceria,Mochilas,Joggers,Bufanda,Saco),
-                    Subcategoria_2 (Tenis Casual,Corte Skinny,Corte Acampanado,Tenis Deportivo,Mochilas,Chamarra Mezclilla,Corte Wide Leg,Corte Mom,Pijamas,Ropa térmica,Corte Colombiano,Conjunto,Crop Top,Leggings,Boxers,Cacheteros,Brasier,Pantaletas,Falda,Short,Protectores,Corte Vaquero,Baby Dalls,Faja,Overol,Tops,Corte Cargo,Corte Recto,Corte Stretch,Tanga,Bikini,Calcetines tobillo,Trusa,Medias,Calcetines Altos,Calcetines cortos,Camiseta,Corset,Calcetines Medios,Bolsa Formal,Body,Corte Extra Skinny,Corte Slim Fit,Corte Regular Fit,Licras,Top niña,Talla Extra,Chaleco Mezclilla,Vestidos largos,Vestidos cortos),
-                    Subcategoria_3 (Escoge entre estas opciones o deja vacío: Algodón, Encaje, Microfibra, Sin costura),
-                    Tipo_de_producto (Escoge entre estas opciones o deja vacío: Linea continua, Promocion, Novedad),
-                    Nombre_de_producto (Si existe uno en la imágen colócalo, sino, creea un nombre como lo haría un experto en ecomerce Mexicano en no más de 5 palabras),
-                    Venta_por_unidad_o_paquete (escribir paquete si es por paquete y unidad si se vende por unidad),
-                    Tipo_de_unidad (Kit, Piezas, Paquetes),
-                    Unidades_por_paquete (si lo incluye la imagen, sino dejar vacío),
-                    Marca (Si no aparece marca, dejar en blanco),
-                    Material_composicion_y_porcentajes (Si aparece en la imagen información de la composición del producto, sino dejar vacío),
-                    Importado_o_hecho_en_mexico (Coloca "Importado" o "Hecho en méxico"),
-                    Colores_presentes_en_producto (varios colores (escribe los colores que identifiques SIN USAR COMAS PARA SEPARARLOS. SEPARALOS CON GUIONES), un color),
-                    Tallas (Si se muestra en la imagen, sino dejar vacío),
-                    Observaciones (Coloca observaciones que te parezcan relevantes del producto en no más de 20 palabras)
-
-                    responde únicamente colocando esta información en un csv en formato tabla donde cada línea representa 1 producto o 1 imagen que ha sido enviada junto con este mensaje y no coloques tíldes en la información de respuesta. A demás, MUY MUY MUY IMPORTANTE si vas a hacer un listado, SEPARA LOS ELEMENTOS DE LAS LISTAS POR GUIONES, NUNCA POR COMAS. Por último, no te saltes campos. Si no tienes respuesta para un campo, dejalo vacío pero NO TE SALTES NINGUN CAMPO.
+                    Tarea: Siendo una persona mexicana experta en la industria de la moda que vende sus productos por mayoreo por medio de un ecommerce y orientado a un cliente de clase media y baja, extraer información de las imágenes de los productos y organizarla en un formato de tabla CSV.
+                    Información a Extraer de la imagen:
+                    codigo_de_producto: Si se encuentra, de lo contrario dejar en blanco.
+                    Categoria_padre: (Elige uno: Hombre, mujer, niño/niña, unisex, productos varios).
+                    Categoria_hijo: (Elige uno: Ropa, calzado, Maquillaje, Bolsas/Mochilas/carteras, accesorios, escolar/profesional, papeleria).
+                    Subcategoria_1: (Elige de: Ropa Interior-Pantalones-Pantuflas-Sandalias-Tenis-Carteras-Jeans-Chalecos-Bolsas-Pijamas-Vestidos-Blusas-Ropa Deportiva-Sueters-Chamarras-Conjuntos-Playeras-Pants-Leggings-Sudaderas-Gorras/Viseras/Sombreros-Faldas-Shorts-Calcetines/calceteria-Bermudas-Ponchos/Capas/Kimonos-Camisas-Ropa de Maternidad-Trajes de Baño-Tops-Botas y Botines-Palazzo-Impermeables-Jumpsuit-Mangas-Lenceria-Mochilas-Joggers-Bufanda-Saco).
+                    Subcategoria_2: (Elige de: Tenis Casual-Corte Skinny-Corte Acampanado-Tenis Deportivo-Mochilas-Chamarra Mezclilla-Corte Wide Leg-Corte Mom-Pijamas-Ropa térmica-Corte Colombiano-Conjunto-Crop Top-Leggings-Boxers-Cacheteros-Brasier-Pantaletas-Falda-Short-Protectores-Corte Vaquero-Baby Dalls-Faja-Overol-Tops-Corte Cargo-Corte Recto-Corte Stretch-Tanga-Bikini-Calcetines tobillo-Trusa-Medias-Calcetines Altos-Calcetines cortos-Camiseta-Corset-Calcetines Medios-Bolsa Formal-Body-Corte Extra Skinny-Corte Slim Fit-Corte Regular Fit-Licras-Top niña-Talla Extra-Chaleco Mezclilla-Vestidos largos-Vestidos cortos).
+                    Subcategoria_3: (Elige de: Algodon-Encaje-Microfibra-Sin costura) o deja en blanco.
+                    Tipo_de_producto: (Elige de: Linea continua-Promocion-Novedad) o deja en blanco.
+                    Nombre_de_producto: Si se encuentra en la imagen, de lo contrario crea un nombre como experto en comercio electrónico mexicano en no más de 5 palabras.
+                    Venta_por_unidad_o_paquete: (Elige uno: paquete-unidad).
+                    Tipo_de_unidad: (Elige uno: Kit-Piezas-Paquetes).
+                    Unidades_por_paquete: Si se indica en la imagen, de lo contrario dejar en blanco.
+                    Marca: Si no está presente, dejar en blanco.
+                    Material_composicion_y_porcentajes: Si se indica en la imagen, dejar en blanco.
+                    Importado_o_hecho_en_mexico: (Elige uno: Importado-Hecho en mexico).
+                    Colores_presentes_en_producto: (Elige uno: varios colores (lista colores sin comas)-un color).
+                    Tallas: Si se indica en la imagen, dejar en blanco.
+                    Observaciones: Anota cualquier observación relevante del producto en no más de 20 palabras.
+                    Formato de documento csv:
+                    Responde organizando la información extraída en un formato de tabla CSV.
+                    Cada línea debe representar un producto o una imagen.
+                    No incluyas tildes en la respuesta.
+                    Si enumeras elementos, sepáralos con guiones, no comas.
+                    No omitas ningún campo; deja en blanco si no hay información disponible.
+                    Ejemplo:
+                    codigo_de_producto, Categoria_padre, Categoria_hijo, Subcategoria_1, Subcategoria_2, Subcategoria_3, Tipo_de_producto, Nombre_de_producto, Venta_por_unidad_o_paquete, Tipo_de_unidad, Unidades_por_paquete, Marca, Material_composicion_y_porcentajes, Importado_o_hecho_en_mexico, Colores_presentes_en_producto, Tallas, Observaciones
+                    12345, mujer, Ropa, Blusas, Corte Slim Fit, Algodon, Novedad, Blusa elegante, unidad, Piezas, 1, Zara, Algodon 100%, Importado, varios colores rojo-azul-verde, M-L, Sin observaciones
+                    Instrucciones: Usa este formato para extraer y organizar la información de cada imagen de producto proporcionada.
                     """
                 },
             ],
@@ -165,8 +174,7 @@ def ingreso_imagenes():
                         df = pd.concat([df, temporal_df], ignore_index=True)
                     
                     else:
-                        reply = response.choices[0].message.content
-                        rows = reply.splitlines()[1:-1]
+                        rows = response
 
                         splitted_line = rows[1].split(",")
                         splitted_line.append(urls[i])
