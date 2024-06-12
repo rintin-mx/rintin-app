@@ -41,12 +41,20 @@ def send_prompt(new_message):
 
         reply = chat_completion.choices[0].message.content.splitlines()
         label_index = reply.index('codigo_de_producto, Categoria_padre, Categoria_hijo, Subcategoria_1, Subcategoria_2, Subcategoria_3, Tipo_de_producto, Nombre_de_producto, Venta_por_unidad_o_paquete, Tipo_de_unidad, Unidades_por_paquete, Marca, Material_composicion_y_porcentajes, Importado_o_hecho_en_mexico, Colores_presentes_en_producto, Tallas, Observaciones')
+
+        # Caso respuesta de GPT no incluye el formato con los labels
+        if label_index == -1:
+            return "no_labels"
+        
+        # Caso respuesta de GPT no tiene la columna de descripción del producto
         if len(reply) - 1 < label_index + 1:
-            return "Empty"
-        else:
-            return reply[label_index:label_index+2]
+            return "empty_description"
+        
+        return reply[label_index:label_index+2]
 
     except Exception as e:
+
+        # Caso GPT responde con error por exceso de TOKENS
         print(e)
         return False
 
@@ -118,6 +126,8 @@ def ingreso_imagenes():
     next_button = st.button("Avanzar")
     placeholder = st.empty()
     next_spinner = st.spinner("Generando propiedades")
+    if st.session_state["overload"]:
+        st.error("Error de envío de imágenes. Escoja menos imágenes a enviar para reducir la carga.")
 
     st.divider()
 
@@ -162,9 +172,9 @@ def ingreso_imagenes():
                     response = send_prompt(prompt_messages)
 
                     if response == False:
-                        st.error("Error de envío de imágenes. Escoja menos imágenes a enviar para reducir la carga.")
+                        break
 
-                    if response == "Empty":
+                    if response == "empty_description" or response == "no_labels":
                         row = []
                         for j in range(len(labels) - 1):
                             row.append("")
@@ -172,7 +182,6 @@ def ingreso_imagenes():
                         row.append(urls[i])
                         temporal_df = pd.DataFrame([row], columns = labels)
                         df = pd.concat([df, temporal_df], ignore_index=True)
-                    
                     else:
                         rows = response
 
@@ -192,10 +201,14 @@ def ingreso_imagenes():
                         
                     prompt_messages[0]["content"].pop(1)
 
-                st.session_state['response_df'] = df
-                st.session_state['current_view'] = 'revision_de_informacion'
-                st.session_state['creacion_productos_urls'] = urls
-                st.rerun()
+                if response == False:
+                    st.session_state["overload"] = True
+                    st.rerun()
+                else:
+                    st.session_state['response_df'] = df
+                    st.session_state['current_view'] = 'revision_de_informacion'
+                    st.session_state['creacion_productos_urls'] = urls
+                    st.rerun()
             
     else:
         if not day_off:
@@ -236,6 +249,8 @@ def revision_info(urls, df):
             del st.session_state['creacion_productos_urls']
         if 'response_df' in st.session_state:
             del st.session_state['response_df']
+        if 'overload' in st.session_state:
+            del st.session_state['overload']
         
         st.session_state['current_view'] = 'creacion_producto_ia'
         st.rerun()
