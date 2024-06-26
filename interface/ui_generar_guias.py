@@ -14,7 +14,8 @@ operadores_list = [
     'ogramak',
     'redpack',
     'fedex',
-    'tiui'
+    'tiui',
+    'klozer'
 ]
 
 def UIgenerar_guias_final(order_string, child_list):
