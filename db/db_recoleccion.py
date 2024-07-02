@@ -84,7 +84,13 @@ def get_seller_recollection(db='repl') -> dict:
                         WHEN `meta_key` = 'bodega' THEN `meta_value`
                         ELSE NULL
                     END
-                    ) AS `bodega`
+                    ) AS `bodega`,
+                    max(
+                    CASE
+                        WHEN `meta_key` = 'wa_group_id' THEN `meta_value`
+                        ELSE NULL
+                    END
+                    ) AS `wa_group_id`
                 FROM
                     wp_usermeta
                     INNER JOIN ordermeta ON dokan_vendor_id = user_id
@@ -123,7 +129,8 @@ def get_seller_recollection(db='repl') -> dict:
                 seller_name,
                 count(DISTINCT ordermeta.order_id) AS num_pedidos,
                 sum(order_quantity) AS num_paquetes,
-                sum(reemplazado) as productos_reemplazados
+                sum(reemplazado) as productos_reemplazados,
+                wa_group_id
                 FROM
                 ordermeta
                 INNER JOIN sellers ON sellers.user_id = dokan_vendor_id
@@ -156,7 +163,7 @@ def get_seller_recollection(db='repl') -> dict:
     minutes = int(duration // 60)
     seconds = int(duration % 60)
     print(f"El script se ejecutó en {minutes} minutos y {seconds} segundos.")
-    seller_recolection.columns = ['seller', 'pedidos','paquetes', 'reemplazos']
+    seller_recolection.columns = ['seller', 'pedidos','paquetes', 'reemplazos', 'wa_group_id']
     total_pedidos = seller_recolection['pedidos'].sum()
     total_paquetes = seller_recolection['paquetes'].sum()
     total_registros = len(seller_recolection)

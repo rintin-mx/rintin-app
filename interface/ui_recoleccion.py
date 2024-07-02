@@ -10,7 +10,13 @@ from db.db_order import insert_order_metadata
 from db.db_user_interaction_events import event_instert
 from db.db_recoleccion import get_substitute_prod
 import streamlit_shadcn_ui as ui
-import time
+import asyncio
+
+from integration.endpoint_whapi import send_post_request_to_api
+
+async def send_whapi_message(wa_group_id, message):
+    result = await send_post_request_to_api(wa_group_id, message)
+    return result
 
 
 
@@ -78,7 +84,7 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
     header_col5.write("")
     for index, vendedor in df.iterrows():
         txt = str(vendedor["paquetes"]).split(".")
-        
+        print(vendedor)
         col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
         with col1:
             st.write(str(vendedor["seller"]))
@@ -93,6 +99,8 @@ def UIpendienteRecoleccionSeleccion(total_pedidos, total_paquetes , total_regist
             if st.button("Recolectar", key=f"recolectar_{index}"):
                 EventName,EventAction,EventUser='picking','Se pulso en botón Recolectar',st.session_state.useremail
                 event_instert(EventName,EventAction,EventUser)
+                print(vendedor["wa_group_id"])
+                send_post_request_to_api(vendedor["wa_group_id"], "¡Nuestro recolector ya esta saliendo para tu tienda!")
                 st.session_state.Seller_name = vendedor["seller"]
                 print("st.session_state.Seller_name")
                 print(st.session_state.Seller_name)
