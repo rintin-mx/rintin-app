@@ -270,8 +270,8 @@ def ui_descargar_bitacora(data_general, data_detalle, fees):
         pdf.set_font('Arial', '', 10)
         pdf.cell(35, 10, f"Dirección cliente: ",border=1)
         pdf.set_font('Arial', '', 8)
-        pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index]}"
-                        + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:]}",border=1,align='C')
+        pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index].encode('latin-1', 'replace').decode('latin-1')}"
+                        + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:].encode('latin-1', 'replace').decode('latin-1')}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Teléfono del cliente: ",border=1)
         pdf.set_font('Arial', '', 10)
@@ -279,8 +279,8 @@ def ui_descargar_bitacora(data_general, data_detalle, fees):
         pdf.set_font('Arial', '', 10)
         pdf.cell(45, 10, f"Comentarios de entrega: ",border=1)
         pdf.set_font('Arial', '', 8)
-        pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios]}"
-                        + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:]}",border=1,align='C')
+        pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios].encode('latin-1', 'replace').decode('latin-1')}"
+                        + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:].encode('latin-1', 'replace').decode('latin-1')}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Método de pago: ",border=1)
         pdf.set_font('Arial', 'B', 10)
