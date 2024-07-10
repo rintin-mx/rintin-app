@@ -5,6 +5,7 @@ import streamlit_shadcn_ui as ui
 from streamlit_searchbox import st_searchbox
 from st_mui_table import st_mui_table
 import asyncio
+import sys
 
 import base64
 from fpdf import FPDF
@@ -122,8 +123,8 @@ def UIdetalleBitacora(data_general, data_detalle, fees):
         pdf.set_font('Arial', '', 10)
         pdf.cell(35, 10, f"Dirección cliente: ",border=1)
         pdf.set_font('Arial', '', 8)
-        pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index]}"
-                        + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:]}",border=1,align='C')
+        pdf.multi_cell(150, 5, f"{str(data_general['shipping_addres'][0])[:partition_index].encode('latin-1', 'replace').decode('latin-1')}"
+                        + "\n" + f"{str(data_general['shipping_addres'][0])[partition_index:].encode('latin-1', 'replace').decode('latin-1')}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Teléfono del cliente: ",border=1)
         pdf.set_font('Arial', '', 10)
@@ -131,8 +132,8 @@ def UIdetalleBitacora(data_general, data_detalle, fees):
         pdf.set_font('Arial', '', 10)
         pdf.cell(45, 10, f"Comentarios de entrega: ",border=1)
         pdf.set_font('Arial', '', 8)
-        pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios]}"
-                        + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:]}",border=1,align='C')
+        pdf.multi_cell(150, 5, f"{str(data_general['comentarios_entrega'][0])[:partition_index_comentarios].encode('latin-1', 'replace').decode('latin-1')}"
+                        + "\n" + f"{str(data_general['comentarios_entrega'][0])[partition_index_comentarios:].encode('latin-1', 'replace').decode('latin-1')}",border=1,align='C')
         pdf.set_font('Arial', '', 10)
         pdf.cell(40, 10, f"Método de pago: ",border=1)
         pdf.set_font('Arial', 'B', 10)
@@ -284,7 +285,7 @@ def UIdetalleBitacora(data_general, data_detalle, fees):
         pdf.cell(100,5, 'Este detalle NO es referencia de lo que contiene el paquete ni del total a pagar', align='C')
         pdf.image("imagen/frase_resalto_inicial.png", x = 10, y = 200, w = 200, h = 10)
         pdf.image("imagen/rintin_telefono.png", x = 230, y = 190, w = 60, h = 28)
-        html = create_download_link(pdf.output(dest="S").encode('latin-1'), 'Bitacora pedido ' + str(data_general['order_id'][0]))
+        html = create_download_link(pdf.output(dest="S").encode('latin-1', 'ignore'), 'Bitacora pedido ' + str(data_general['order_id'][0]))
         st.markdown(html, unsafe_allow_html=True)
 
     if st.button('Regresar al Inicio'):
