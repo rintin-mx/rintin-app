@@ -56,7 +56,7 @@ def get_lista_ordenes_padre(db='repl'):
 final_helper as(
 select 
 	post_parent,
-	count(case when post_status not in ('wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces') then id else null end) as ordenes_activas,
+	count(id) as ordenes_activas,
 	count(case when post_status = 'wc-agrupar-pedidos' then id else null end) as pedidos_auditados,
     group_concat(case when post_status not in ('wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces') then id else null end separator ', ') as hijos_en_proceso
 from 
@@ -87,7 +87,6 @@ where
 	from wp_posts 
 	where post_type = 'shop_order' and post_parent != 0
     )
-    and post_status not in ('wc-pendientes_ograma', 'wc-failed', 'wc-caducado', 'wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces')
 )
 select post_parent as order_id, 
 hijos_en_proceso as hijos
@@ -210,6 +209,8 @@ select
     group_concat(case when post_parent != 0 then ID end separator ',') as pedidos_hijos
 from
 	wp_posts
+where
+	post_type = 'shop_order'
 group by
 	post_parent
 )
