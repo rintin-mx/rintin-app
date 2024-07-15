@@ -40,7 +40,7 @@ def send_prompt(new_message):
         )
 
         reply = chat_completion.choices[0].message.content.splitlines()
-        label_index = reply.index('codigo_de_producto, Categoria_padre, Categoria_hijo, Subcategoria_1, Subcategoria_2, Subcategoria_3, Tipo_de_producto, Nombre_de_producto, Venta_por_unidad_o_paquete, Tipo_de_unidad, Unidades_por_paquete, Marca, Material_composicion_y_porcentajes, Importado_o_hecho_en_mexico, Colores_presentes_en_producto, Tallas, Observaciones')
+        label_index = reply.index('codigo_de_producto, Categoria_padre, Categoria_hijo, Subcategoria_1, Subcategoria_2, Subcategoria_3, Tipo_de_producto, Nombre_de_producto, Venta_por_unidad_o_paquete, Tipo_de_unidad, Unidades_por_paquete, Marca, Material_composicion_y_porcentajes, Importado_o_hecho_en_mexico, Colores_presentes_en_producto, Blank, Tallas, Observaciones')
 
         # Caso respuesta de GPT no tiene la fila de labels
         if label_index == -1:
@@ -82,14 +82,15 @@ def ingreso_imagenes():
                     Subcategoria_2: (Dependiendo de la eleccion en Subcategoria_1, si escogiste Blusas: Body, Corset, Crop Top, Tops, Bluson; Calcentines y Calceteria: Calceta, Calcetines Altos, Calcetines Cortos, Calcetines Medios, Calcetines Tobillo, Medias, Protectores; Jeans: Short, Chaleco Mezclilla, Corte Colombiano, Corte Mom, Talla Extra, Overol, Corte Acampanado, Vestidos Cortos, Faldas, Chamarra Mezclilla, Corte Skinny, Corte Slim Fit, Corte Extra Skinny, Corte Regular Fit, Cargo, Corte Recto; Pantalones: Cargo, Acampanado; Ropa Deportiva: Licras, Tops, Conjunto, Short; Vestidos: Vestidos Cortos, Vestidos Largos; Ropa Interior: Bikini, Boxers, Brasier, Cachetero, Conjuntos, Faja, Pantaletas, Tanga, Top, Top Niña, Trusa. Si no hay una categoría que se ajuste dentro de las opciones en la eleccion de subcategoria_1, dejar en blanco).
                     Subcategoria_3: (Dependiendo de la eleccion en Subcategoria_2, si escogiste Bikini: Algodon, Microfibra, Sin Costura, Encaje; Boxers: Algodon, Microfibra, Sin Costura, Encaje; Cachetero: Sin Costura, Encaje; Pantaletas: Algodon, Microfibra, Sin Costura, Encaje; Tanga: Algodon, Microfibra, Sin Costura, Encaje; Top: Algodon, Microfibra, Sin Costura, Encaje; Trusa: Algodon, Microfibra. Si no hay una categoría que se ajuste dentro de las opciones en la eleccion de subcategoria_2, dejar en blanco)
                     Tipo_de_producto: (Elige de: Linea continua-Promocion-Novedad) o deja en blanco.
-                    Nombre_de_producto: Si se encuentra en la imagen, de lo contrario crea un nombre como experto en comercio electrónico mexicano en no más de 5 palabras.
+                    Nombre_de_producto: Si se encuentra en la imagen, de lo contrario crea un nombre como experto en comercio electrónico mexicano en no más de 5 palabras. Escribe la primera letra de cada palabra en mayúscula.
                     Venta_por_unidad_o_paquete: (Elige uno: paquete-unidad).
                     Tipo_de_unidad: (Elige uno: Kit-Piezas-Paquetes).
                     Unidades_por_paquete: Si se indica en la imagen, de lo contrario dejar en blanco.
                     Marca: Si no está presente, dejar en blanco.
                     Material_composicion_y_porcentajes: Si se indica en la imagen, dejar en blanco.
                     Importado_o_hecho_en_mexico: (Elige uno: Importado-Hecho en mexico).
-                    Colores_presentes_en_producto: (Elige uno: varios colores (lista colores sin comas)-un color).
+                    Colores_presentes_en_producto: (Elige uno: varios colores (lista colores sin comas)-un color. Escribe la primera letra de cada color en mayúscula y escribe siempre los colores en español).
+                    Blank: Deja un espacio en blanco aquí.
                     Tallas: Si se indica en la imagen, dejar en blanco.
                     Observaciones: Anota cualquier observación relevante del producto en no más de 20 palabras.
                     Formato de documento csv:
@@ -99,8 +100,8 @@ def ingreso_imagenes():
                     Si enumeras elementos, sepáralos con guiones, no comas.
                     No omitas ningún campo; deja en blanco si no hay información disponible.
                     Ejemplo:
-                    codigo_de_producto, Categoria_padre, Categoria_hijo, Subcategoria_1, Subcategoria_2, Subcategoria_3, Tipo_de_producto, Nombre_de_producto, Venta_por_unidad_o_paquete, Tipo_de_unidad, Unidades_por_paquete, Marca, Material_composicion_y_porcentajes, Importado_o_hecho_en_mexico, Colores_presentes_en_producto, Tallas, Observaciones
-                    12345, mujer, Ropa, Blusas, Corte Slim Fit, Algodon, Novedad, Blusa elegante, unidad, Piezas, 1, Zara, Algodon 100%, Importado, varios colores rojo-azul-verde, M-L, Sin observaciones
+                    codigo_de_producto, Categoria_padre, Categoria_hijo, Subcategoria_1, Subcategoria_2, Subcategoria_3, Tipo_de_producto, Nombre_de_producto, Venta_por_unidad_o_paquete, Tipo_de_unidad, Unidades_por_paquete, Marca, Material_composicion_y_porcentajes, Importado_o_hecho_en_mexico, Colores_presentes_en_producto, Blank, Tallas, Observaciones
+                    12345, mujer, Ropa, Blusas, Corte Slim Fit, Algodon, Novedad, Blusa Elegante, unidad, Piezas, 1, Zara, Algodon 100%, Importado, varios colores Rojo-Azul-Verde, , M-L, Sin observaciones
                     Instrucciones: Usa este formato para extraer y organizar la información de cada imagen de producto proporcionada.
                     """
                 },
@@ -161,7 +162,7 @@ def ingreso_imagenes():
                 
                 labels = ["codigo_de_producto", "Categoria_padre", "Categoria_hijo", "Subcategoria_1", "Subcategoria_2", "Subcategoria_3", "Tipo_de_producto", "Nombre_de_producto",
                           "Venta_por_unidad_o_paquete", "Tipo_de_unidad", "Unidades_por_paquete", "Marca", "Material_composicion_y_porcentajes", "Importado_o_hecho_en_mexico",
-                          "Colores_presentes_en_producto", "Tallas", "Observaciones", "Foto"]
+                          "Colores_presentes_en_producto", "Blank", "Tallas", "Observaciones", "Foto"]
                 df = pd.DataFrame(columns = labels)
 
                 for i in range(len(images)):
