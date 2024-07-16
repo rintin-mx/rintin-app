@@ -39,7 +39,7 @@ def UIvisualizarShowroom(data):
             st.write(f"**Seller**: {data['seller'][i]}")
             st.divider()
 
-def UIactualizarShowroom():
+def UIactualizarShowroom(sku_list):
     if 'is_clicked' not in st.session_state:
         st.session_state['is_clicked'] = False
     st.header("Busca un producto")
@@ -48,7 +48,7 @@ def UIactualizarShowroom():
         st.session_state['current_view'] = 'showroom'
         st.rerun()
 
-    sku_seleccionado = st.text_input("Ingresa el SKU:")
+    sku_seleccionado = st.selectbox("Ingresa el SKU:", options= sku_list, index= None, placeholder= "Escribe un SKU o una parte de él")
     confirm_btn = st.button("Buscar", key='confirm_btn')
     if st.session_state.confirm_btn or st.session_state.is_clicked:
         st.session_state.is_clicked = True
@@ -56,7 +56,7 @@ def UIactualizarShowroom():
         
         info_producto = get_one_product_info(sku_seleccionado)
         if pd.DataFrame(info_producto).empty:
-            st.warning("## Este SKU no exitse. Verifique que sea el correcto o ingrese uno diferente.")
+            st.warning("## Este SKU no existe. Verifique que sea el correcto o ingrese uno diferente.")
         else:
             st.image(info_producto['img_url'][0], width=400)
             st.write(f"**SKU**: {info_producto['sku'][0]}")

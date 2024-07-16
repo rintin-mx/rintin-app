@@ -1,6 +1,6 @@
 import streamlit as st
 
-from db.db_stock_showroom import get_products
+from db.db_stock_showroom import get_products, get_all_skus
 from db.db_user_interaction_events import event_instert
 from interface.ui_stock_showroom import UIactualizarShowroom, UIfinalizarActualizacion, UIstartPage, UIvisualizarShowroom
 
@@ -30,8 +30,9 @@ def app():
         if st.session_state.current_view == 'actualizar_showroom':
             if st.session_state.useremail is not None:
                 EventName,EventAction,EventUser='actualizar_showroom','acceso a las vista actualizar_showroom',st.session_state.useremail
+                sku_list = get_all_skus()
                 event_instert(EventName,EventAction,EventUser)
-                UIactualizarShowroom()
+                UIactualizarShowroom(sku_list)
         
         if st.session_state.current_view == 'finalizar_actualizacion':
             if st.session_state.useremail is not None:

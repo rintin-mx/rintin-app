@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 
+from db.db_manejo_stock_unitario import get_all_skus
 from interface.ui_manejo_stock_unitario import finalizar_manejo_stock_unitario, search_product_by_sku
 
 def app():
@@ -14,7 +15,8 @@ def app():
             st.session_state['current_view'] = 'manejo_stock_unitario'
         
         if st.session_state.current_view == 'manejo_stock_unitario':
-            search_product_by_sku()
+            sku_list = get_all_skus()
+            search_product_by_sku(sku_list)
 
         elif st.session_state.current_view == 'finalizar_manejo_stock_unitario':
             finalizar_manejo_stock_unitario(st.session_state.producto_alterado)
