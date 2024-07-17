@@ -79,7 +79,7 @@ group by product_id
             connection.close()
     if len(results) > 0:
         results_df = pd.DataFrame(results)
-        return results_df[0][0]
+        return results_df['stock_count'][0]
     
     return 0
 
