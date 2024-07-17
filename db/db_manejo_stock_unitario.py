@@ -83,6 +83,44 @@ group by product_id
     
     return 0
 
+def get_all_skus(db = 'repl'):
+    # Get all the information needed from the product selected
+
+    # Parameters:
+
+    # Returns:
+    # Dataframe: A Dataframe containing the query results
+    # (SKU)
+
+    config = config_db(db)
+    
+    try:
+        conexion = mysql.connector.connect(**config)
+        # Crear un cursor para ejecutar consultas
+        cursor = conexion.cursor(dictionary=True)
+        
+        all_skus = f"""
+        select
+	meta_value as SKU
+from
+	wp_postmeta
+where
+	meta_key = '_sku'
+        """
+        # Ejecutar la primera consulta
+        cursor.execute(all_skus)
+
+        # Obtener los resultados de la primera consulta
+        resultados_all_skus = cursor.fetchall()
+
+        # Convertir los resultados a un DataFrame de pandas
+        all_skus = pd.DataFrame(resultados_all_skus)
+    finally:
+        # Cerrar el cursor y la conexión
+        cursor.close()
+        conexion.close()
+    return all_skus
+
 def get_one_product(sku, db = 'repl'):
     '''
     Get one product's information (id, name, stock, status, image, units per pack, cost)

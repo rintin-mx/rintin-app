@@ -27,14 +27,14 @@ def off_info():
     """
     st.session_state['show_info_stock_unitario'] = False
 
-def search_product_by_sku():
+def search_product_by_sku(sku_list):
     """
     Frontend for search a product by sku
     """
 
     st.title("Manejo Stock Unitario")
     st.markdown("#### Búsqueda de producto por sku:")
-    selected_sku = st.text_input('Introduzca el SKU:', on_change= off_info)
+    selected_sku = st.selectbox("Ingresa el SKU:", options= sku_list, index= None, placeholder= "Escribe un SKU o una parte de él")
     pressed = st.button("**Buscar**")
 
     if pressed:
