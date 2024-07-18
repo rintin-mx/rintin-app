@@ -136,7 +136,7 @@ ordermeta
 INNER JOIN sellers ON sellers.user_id = dokan_vendor_id
 INNER JOIN order_items ON order_items.order_id = ordermeta.order_id
 INNER JOIN product_order_meta_values ON product_order_meta_values.order_item_id = order_items.order_item_id
-where bodega != 'centro_cdmx'
+where bodega != 'centro_cdmx' or bodega is null
 GROUP BY
 seller_name
         """
