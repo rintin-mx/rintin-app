@@ -96,7 +96,7 @@ def update_product_stock(producto, need_val, sku):
             update_product_status(producto['product_id'])
 
         elif producto['difference'] != 0:
-            update_product_stock_on_db(producto['product_id'], producto['stock_web'], int(producto['stock_web'] + producto['difference']), sku)
+            update_product_stock_on_db(int(producto['stock_web'] + producto['difference']), sku)
             insert_to_stock_count_table(producto['product_id'], producto['stock_web'], producto['active_count'], producto['stock_fisico'], producto['inserted_stock'], producto['difference'], int(producto['stock_web'] + producto['difference']), st.session_state.useremail)
     else:
         insert_to_stock_count_table(producto['product_id'], producto['stock_web'], producto['active_count'], producto['stock_fisico'], producto['inserted_stock'], producto['difference'], int(producto['stock_web'] + producto['difference']), st.session_state.useremail)

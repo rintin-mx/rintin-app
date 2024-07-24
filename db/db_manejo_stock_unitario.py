@@ -240,59 +240,21 @@ def update_product_status(product_id):
             connection.close()
         return False
     
-def update_product_stock_on_db(product_id, actual_stock, new_stock, sku):
+def update_product_stock_on_db(new_stock, sku):
     '''
     Update of product stock made directly in the wp_postmeta table
     
     Parameters:
-    product_id (int): Id of the product
-    actual_stock (int): Previous stock value
     new_stock (int): Stock value to insert
+    sku (string): product's sku
     
     Return: boolean
     '''
-    config = config_db('prod')
     try:
-        connection = mysql.connector.connect(**config)
-        if connection.is_connected():
-            current_utc_time = datetime.utcnow()
-            cst_offset = timedelta(hours=-6)
-            cst_time = current_utc_time + cst_offset
-            mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
-            my_sql_datetime_utc = current_utc_time.strftime('%Y-%m-%d %H:%M:%S')
-            cursor = connection.cursor(dictionary=True, buffered=True)
-            if new_stock != 0:
-                #sql = f"UPDATE wp_postmeta SET meta_value = '{new_stock}' WHERE meta_key = '_stock' AND post_id = {product_id}"
-                #cursor.execute(sql)
-                update_stock_by_sku(sku, str(int(new_stock)))
-                sql = f"UPDATE wp_postmeta SET meta_value = 'instock' WHERE meta_key = '_stock_status' AND post_id = {product_id}"
-                cursor.execute(sql)
-                try:
-                    sql = f"DELETE from wp_term_relationships WHERE object_id = {product_id} and term_taxonomy_id = '212'"
-                    cursor.execute(sql)
-                except Exception:
-                    pass
-                sql = f"UPDATE wp_posts SET post_status = 'publish' WHERE id = {product_id}"
-                cursor.execute(sql)
-            else:
-                #sql = f"UPDATE wp_postmeta SET meta_value = '{new_stock}' WHERE meta_key = '_stock' AND post_id = {product_id}"
-                #cursor.execute(sql)
-                update_stock_by_sku(sku, str(int(new_stock)))
-                sql = f"UPDATE wp_postmeta SET meta_value = 'outofstock' WHERE meta_key = '_stock_status' AND post_id = {product_id}"
-                cursor.execute(sql)
-            sql = "INSERT INTO stock_log (product_id, previous_stock, new_stock, reason, modification_date, modification_date_mx) VALUES (%s, %s, %s, 'Cambio de stock por herramienta interna', %s, %s)"
-            cursor.execute(sql, (product_id, actual_stock, new_stock, my_sql_datetime_utc, mysql_datetime_cst))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return True
-        return False
+        update_stock_by_sku(sku, str(int(new_stock)))
+        return True
     except Exception as e:
         print(e)
-        if 'connection' in locals() and connection.is_connected():
-            cursor.close()
-            connection.close()
-        return False
     
 def insert_to_stock_count_table(product_id, stock_sistema, stock_ordenes_activas, stock_total, stock_contado, diferencias, stock_a_insertar, responsable):
     '''

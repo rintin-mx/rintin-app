@@ -15,4 +15,3 @@ def update_stock_by_sku(sku, qty):
     # requests authentication
     basic = HTTPBasicAuth(user, password)
     response = requests.put(url, json=data, auth=basic)
-    print(response.content)
