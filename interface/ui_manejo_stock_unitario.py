@@ -50,7 +50,7 @@ def search_product_by_sku(sku_list):
         container = st.container()
         with container:
             if not product['product_id'][0] == None:
-                stock_fisico = int(stock_in_order) + int(product['stock'][0])
+                stock_fisico = int(stock_in_order) + int(float(product['stock'][0]))
                 print(stock_fisico)
                 st.write('---')
                 if product["img_url"][0] is not  None:
@@ -65,7 +65,6 @@ def search_product_by_sku(sku_list):
                     st.error('Validacion')
                     need_val = True
                     state = 'necesita validación'
-                
                 boton = st.button("**Terminar Conteo**")
                 respuesta = ui.alert_dialog(show=boton, title="Confirmación de conteo", description=f"El producto ajustado {state}.", confirm_label="Confirmar", cancel_label="Volver", key="alert_dialog_order")
                 if respuesta:
@@ -74,20 +73,20 @@ def search_product_by_sku(sku_list):
                         "inserted_stock": int(inserted_stock),
                         "stock_fisico": stock_fisico,
                         "difference": inserted_stock - stock_fisico,
-                        "stock_web": int(product['stock'][0]),
+                        "stock_web": int(float(product['stock'][0])),
                         "sku": product['sku'][0],
                         "active_count": int(stock_in_order),
                         "product_id": int(product['product_id'][0]),
                         "need_val": need_val
                     }   
-                    update_product_stock(producto, need_val)
+                    update_product_stock(producto, need_val, product["sku"][0])
                     st.session_state.current_view = 'finalizar_manejo_stock_unitario'
                     st.session_state.producto_alterado = producto
                     st.rerun()
             else:
                 st.warning("**Escriba un SKU existente o corrija el escrito.**")
 
-def update_product_stock(producto, need_val):
+def update_product_stock(producto, need_val, sku):
     '''
     Checks if product stock can be automatically updated or needs validation. 
     In case it can be updated, updates the stock, else sends it to validation.
@@ -97,7 +96,7 @@ def update_product_stock(producto, need_val):
             update_product_status(producto['product_id'])
 
         elif producto['difference'] != 0:
-            update_product_stock_on_db(producto['product_id'], producto['stock_web'], int(producto['stock_web'] + producto['difference']))
+            update_product_stock_on_db(producto['product_id'], producto['stock_web'], int(producto['stock_web'] + producto['difference']), sku)
             insert_to_stock_count_table(producto['product_id'], producto['stock_web'], producto['active_count'], producto['stock_fisico'], producto['inserted_stock'], producto['difference'], int(producto['stock_web'] + producto['difference']), st.session_state.useremail)
     else:
         insert_to_stock_count_table(producto['product_id'], producto['stock_web'], producto['active_count'], producto['stock_fisico'], producto['inserted_stock'], producto['difference'], int(producto['stock_web'] + producto['difference']), st.session_state.useremail)
