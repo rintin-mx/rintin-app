@@ -29,7 +29,7 @@ def orderMsjString(objeto, status):
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
     fuente='picking-pickups'
     insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail, 'wc-auditoria-2', 'wc-' + status, 'No hay stock')
-    update_order_product_status(objeto['producto_id'],'validacion')
+    update_order_product_status(objeto['sku'],'validacion_stock')
     linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe pickeo {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
 

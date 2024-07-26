@@ -1,5 +1,7 @@
 # db/script_db.py
 import sys
+
+from integration.cache_api import update_stock_by_sku
 sys.path.append('..')
 
 from config import USER, PASSWORD,HOST,DATABASE,USER_REPLICA,PASSWORD_REPLICA,HOST_REPLICA,DATABASE_REPLICA
@@ -256,34 +258,6 @@ def insert_to_stock_count_table(product_id, stock_sistema, stock_ordenes_activas
             connection.close()
         return False
 
-def update_product_status_bulk(product_id_list):
-    '''
-    Update of product status to proceso_stock
-    
-    Parameters:
-    product_id_list (string): String of concatenated ids separated by ', '
-    
-    Return: boolean
-    '''
-    config = config_db('prod')
-    try:
-        connection = mysql.connector.connect(**config)
-        if connection.is_connected():
-            cursor = connection.cursor(dictionary=True, buffered=True)
-            sql = f"UPDATE wp_posts SET post_status = 'proceso_stock' WHERE id in ({product_id_list})"
-            cursor.execute(sql)
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return True
-        return False
-    except Exception as e:
-        print(e)
-        if 'connection' in locals() and connection.is_connected():
-            cursor.close()
-            connection.close()
-        return False
-
 def update_product_status(product_id, status):
     '''
     Update of product status to proceso_stock
@@ -312,54 +286,18 @@ def update_product_status(product_id, status):
             connection.close()
         return False
 
-def update_product_stock_on_db(product_id, actual_stock, new_stock):
+def update_product_stock_on_db(sku, new_stock):
     '''
     Update of product stock made directly in the wp_postmeta table
     
     Parameters:
-    product_id (int): Id of the product
-    actual_stock (int): Previous stock value
     new_stock (int): Stock value to insert
+    sku (string): product's sku
     
     Return: boolean
     '''
-    config = config_db('prod')
     try:
-        connection = mysql.connector.connect(**config)
-        if connection.is_connected():
-            current_utc_time = datetime.utcnow()
-            cst_offset = timedelta(hours=-6)
-            cst_time = current_utc_time + cst_offset
-            mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
-            my_sql_datetime_utc = current_utc_time.strftime('%Y-%m-%d %H:%M:%S')
-            cursor = connection.cursor(dictionary=True, buffered=True)
-            if new_stock != 0:
-                sql = f"UPDATE wp_postmeta SET meta_value = '{new_stock}' WHERE meta_key = '_stock' AND post_id = {product_id}"
-                cursor.execute(sql)
-                sql = f"UPDATE wp_postmeta SET meta_value = 'instock' WHERE meta_key = '_stock_status' AND post_id = {product_id}"
-                cursor.execute(sql)
-                try:
-                    sql = f"DELETE from wp_term_relationships WHERE object_id = {product_id} and term_taxonomy_id = '212'"
-                    cursor.execute(sql)
-                except Exception:
-                    pass
-                sql = f"UPDATE wp_posts SET post_status = 'publish' WHERE id = {product_id}"
-                cursor.execute(sql)
-            else:
-                sql = f"UPDATE wp_postmeta SET meta_value = '{new_stock}' WHERE meta_key = '_stock' AND post_id = {product_id}"
-                cursor.execute(sql)
-                sql = f"UPDATE wp_postmeta SET meta_value = 'outofstock' WHERE meta_key = '_stock_status' AND post_id = {product_id}"
-                cursor.execute(sql)
-            sql = "INSERT INTO stock_log (product_id, previous_stock, new_stock, reason, modification_date, modification_date_mx) VALUES (%s, %s, %s, 'Cambio de stock por herramienta interna', %s, %s)"
-            cursor.execute(sql, (product_id, actual_stock, new_stock, my_sql_datetime_utc, mysql_datetime_cst))
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return True
-        return False
+        update_stock_by_sku(sku, str(int(new_stock)), 'cambio_stock_herramienta_interna')
+        return True
     except Exception as e:
         print(e)
-        if 'connection' in locals() and connection.is_connected():
-            cursor.close()
-            connection.close()
-        return False

@@ -145,7 +145,7 @@ def UIDetallePedido(data_deta,idPedido):
             for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
-                        update_order_product_status(objeto['producto_id'],'validacion')
+                        update_order_product_status(objeto['sku'],'validacion_stock')
 
                         # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
                         # este condicional me permite identificar los reemplazados
@@ -183,7 +183,7 @@ def UIDetallePedido(data_deta,idPedido):
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
-                        update_order_product_status(objeto['producto_id'],'validacion')
+                        update_order_product_status(objeto['sku'],'validacion_stock')
 
                         # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
                         # este condicional me permite identificar los reemplazados

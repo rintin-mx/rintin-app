@@ -53,7 +53,7 @@ def orderDetail(products):
                 st.error('Validacion')
             else:
                 st.success('OK')
-        objArry.append({'product_id': products['product_id'][i], 'ingreso': number, 'no_ingreso': products['line_paquetes'][i] - number, 'razon': razon})
+        objArry.append({'product_id': products['product_id'][i], 'product_sku': products['sku_producto_wp'][i], 'ingreso': number, 'no_ingreso': products['line_paquetes'][i] - number, 'razon': razon})
         if razon == 'Ingresado correctamente':
             ingresos_ok += 1
         elif razon == 'Llegara en otro envio':

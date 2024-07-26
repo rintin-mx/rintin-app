@@ -251,7 +251,7 @@ def update_product_stock_on_db(new_stock, sku):
     Return: boolean
     '''
     try:
-        update_stock_by_sku(sku, str(int(new_stock)))
+        update_stock_by_sku(sku, str(int(new_stock)), 'cambio_stock_herramienta_interna')
         return True
     except Exception as e:
         print(e)
