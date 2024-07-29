@@ -1,5 +1,7 @@
 import sys
 import time
+
+from integration.cache_api import update_stock_by_sku
 sys.path.append('..')
 from typing import List
 import streamlit as st
@@ -8,7 +10,7 @@ import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
-from db.db_productos_validados import insert_productos_validados,update_order_product_status
+from db.db_productos_validados import insert_productos_validados
 from db.db_user_interaction_events import event_instert
 from datetime import datetime
 import streamlit.components.v1 as components
@@ -145,7 +147,7 @@ def UIDetallePedido(data_deta,idPedido):
             for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
-                        update_order_product_status(objeto['sku'],'validacion_stock')
+                        update_stock_by_sku(objeto['sku'], '0','validacion_stock')
 
                         # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
                         # este condicional me permite identificar los reemplazados
@@ -183,7 +185,7 @@ def UIDetallePedido(data_deta,idPedido):
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         lineasProblemas.append(orderMsjString(objeto))
-                        update_order_product_status(objeto['sku'],'validacion_stock')
+                        update_stock_by_sku(objeto['sku'], '0','validacion_stock')
 
                         # Si el producto es reemplazado, tiene más de 8 atributos al guardarlo en el ObjArray, 
                         # este condicional me permite identificar los reemplazados

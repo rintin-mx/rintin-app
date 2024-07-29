@@ -54,23 +54,3 @@ def insert_productos_validados(productID, SKU, usuarioTimestamp, orderID, cantid
         if connection.is_connected():
             cursor.close()
             connection.close()
-
-def update_order_product_stock_and_status(sku, razon) -> dict:
-    '''
-    Update of product stock and status through the wordpress api
-    
-    Parameters:
-    sku (string): product's sku
-    reason (string): reason code to address at the stock_log table
-    
-    Return: boolean
-    '''
-    try:
-        update_stock_by_sku(sku, '0', razon)
-        return True
-    except Exception as e:
-        print(e)
-
- 
-
-
