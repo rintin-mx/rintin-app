@@ -1,5 +1,7 @@
 # db/script_db.py
 import sys
+
+from integration.cache_api import update_stock_by_sku
 sys.path.append('..')
 import streamlit as st
 from config import USER, PASSWORD,HOST,DATABASE,USER_REPLICA,PASSWORD_REPLICA,HOST_REPLICA,DATABASE_REPLICA
@@ -52,32 +54,3 @@ def insert_productos_validados(productID, SKU, usuarioTimestamp, orderID, cantid
         if connection.is_connected():
             cursor.close()
             connection.close()
-
-def update_order_product_status(product_id,estatus) -> dict:
-    db='prod'
-    config = config_db(db)
-    start_time = time.time()
-    try:
-        conexion = mysql.connector.connect(**config)
-        cursor = conexion.cursor(dictionary=True)
-        sql = "UPDATE wp_posts SET post_status = %s WHERE ID=%s"
-        cursor.execute(sql, (estatus,product_id))
-        conexion.commit()
-    finally:
-        # Cerrar el cursor y la conexión
-        cursor.close()
-        conexion.close()
-
-    # Registrar el tiempo de finalización
-    end_time = time.time()
-
-    # Calcular la duración
-    duration = end_time - start_time
-
-    # Convertir a minutos y segundos
-    minutes = int(duration // 60)
-    seconds = int(duration % 60)
-
- 
-
-

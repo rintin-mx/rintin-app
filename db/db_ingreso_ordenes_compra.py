@@ -1,5 +1,7 @@
 
 import sys
+
+from integration.cache_api import update_stock_by_sku
 sys.path.append('..')
 
 from config import USER, PASSWORD,HOST,DATABASE,USER_REPLICA,PASSWORD_REPLICA,HOST_REPLICA,DATABASE_REPLICA
@@ -119,11 +121,7 @@ def insertOCItems(product_list, order_id, responsable):
     """
     db ='prod'
     config = config_db(db)
-    current_utc_time = datetime.utcnow()
-    cst_offset = timedelta(hours=-6)
-    cst_time = current_utc_time + cst_offset
-    mysql_datetime_cst = cst_time.strftime('%Y-%m-%d %H:%M:%S')
-    my_sql_datetime_utc = current_utc_time.strftime('%Y-%m-%d %H:%M:%S')
+
     try:
         connection = mysql.connector.connect(**config)
         if connection.is_connected():
@@ -134,37 +132,13 @@ def insertOCItems(product_list, order_id, responsable):
                 sql = "INSERT INTO ingreso_items_ordenes_compra (id_orden_compra, id_producto_orden_compra, cantidad_ingreso, cantidad_no_ingreso, estado_ingreso, fecha, responsable) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                 cursor.execute(sql, (order_id, value['product_id'], value['ingreso'], value['no_ingreso'], value['razon'], time.strftime('%Y-%m-%d %H:%M:%S'), responsable))
 
-                sql = f"SELECT post_status FROM wp_posts WHERE ID = {value['product_id']}"
-                cursor.execute(sql)
-                post_status = cursor.fetchone()['post_status']
-
                 sql = f"select meta_value from wp_postmeta where meta_key = '_stock' and post_id = {value['product_id']}"
-
                 cursor.execute(sql)
+
                 stock = int(cursor.fetchone()['meta_value'])
 
-                if stock is None or stock < 0:
-                    stock = 0
-                if stock == 0:
-                    sql = f"DELETE from wp_term_relationships WHERE object_id = {value['product_id']} and term_taxonomy_id = '212'"
-                    cursor.execute(sql)
-
                 new_stock = stock + value['ingreso']
-
-                sql = 'UPDATE wp_postmeta SET meta_value = %s WHERE post_id = %s and meta_key = "_stock"'
-                cursor.execute(sql, (new_stock, value['product_id']))
-
-                if new_stock > 0:
-                    sql = 'UPDATE wp_postmeta SET meta_value = %s WHERE post_id = %s and meta_key = "_stock_status"'
-                    cursor.execute(sql, ('instock', value['product_id']))
-                    
-                if post_status != 'pre_ingreso_oc':
-                    sql = "INSERT INTO stock_log (product_id, previous_stock, new_stock, reason, modification_date, modification_date_mx) VALUES (%s, %s, %s, 'Aumento para producto antiguo por ingreso oc', %s, %s)"
-                    cursor.execute(sql, (value['product_id'], stock, new_stock, my_sql_datetime_utc, mysql_datetime_cst))
-                else:
-                    sql = "INSERT INTO stock_log (product_id, previous_stock, new_stock, reason, modification_date, modification_date_mx) VALUES (%s, %s, %s, 'Aumento para producto nuevo por ingreso oc', %s, %s)"
-                    cursor.execute(sql, (value['product_id'], stock, new_stock, my_sql_datetime_utc, mysql_datetime_cst))
-
+                update_stock_by_sku(value['product_sku'], str(int(new_stock)), 'creacion_producto_orden_compra')
 
             connection.commit()
             cursor.close()

@@ -113,7 +113,7 @@ def update_product_stock():
     products_ok_dict = st.session_state['products_ok']
     for product in products_dict:
         update_product_status(product)
-        update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
+        update_product_stock_on_db(products_dict[product]['sku'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
         insert_to_stock_count_table(product, products_dict[product]['stock_web'], products_dict[product]['active_count'], products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'], products_dict[product]['difference'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']), st.session_state.useremail)
     for product in products_ok_dict:
         update_product_status(product)
@@ -246,7 +246,7 @@ def conteo_stock_por_seller():
     with container2:
         st.write('<div class="container_2"></div>', unsafe_allow_html=True)
         for i, product in filtered_products.iterrows():
-            stock_fisico = int(product['active_count']) + int(product['stock'])
+            stock_fisico = int(product['active_count']) + int(float(product['stock']))
             st.write('---')
             if product["img_url"] is not  None:
                 st.image(product["img_url"], use_column_width=True )
@@ -258,5 +258,5 @@ def conteo_stock_por_seller():
             inserted_stock = st.number_input('Conteo físico', min_value=0, step=1, key=f'{i}_number_input', on_change=handle_input_change(i))
             if int(inserted_stock) != stock_fisico:
                 st.error('Validacion')
-            st.checkbox('Conteo completado', key=f'{i}_checkbox', on_change=check_box_change_handler(i, product['cost'], inserted_stock, stock_fisico, int(product['stock']), product["sku"], product['active_count']))
+            st.checkbox('Conteo completado', key=f'{i}_checkbox', on_change=check_box_change_handler(i, product['cost'], inserted_stock, stock_fisico, int(float(product['stock'])), product["sku"], product['active_count']))
 

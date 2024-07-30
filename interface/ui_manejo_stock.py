@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 import streamlit as st
-from db.db_manejo_stock import update_product_status_bulk, update_product_stock_on_db, insert_to_stock_count_table, update_product_status
+from db.db_manejo_stock import update_product_stock_on_db, insert_to_stock_count_table, update_product_status
 import streamlit_shadcn_ui as ui
 from fpdf import FPDF
 import base64
@@ -77,10 +77,10 @@ def update_product_stock():
     products_ok_dict = st.session_state['products_ok']
     for product in products_dict:
         if products_dict[product]['difference'] < 0 and int(abs(products_dict[product]['difference']) * float(products_dict[product]['cost'])) >= 2000:
-
+            
             update_product_status(product, 'proceso_stock')
         elif products_dict[product]['difference'] != 0:
-            update_product_stock_on_db(product, products_dict[product]['stock_web'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
+            update_product_stock_on_db(products_dict[product]['sku'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']))
             insert_to_stock_count_table(product, products_dict[product]['stock_web'], products_dict[product]['active_count'], products_dict[product]['stock_fisico'], products_dict[product]['inserted_stock'], products_dict[product]['difference'], int(products_dict[product]['stock_web'] + products_dict[product]['difference']), st.session_state.useremail)
     for product in products_ok_dict:
         if products_ok_dict[product]['stock_web'] > 0:

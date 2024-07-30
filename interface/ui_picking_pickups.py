@@ -2,6 +2,7 @@
 import sys
 sys.path.append('..')
 
+from integration.cache_api import update_stock_by_sku
 from integration.insert_to_S3 import insertImage
 import streamlit as st
 import pandas as pd
@@ -9,7 +10,7 @@ import streamlit_shadcn_ui as ui
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
 from db.db_user_interaction_events import event_instert
 from datetime import datetime
-from db.db_productos_validados import insert_productos_validados,update_order_product_status
+from db.db_productos_validados import insert_productos_validados
 from db.db_auditoria import get_product_changes
 import asyncio
 
@@ -29,7 +30,7 @@ def orderMsjString(objeto, status):
     fecha_formato_mysql = ahora.strftime('%Y-%m-%d %H:%M:%S')
     fuente='picking-pickups'
     insert_productos_validados(objeto['producto_id'], objeto['sku'], fecha_formato_mysql, objeto['order_id'], objeto['cantidad_sistema'], objeto['cantidad_nueva'],fuente,st.session_state.useremail, 'wc-auditoria-2', 'wc-' + status, 'No hay stock')
-    update_order_product_status(objeto['producto_id'],'validacion')
+    update_stock_by_sku(objeto['sku'], '0','validacion_stock')
     linea = f"Productos {objeto['nombre_producto']} - SKU: {objeto['sku']}\nSe pickeo {objeto['cantidad_nueva']} de {objeto['cantidad_sistema']}"
     return linea
 
