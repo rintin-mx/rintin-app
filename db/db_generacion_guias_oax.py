@@ -27,40 +27,6 @@ def config_db(db='repl') -> dict:
         }
     return config
 
-def update_order_metadata(order_id, num_guia, logis_op):
-    config = config_db('prod')
-    
-    try:
-        connection = mysql.connector.connect(**config)
-        if connection.is_connected():
-            cursor = connection.cursor(dictionary=True, buffered=True)
-            # Consulta SQL para insertar datos
-            # Sentencia SQL para insertar datos
-            sql = "SELECT * FROM wp_postmeta WHERE post_id = %s AND meta_key = '_numero_guia_interno'"
-            cursor.execute(sql, (order_id,))
-            if cursor.rowcount == 0:
-                sql = "INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (%s, '_numero_guia_interno', %s)"
-                cursor.execute(sql, (order_id, num_guia))
-            else:
-                sql = "UPDATE wp_postmeta SET meta_value = %s WHERE meta_key = '_numero_guia_interno' AND post_id = %s "
-                cursor.execute(sql, (num_guia, order_id))
-
-            sql = "SELECT * FROM wp_postmeta WHERE post_id = %s AND meta_key = '_logis_op_interno'"
-            cursor.execute(sql, (order_id,))
-            if cursor.rowcount == 0:
-                sql = "INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (%s, '_logis_op_interno', %s)"
-                cursor.execute(sql, (order_id, logis_op))
-            else:
-                sql = "UPDATE wp_postmeta SET meta_value = %s WHERE meta_key = '_logis_op_interno' AND post_id = %s "
-                cursor.execute(sql, (logis_op, order_id))
-            
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return True
-    except Exception as e:
-        return False
-
 def get_ordenes_generar_guia(db='repl') -> dict:
     config = config_db(db)
     try:

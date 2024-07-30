@@ -1,12 +1,14 @@
 # db/script_db.py
 import sys
+
+from integration.cache_api import update_order_metadata
 sys.path.append('..') 
 import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
-from db.db_order import insert_order_metadata
+
 from db.db_user_interaction_events import event_instert
 from db.db_recoleccion import get_substitute_prod
 import streamlit_shadcn_ui as ui
@@ -210,7 +212,8 @@ def UIagrerPedidoSellerSeleccion(data):
                     if pedido['noReco']!="No motivo":
                         
                         meta_key='_no_motivo_recoleccion'
-                        insert_order_metadata(pedido['order_id'],meta_key,pedido['noReco'])
+
+                        update_order_metadata([pedido['order_id']], meta_key, pedido['noReco'])
                         EventName,EventAction,EventUser='picking','Se ejecuto insert_order_metadata',st.session_state.useremail
                         event_instert(EventName,EventAction,EventUser)
                         st.session_state.flag = True

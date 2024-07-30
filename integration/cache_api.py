@@ -29,3 +29,30 @@ def update_stock_by_sku(sku, qty, source):
     basic = HTTPBasicAuth(user, password)
     response = requests.put(url, json=data, auth=basic)
     print(response.content)
+
+def update_order_metadata(order_ids, key, value):
+
+    '''
+    Update various order metadata
+
+    params:
+    order_ids ([]str): order ids
+    key (str): metadata key
+    value (str): metadata value
+
+    returns: nothing
+    '''
+
+    url = f"https://rintin.mx/wp-json/rintin/v1/orders/update-meta"
+    # Credenciales para la autenticación Basic Auth
+    user = USER_WORDPRESS
+    password = PASSWORD_WORDPRESS
+    data = {
+        "order-ids": order_ids,
+        "meta-key": key,
+        "meta-value": value
+    }
+    # requests authentication
+    basic = HTTPBasicAuth(user, password)
+    response = requests.put(url, json=data, auth=basic)
+    print(response.content)

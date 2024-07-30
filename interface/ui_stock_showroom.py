@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 
-from db.db_stock_showroom import get_one_product_info, update_stock_showroom
+from db.db_stock_showroom import get_one_product_info
+from integration.cache_api import update_order_metadata
 
 def UIstartPage():
     st.write("###")
@@ -73,11 +74,8 @@ def UIactualizarShowroom(sku_list):
             new_stock = st.number_input('Nuevo Stock en Showroom', min_value=0, step=1)
 
             if st.button("**Actualizar stock en showroom**"):
-                
-                if info_producto['stock_showroom'][0] is None:
-                    update_stock_showroom(info_producto['product_id'][0], new_stock, True)
-                else:
-                    update_stock_showroom(info_producto['product_id'][0], new_stock, False)
+
+                update_order_metadata([info_producto['product_id'][0]], '_stock_shr', str(new_stock))
                 
                 st.session_state.current_view = 'finalizar_actualizacion'
                 st.session_state.shr_prod_sku = info_producto['sku'][0]
