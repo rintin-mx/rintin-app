@@ -3,19 +3,15 @@ import sys
 sys.path.append('..')
 from typing import List
 import streamlit as st
-from st_mui_dialog import st_mui_dialog
 import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
-from db.db_productos_validados import insert_productos_validados,update_order_product_status
+from db.db_productos_validados import insert_productos_validados
 from db.db_user_interaction_events import event_instert
 from datetime import datetime
-import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
-from db.db_auditoria import get_order_auditoria, get_product_changes
-import random
-from st_material_table import st_material_table
+from db.db_auditoria import  get_product_changes
 from st_mui_table import st_mui_table
 
 noAuditoriaOpt = ['No llego', 'Llego otro producto']

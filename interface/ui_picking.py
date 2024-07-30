@@ -13,7 +13,7 @@ from db.db_productos_validados import insert_productos_validados
 from db.db_user_interaction_events import event_instert
 from db.db_auditoria import get_product_changes
 from datetime import datetime
-import streamlit.components.v1 as components
+
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
