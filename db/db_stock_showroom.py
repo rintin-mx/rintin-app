@@ -170,34 +170,3 @@ having
         cursor.close()
         conexion.close()
     return products_in_showroom
-
-def update_stock_showroom(product_id, new_stock_showroom, should_create):
-      
-    # Update metadata 'stock_shr'
-
-    # Parameters:
-    # product_id, new_stock_showroom
-
-    # Returns:
-    # False
-
-        db = 'prod'
-        config = config_db(db)
-        
-        try:
-            connection = mysql.connector.connect(**config)
-
-            if connection.is_connected():
-                cursor = connection.cursor(dictionary=True)
-                if should_create:
-                    sql = f"INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES ({product_id}, '_stock_shr', {new_stock_showroom})"
-                else:
-                    sql = f"update wp_postmeta set meta_value = {new_stock_showroom} where meta_key = '_stock_shr' and post_id = {product_id}"
-                cursor.execute(sql)
-                connection.commit()
-                cursor.close()
-                connection.close()
-                return True
-            return False
-        except Exception as e:
-            return False

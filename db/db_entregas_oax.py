@@ -1,5 +1,7 @@
 # db/script_db.py
 import sys
+
+from integration.cache_api import update_order_metadata
 sys.path.append('..')
 
 from config import USER, PASSWORD,HOST,DATABASE,USER_REPLICA,PASSWORD_REPLICA,HOST_REPLICA,DATABASE_REPLICA
@@ -338,8 +340,7 @@ def update_route_order_status(route_id, order_id, status, reason, img_url):
 				status_for_route_order= 'failed'
 				sql = f"UPDATE entrega_ordenes SET razon_no_entrega = '{reason}' WHERE order_id = {order_id}"
 				cursor.execute(sql)
-				sql = f"UPDATE wp_postmeta SET meta_value = '{reason}' WHERE post_id = {order_id} and meta_key = '_razon_no_entrega'"
-				cursor.execute(sql)
+				update_order_metadata([order_id], '_razon_no_entrega', reason)
 			sql = f"UPDATE ordenes_de_ruta SET estado = '{status_for_route_order}' WHERE order_id = {order_id} and id_ruta = {route_id}"
 			cursor.execute(sql)
 			sql = f"UPDATE ordenes_de_ruta SET fecha_modificacion = '{current_date}' WHERE order_id = {order_id} and id_ruta = {route_id}"

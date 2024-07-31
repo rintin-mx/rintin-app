@@ -99,14 +99,16 @@ def UIgeneracion_guias_oax(data, order_filter, zone_filter):
         if respuesta:
             with st.spinner('Actualizando ordenes'):
                 for value in objArray:
-                    update_order_metadata(str(value['order_id']), value['numero_guia'], value['paqueteria'])
+                    update_order_metadata([str(value['order_id'])], '_numero_guia', value['numero_guia'])
+                    update_order_metadata([str(value['order_id'])], '_logis_op', value['paqueteria'])
                     if value['hijos'] is None:
                         r2 = asyncio.run(endpoint_update_status_by_order_id(value['order_id'], 'embarque'))
                     else:
                         childs_array = value['hijos'].split(', ')
                         if len(childs_array) > 0:
                             for order_id in childs_array:
-                                update_order_metadata(order_id, value['numero_guia'], value['paqueteria'])
+                                update_order_metadata([str(value['order_id'])], '_numero_guia', value['numero_guia'])
+                                update_order_metadata([str(value['order_id'])], '_logis_op', value['paqueteria'])
                                 r2 = asyncio.run(endpoint_update_status_by_order_id(int(order_id), 'embarque'))
             st.session_state['orders_string'] = order_id_string
             st.session_state['child_list'] = objArray

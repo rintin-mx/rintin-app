@@ -382,39 +382,3 @@ order by meta_value
         return wp_pickeo_general_dict
     else:
         return {}
-
-
-def insert_order_metadata(order_id,meta_key,meta_value ,db='prod') -> dict:
-    config = config_db(db)
-    # Registrar el tiempo de inicio
-    start_time = time.time()
-    try:
-        conexion = mysql.connector.connect(**config)
-        # Crear un cursor para ejecutar consultas
-        cursor = conexion.cursor(dictionary=True)
-        # Preparar la sentencia SQL para insertar datos
-        sql = "INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (%s, %s, %s)"
-
-        # Ejecutar la sentencia SQL
-        cursor.execute(sql, (order_id, meta_key, meta_value))
-
-        conexion.commit()
-
-    finally:
-        # Cerrar el cursor y la conexión
-        cursor.close()
-        conexion.close()
-
-    # Registrar el tiempo de finalización
-    end_time = time.time()
-
-    # Calcular la duración
-    duration = end_time - start_time
-
-    # Convertir a minutos y segundos
-    minutes = int(duration // 60)
-    seconds = int(duration % 60)
-
- 
-
-

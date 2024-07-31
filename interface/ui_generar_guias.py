@@ -1,4 +1,6 @@
 import sys
+
+from integration.cache_api import update_order_metadata
 sys.path.append('..')
 
 import streamlit as st
@@ -6,7 +8,7 @@ import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_order_meta_data, endpoint_update_status_by_order_id
-from db.db_numeros_guia import update_order_metadata
+#from db.db_numeros_guia import update_order_metadata
 
 operadores_list = [
     'estafeta',
@@ -81,14 +83,18 @@ def UIgenerar_guias(data):
                         {"key": '_numero_guia', "value": value['numero_guia']},
                         {"key": '_logis_op', "value": value['paqueteria']}
                     ]
-                    update_order_metadata(str(value['order_id']), value['numero_guia'], value['paqueteria'])
+                    
+                    update_order_metadata([str(value['order_id'])], '_numero_guia', value['numero_guia'])
+                    update_order_metadata([str(value['order_id'])], '_logis_op', value['paqueteria'])
                     if value['childs'] is None:
                         r2 = asyncio.run(endpoint_update_status_by_order_id(value['order_id'], 'embarque'))
                     else:
                         childs_array = value['childs'].split(', ')
                         if len(childs_array) > 0:
                             for order_id in childs_array:
-                                update_order_metadata(order_id, value['numero_guia'], value['paqueteria'])
+                                
+                                update_order_metadata([str(value['order_id'])], '_numero_guia', value['numero_guia'])
+                                update_order_metadata([str(value['order_id'])], '_logis_op', value['paqueteria'])
                                 r2 = asyncio.run(endpoint_update_status_by_order_id(int(order_id), 'embarque'))
             st.session_state['orders_string'] = order_id_string
             st.session_state['child_list'] = new_data
