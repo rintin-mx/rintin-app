@@ -53,6 +53,35 @@ def update_order_metadata(order_ids, key, value):
         "meta-value": value
     }
     # requests authentication
+    print(data["order-ids"])
+    basic = HTTPBasicAuth(user, password)
+    response = requests.put(url, json=data, auth=basic)
+    print(response.content)
+
+def update_product_metadata(product_ids, key, value):
+
+    '''
+    Update various product metadata
+
+    params:
+    product_ids ([]str): order ids
+    key (str): metadata key
+    value (str): metadata value
+
+    returns: nothing
+    '''
+
+    url = f"https://rintin.mx/wp-json/rintin/v1/products/update-meta"
+    # Credenciales para la autenticación Basic Auth
+    user = USER_WORDPRESS
+    password = PASSWORD_WORDPRESS
+    data = {
+        "product-ids": product_ids,
+        "meta-key": key,
+        "meta-value": value
+    }
+    # requests authentication
+    print(data["product-ids"])
     basic = HTTPBasicAuth(user, password)
     response = requests.put(url, json=data, auth=basic)
     print(response.content)

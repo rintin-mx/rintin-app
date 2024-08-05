@@ -213,7 +213,7 @@ def UIagrerPedidoSellerSeleccion(data):
                         
                         meta_key='_no_motivo_recoleccion'
 
-                        update_order_metadata([pedido['order_id']], meta_key, pedido['noReco'])
+                        update_order_metadata([str(pedido['order_id'])], meta_key, pedido['noReco'])
                         EventName,EventAction,EventUser='picking','Se ejecuto insert_order_metadata',st.session_state.useremail
                         event_instert(EventName,EventAction,EventUser)
                         st.session_state.flag = True
