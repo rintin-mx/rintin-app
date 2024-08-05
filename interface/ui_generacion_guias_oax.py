@@ -4,10 +4,10 @@ sys.path.append('..')
 import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
-from integration.cache_api import update_order_metadata
 from datetime import datetime
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_order_meta_data, endpoint_update_status_by_order_id
+from integration.cache_api import update_order_metadata
 
 
 operadores_list = [
