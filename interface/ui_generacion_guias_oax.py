@@ -4,7 +4,7 @@ sys.path.append('..')
 import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
-from db.db_generacion_guias_oax import update_order_metadata
+from integration.cache_api import update_order_metadata
 from datetime import datetime
 import asyncio
 from integration.endpoint_wordpress import endpoint_update_order_meta_data, endpoint_update_status_by_order_id
@@ -107,8 +107,8 @@ def UIgeneracion_guias_oax(data, order_filter, zone_filter):
                         childs_array = value['hijos'].split(', ')
                         if len(childs_array) > 0:
                             for order_id in childs_array:
-                                update_order_metadata([str(value['order_id'])], '_numero_guia', value['numero_guia'])
-                                update_order_metadata([str(value['order_id'])], '_logis_op', value['paqueteria'])
+                                update_order_metadata([order_id], '_numero_guia', value['numero_guia'])
+                                update_order_metadata([order_id], '_logis_op', value['paqueteria'])
                                 r2 = asyncio.run(endpoint_update_status_by_order_id(int(order_id), 'embarque'))
             st.session_state['orders_string'] = order_id_string
             st.session_state['child_list'] = objArray
