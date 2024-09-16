@@ -119,7 +119,9 @@ CASE
 	WHEN (ordenes_activas - pedidos_agrupados) = 0 THEN 'Empaquetar'
 	ELSE 'Faltan Pedidos'
 END AS estado
-from final_helper2 
+from final_helper2
+order by
+	order_id ASC 
         """
 
         # Ejecutar la primera consulta

@@ -87,6 +87,8 @@ def get_seller_centro(db='repl') -> dict:
                 seller_name
             from ordermeta
                 inner join sellers on sellers.user_id = dokan_vendor_id
+            order by
+                ordermeta.order_id asc
         """
         
         # Ejecutar la primera consulta

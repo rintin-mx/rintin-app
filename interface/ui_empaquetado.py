@@ -40,6 +40,7 @@ def UIOrdenesEmpaquetar(data, orders_for_filter):
     else:
         df_data = df
 
+    df_data = df_data.sort_values(by=['order_id'], ascending=True)
     if len(df_data) > 0:
         for i, ordenes in df_data.iterrows():
             st.write("---")
