@@ -101,12 +101,11 @@ def get_all_skus(db = 'repl'):
         cursor = conexion.cursor(dictionary=True)
         
         all_skus = f"""
-        select
-	meta_value as SKU
-from
-	wp_postmeta
-where
-	meta_key = '_sku'
+        select meta_value as SKU
+	from wp_postmeta
+  	inner join wp_posts on wp_postmeta.post_id = wp_posts.ID
+	where meta_key = '_sku'
+  	      and post_author = 1663
         """
         # Ejecutar la primera consulta
         cursor.execute(all_skus)
