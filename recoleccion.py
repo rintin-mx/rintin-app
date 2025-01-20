@@ -1,5 +1,5 @@
 import streamlit as st
-from interface.UIrecoleccion import UIpendienteRecoleccion, UIpendienteRecoleccionSeleccion,UIagrerPedidoSellerSeleccion
+from interface.ui_recoleccion import UIpendienteRecoleccion, UIrecoleccionFinal, UIpendienteRecoleccionSeleccion,UIagrerPedidoSellerSeleccion
 from db.db_recoleccion import get_seller_recollection,get_data_seller_by_name
 import pandas as pd
 
@@ -8,18 +8,12 @@ def app():
     if 'username' in st.session_state:
         if 'current_view' not in st.session_state:
             st.session_state['current_view'] = 'recolect'
-        if st.session_state.current_view== 'pick' or st.session_state.current_view== 'detalle' or st.session_state.current_view== 'auditoria' or  st.session_state.current_view== 'detalleAuditoria' or st.session_state.current_view== 'ordenesAgrupar' or st.session_state.current_view== 'agrupacion' or st.session_state.current_view== 'detalleAgrupacion' or st.session_state.current_view=='ordenesCompra' or st.session_state.current_view=='detalleAuditoria':
+        if st.session_state.current_view in ('revision_de_informacion','creacion_producto_ia','finalizar_manejo_stock_unitario','manejo_stock_unitario','showroom','visualizar_showroom','actualizar_showroom','finalizar_actualizacion','ingreso_pedidos_pickups','pendiente_entrega_pickup','bitacora_pickup','validar_entrega','finalizar_entrega','bitacora','detalle_bitacora','confirmar_baja_proveedor', 'detalle_ordenes_por_seller', 'conteo_stock_por_seller', 'finalizar_manejo_stock','validacion_detalle_ordenes_por_seller', 'validacion_conteo_stock_por_seller', 'validacion_finalizar_manejo_stock', 'ingreso_entregador_oax', 'route_order_detail', 'confirmacion_route_order', 'entregas_oax', 'entrega_order_detail', 'generar_guias_oax', 'generar_guias_oax_final','pickFinal', 'ingresoPickup', 'ingresoPickupFinal', 'final_proceso_picking_pickups','picking_pickups_detalle','picking_pickups','generar_guias', 'generar_guias_final','confirmacion','ingresoOrdenesDetalle','detalleEmpaquetado','finalProcesoEmpaquetado','detalleConfirmacion','finalProcesoConfirmacion','empaquetado', 'detalleAuditoria','finalProceso', 'detalleAgrupacion', 'finalProcesoAgrupacion','pick','recolect','detalle','ordenesAgrupar','agrupacion','ordenesCompraMenu', 'editOrdenesCompra', 'terminar_orden_compra', 'ordenesCompra','auditoria', 'detalleOrdenCompra', 'ingresoOrdenesCompra', 'ordenesCompraCsv'):
             st.session_state['current_view'] = 'recolect'
         # Mostrar la vista correspondiente
         if st.session_state.current_view == 'recolect':
 
             total_pedidos, total_paquetes , total_registros, data =get_seller_recollection()
-            print("total_pedidos")
-            print(total_pedidos)
-            print("total_paquetes")
-            print(total_paquetes)
-            print("total_registros")
-            print(total_registros)
             UIpendienteRecoleccion(total_pedidos, total_paquetes , total_registros, data)
               
         elif st.session_state.current_view == 'recoleccion':
@@ -35,14 +29,18 @@ def app():
             dataBase_df = pd.DataFrame(dataBase)
             data_df = pd.DataFrame(data)
             # Realizamos el inner join
-            df_merged = pd.merge(dataBase_df, data_df, left_on='Seller', right_on='seller_name')
-            df_final=df_merged[["Seller","#Pedidos","num_paquetes","recolectado","order_id"]]
-            df_final.columns = ['seller_name', 'num_pedidos','num_paquetes','recolectado','order_id']
+            df_merged = pd.merge(dataBase_df, data_df, left_on='seller', right_on='seller_name')
+            df_final=df_merged[["seller","pedidos","num_paquetes","recolectado","order_id", "productos_reemplazados"]]
+            df_final.columns = ['seller_name', 'num_pedidos','num_paquetes','recolectado','order_id','productos_reemplazados']
             df_final_dict = df_final.to_dict(orient='list')
             if st.button("regresar a recoleccion"):
                 st.session_state.current_view = 'recoleccion'
                 st.rerun()
             UIagrerPedidoSellerSeleccion(df_final)
+        elif st.session_state.current_view == 'recoleccionFinal':
+            orderList = st.session_state['orderList']
+            orderStr = st.session_state['orderStr']
+            UIrecoleccionFinal(orderList, orderStr)
     else:
         st.markdown(st.session_state.username)
         st.image("imagen/logo_imagen_no_loguado.png", width=300)

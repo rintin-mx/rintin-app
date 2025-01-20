@@ -1,12 +1,14 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 import extra_streamlit_components as stx
-from db.db_UserInteractionEvents import event_instert
+from db.db_user_interaction_events import event_instert
+from db.db_user_app import get_user_permissions_by_email
+import numpy as np
 
 st.set_page_config(
         page_title="Rintin",
 )
-import login,picking, recoleccion, auditoria,logout, cookiesMenu, register,test, register,agrupacion, ordenesCompra
+import validacion_manejo_stock, manejo_stock, ingreso_entregador, entregas_oax, numeros_guia_oax, ingreso_pickup,login,picking_pickups,picking,confirmacion, numeros_guia, empaquetado, recoleccion, ingreso_ordenes_compra , auditoria,logout, cookiesMenu, register, register,agrupacion, ordenes_compra, generar_bitacora, entrega_pedidos_pickup, stock_showroom, manejo_stock_unitario, creacion_producto_ia
 
 @st.cache_resource(experimental_allow_widgets=True)
 def get_manager():
@@ -35,23 +37,43 @@ class MultiApp:
             cookies = cookie_manager.get_all(key="cookie_manager_login:get_all") 
             val=cookie_manager.get(cookie="username")
             valEmail=cookie_manager.get(cookie="useremail")
+            lista_permisos = []
+            permisos={}
+            if valEmail is not None:
+                permisos=get_user_permissions_by_email(valEmail)
+                lista_permisos = [dic['nombre_permiso'] for dic in permisos]
+            default_index=1
             st.session_state.username=val
             st.session_state.useremail=valEmail
-            if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
-                menu=['Logout','Pickeo']
-                pagina=1
-            elif val == 'Usuario Recoleccion':
-                menu=['Logout','Recoleccion']
-                pagina=1
-            elif val== 'operaciones':
-                menu=['Logout','Pickeo','Recoleccion','Auditoria','Agrupacion']
-                pagina=1
-            elif val == 'ismael':
-                menu=['Logout','Auditoria','Agrupacion']
-            elif val in ('francisco', 'JuanMa'):
-                menu=['Logout','Register','Pickeo','Recoleccion','Auditoria', 'Agrupacion','Ordenes de Compra','Cookies','Test']
+            st.session_state.pagina=1
+            # if val in ('Usuario Pickeo','Usuario_Pickeo2' ,'Usuario_Pickeo3','Usuario_Pickeo4'): 
+            #     menu=['Logout','Pickeo', 'Ingreso OC Bodega']
+            #     pagina=1
+            menu=['Login']
+            if len(lista_permisos)==0:
+                if val == 'picker_oaxaca':
+                    menu=['Logout','Pickeo', 'Picking Pickups']
+                    pagina=st.session_state.pagina=1
+                # elif val == 'Usuario Recoleccion':
+                #     menu=['Logout','Recoleccion']
+                #     pagina=1
+                elif val == 'aurea':
+                    menu=['Logout','Confirmación Seller']
+                elif val in ('operaciones','santiago','ivan','leslie','joshua','jesus','morris','emilio','lucero','oscar','jonathan','ismael','ayjpickeo'):
+                    menu=['Logout','Confirmación Seller','Pickeo','Recoleccion','Auditoria' ,'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega']
+                    pagina=st.session_state.pagina=1
+                elif val == ' ivan':
+                    menu=['Logout','Pickeo','Ordenes de Compra', 'Picking Pickups']
+                # elif val == 'ismael':
+                #     menu=['Logout','Auditoria','Agrupacion']
+                elif val in ('francisco', 'JuanMa', 'daniel'):
+                    menu=['Logout', 'Validacion Manejo Stock', 'Manejo Stock','Ingreso Entregas Oaxaca','Register','Entregas Oaxaca','Números de Guía Oaxaca','Pickeo','Ingreso Pickups','Confirmación Seller','Picking Pickups','Recoleccion','Auditoria', 'Agrupacion', 'Empaquetado','Números de Guía','Ordenes de Compra', 'Ingreso OC Bodega','Cookies','Test', 'Generar Bitacora', 'Entrega Pedidos directo en Pickup', 'Stock Showroom', 'Manejo Stock Unitario', 'Creacion Productos IA']
+
             else:
-                menu=['Login']
+                #persona con permisos consedidos por el administrador
+                #y le modulo de permisos
+                menu=lista_permisos
+                st.session_state.pagina=1
             app = option_menu(
                 menu_title='Operaciones',
                 options=menu,
@@ -73,6 +95,41 @@ class MultiApp:
             picking.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción picking',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Picking Pickups':
+            picking_pickups.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción picking pickups',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Ingreso Pickups':
+            ingreso_pickup.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción picking pickups',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Números de Guía Oaxaca':
+            numeros_guia_oax.app()
+        if app == 'Entregas Oaxaca':
+            entregas_oax.app()
+        if app == 'Ingreso Entregas Oaxaca':
+            ingreso_entregador.app()
+        if app == 'Manejo Stock':
+            manejo_stock.app()
+        if app == 'Validacion Manejo Stock':
+            validacion_manejo_stock.app()
+        if app == 'Empaquetado':
+            empaquetado.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción empaquetado',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Números de Guía':
+            numeros_guia.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción numeros de guia',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Confirmación Seller':
+            confirmacion.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción confirmacion',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == "Recoleccion":
             recoleccion.app()
@@ -105,11 +162,39 @@ class MultiApp:
                 EventName,EventAction,EventUser='Main','acceso a la opción agrupacion',valEmail
                 event_instert(EventName,EventAction,EventUser)
         if app == "Ordenes de Compra":
-            ordenesCompra.app()
+            ordenes_compra.app()
             if valEmail is not None:
                 EventName,EventAction,EventUser='Main','acceso a la opción Ordenes de Compra',valEmail
                 event_instert(EventName,EventAction,EventUser)
-        if app=='Test':
-            test.app()
+        if app == 'Ingreso OC Bodega':
+            ingreso_ordenes_compra.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Ingreso Ordenes de Compra Bodega',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Generar Bitacora':
+            generar_bitacora.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Generar Bitacora',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Entrega Pedidos directo en Pickup':
+            entrega_pedidos_pickup.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Ingreso Pedidos Pickup',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Stock Showroom':
+            stock_showroom.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Stock Showroom',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Manejo Stock Unitario':
+            manejo_stock_unitario.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Manejo Stock Unitario',valEmail
+                event_instert(EventName,EventAction,EventUser)
+        if app == 'Creacion Productos IA':
+            creacion_producto_ia.app()
+            if valEmail is not None:
+                EventName,EventAction,EventUser='Main','acceso a la opción Creacion Productos IA',valEmail
+                event_instert(EventName,EventAction,EventUser)
 
     run() 
