@@ -124,3 +124,4 @@ watchdog==3.0.0
 yarl==1.9.4
 zipp==3.17.0
 st_material_table
+dotenv==0.9.9
