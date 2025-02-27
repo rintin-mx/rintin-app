@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 import streamlit as st
-
+import traceback
 import firebase_admin
 from firebase_admin import auth
 from firebase_admin import credentials

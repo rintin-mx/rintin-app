@@ -15,3 +15,4 @@ rintin-16fee-firebase-adminsdk-zcrog-536fdf1dfb.json
 .env
 .idea
 .streamlit
+__pycache__

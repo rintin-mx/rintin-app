@@ -1,6 +1,6 @@
 import streamlit as st
 from interface.ui_auditoria import UITodosLosPedidos,UIDetallePedido,UITFinalizarProceso
-from db.db_auditoria import get_seller_centro,get_order_auditoria, checkForChildStatusses
+from db.db_auditoria import get_seller_centro,get_order_auditoria, checkForChildStatusses, get_order_issues
 from db.db_user_interaction_events import event_instert
 
 def app():
@@ -27,7 +27,8 @@ def app():
                         EventName,EventAction,EventUser='auditoria','acceso a las vista detalleAuditoria',st.session_state.useremail
                         event_instert(EventName,EventAction,EventUser, int(st.session_state['Order_id_auditoria']))  
                         data=get_order_auditoria(int(st.session_state['Order_id_auditoria'])) 
-                        UIDetallePedido(data,int(st.session_state['Order_id_auditoria']))
+                        data_seller_errors=get_order_issues(int(st.session_state['Order_id_auditoria'])) 
+                        UIDetallePedido(data,data_seller_errors,int(st.session_state['Order_id_auditoria']))
                 if st.session_state.current_view == 'finalProceso':
                     EventName,EventAction,EventUser='auditoria','finalProceso detalleAuditoria',st.session_state.useremail
                     event_instert(EventName,EventAction,EventUser, st.session_state['Order_id_auditoria'])  
