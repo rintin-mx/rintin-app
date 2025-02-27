@@ -47,3 +47,5 @@ chat_completion = client.chat.completions.create(
 
 
 reply = chat_completion.choices[0].message.content.splitlines()
+
+print(reply)

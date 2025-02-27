@@ -33,77 +33,72 @@ def get_seller_centro(db='repl') -> dict:
     # Registrar el tiempo de inicio
     config = config_db(db)
     start_time = time.time()
+    
     try:
         conexion = mysql.connector.connect(**config)
-        # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
 
         wp_seller_sql = """
-      WITH filtered_orders AS (
-    SELECT o.id AS order_id
-    FROM wp_posts o
-    LEFT JOIN wp_posts child ON child.post_parent = o.id
-    WHERE o.post_status IN ('wc-auditoria-2', 'wc-rec_ped_aud', 'wc-pedidos_auditar')
-      AND child.id IS NULL
-),
-vendor_info AS (
-    SELECT 
-        pm.post_id AS order_id,
-        pm.meta_value AS vendor_id
-    FROM wp_postmeta pm
-    INNER JOIN filtered_orders fo ON fo.order_id = pm.post_id
-    WHERE pm.meta_key = '_dokan_vendor_id'
-),
-vendors_in_centro AS (
-    SELECT DISTINCT um.user_id
-    FROM wp_usermeta um
-    WHERE um.meta_key = '_zone' AND um.meta_value = 'centro'
-),
-seller_names AS (
-    SELECT 
-        um.user_id,
-        um.meta_value AS seller_name
-    FROM wp_usermeta um
-    WHERE um.meta_key = 'dokan_store_name'
-)
-SELECT 
-    vi.order_id,
-    sn.seller_name
-FROM vendor_info vi
-INNER JOIN vendors_in_centro vic ON vi.vendor_id = vic.user_id
-INNER JOIN seller_names sn ON vi.vendor_id = sn.user_id;
+            WITH filtered_orders AS (
+                SELECT o.id AS order_id
+                FROM wp_posts o
+                LEFT JOIN wp_posts child ON child.post_parent = o.id
+                WHERE o.post_status IN ('wc-auditoria-2', 'wc-rec_ped_aud', 'wc-pedidos_auditar')
+                AND child.id IS NULL
+            ),
+            vendor_info AS (
+                SELECT
+                    pm.post_id AS order_id,
+                    pm.meta_value AS vendor_id
+                FROM wp_postmeta pm
+                INNER JOIN filtered_orders fo ON fo.order_id = pm.post_id
+                WHERE pm.meta_key = '_dokan_vendor_id'
+            ),
+            vendors_in_centro AS (
+                SELECT DISTINCT um.user_id
+                FROM wp_usermeta um
+                WHERE um.meta_key = '_zone' AND um.meta_value = 'centro'
+            ),
+            seller_names AS (
+                SELECT
+                    um.user_id,
+                    um.meta_value AS seller_name
+                FROM wp_usermeta um
+                WHERE um.meta_key = 'dokan_store_name'
+            ),
+            order_info AS (
+                SELECT
+                    vi.order_id,
+                    sn.seller_name
+                FROM vendor_info vi
+                INNER JOIN vendors_in_centro vic ON vi.vendor_id = vic.user_id
+                INNER JOIN seller_names sn ON vi.vendor_id = sn.user_id
+            )
+            SELECT 
+                oi.order_id,
+                oi.seller_name,
+                COALESCE(GROUP_CONCAT(DISTINCT rapi.incidencia SEPARATOR '; '), '-') AS incidencias
+            FROM order_info oi
+            LEFT JOIN wordpress.rintin_auditoria_productos_incidencias rapi 
+                ON oi.order_id = rapi.order_id
+            GROUP BY oi.order_id, oi.seller_name;
         """
         
-        # Ejecutar la primera consulta
         cursor.execute(wp_seller_sql)
-
-        # Obtener los resultados de la primera consulta
         resultados_wp_seller_sql = cursor.fetchall()
 
         # Convertir los resultados a un DataFrame de pandas
         wp_seller = pd.DataFrame(resultados_wp_seller_sql)
 
     finally:
-        # Cerrar el cursor y la conexión
         cursor.close()
         conexion.close()
-        # Registrar el tiempo de finalización
         end_time = time.time()
-
-        # Calcular la duración
         duration = end_time - start_time
 
-        # Convertir a minutos y segundos
-        minutes = int(duration // 60)
-        seconds = int(duration % 60)
-        # Nueva lista de nombres de columnas
-        #wp_seller['estado']='wc-recolectar-2'
-        #wp_seller=wp_seller[['order_id','seller_id','seller_name', 'num_paquetes','estado']]
-        #wp_seller.columns = ['id','Seller', 'num_paquetes','estado','seller_id']
         if len(wp_seller) > 0:
-            wp_seller.columns = ['ID', 'Seller']
-            wp_seller_general_dict = wp_seller.to_dict(orient='list')
-            return wp_seller
+            wp_seller.columns = ['ID', 'Seller', 'Incidencias'] 
+            return wp_seller.to_dict(orient='list')
         else:
             return {}
 
@@ -462,46 +457,78 @@ def checkForChildStatusses(orderId, db='repl'):
         conexion = mysql.connector.connect(**config)
         cursor = conexion.cursor(dictionary=True)
         check_statusses = f"""
-            with orders_grouped_by_parent as (
-	select 
-		post_parent,
-        sum(
-			case
-				when post_status = 'wc-agrupar-pedidos' then 1 
-                else 0
-			end
-        ) as num_agrupados,
-        count(
-            case
-                when post_status not in ('wc-pendientes_ograma','wc-failed', 'wc-caducado','wc-cancelled', 'wc-devuelto', 'wc-devolucion_proces', 'wc-delivered', 'wc-contracargo-ganad', 'wc-contra-cargo', 'wc-refunded', 'wc-reembolso-parcial') then id
-                else null
-            end
-        ) as childs
-	from wp_posts 
-    where post_parent != 0 and post_type = 'shop_order'
-    group by post_parent, post_type
-),
-final as(
-select 
-	id, num_agrupados, childs, wp_posts.post_parent
-from wp_posts 
-inner join orders_grouped_by_parent on wp_posts.post_parent = orders_grouped_by_parent.post_parent
-union
-	select
-		id,
-        case 
-			when post_status = 'wc-agrupar-pedidos' then 1
-            else 0
-		end as num_agrupados,
-        1 as childs,
-        id as post_parent
-	from wp_posts
-    where 
-		post_type = 'shop_order'
-        and post_parent = 0
-        and id not in (select distinct post_parent from wp_posts)
-)
-select * from final where id = {orderId}
+          WITH orders_grouped_by_parent AS (
+                SELECT 
+                    post_parent,
+                    SUM(
+                        CASE
+                            WHEN post_status = 'wc-agrupar-pedidos' THEN 1 
+                            ELSE 0
+                        END
+                    ) AS num_agrupados,
+                    COUNT(
+                        CASE
+                            WHEN post_status NOT IN (
+                                'wc-pendientes_ograma',
+                                'wc-failed',
+                                'wc-caducado',
+                                'wc-cancelled',
+                                'wc-devuelto',
+                                'wc-devolucion_proces',
+                                'wc-delivered',
+                                'wc-contracargo-ganad',
+                                'wc-contra-cargo',
+                                'wc-refunded',
+                                'wc-reembolso-parcial'
+                            ) THEN id
+                            ELSE NULL
+                        END
+                    ) AS childs
+                FROM wp_posts 
+                WHERE post_parent != 0 
+                AND post_type = 'shop_order'
+                GROUP BY post_parent
+            ),
+            final AS (
+                SELECT 
+                    wp_posts.id, 
+                    orders_grouped_by_parent.num_agrupados, 
+                    orders_grouped_by_parent.childs, 
+                    wp_posts.post_parent,
+                    wp_posts.post_date
+                FROM wp_posts 
+                INNER JOIN orders_grouped_by_parent 
+                    ON wp_posts.post_parent = orders_grouped_by_parent.post_parent
+                    
+                UNION
+                
+                SELECT
+                    id,
+                    CASE 
+                        WHEN post_status = 'wc-agrupar-pedidos' THEN 1
+                        ELSE 0
+                    END AS num_agrupados,
+                    1 AS childs,
+                    id AS post_parent,
+                    wp_posts.post_date
+                FROM wp_posts
+                WHERE post_type = 'shop_order'
+                AND post_parent = 0
+                AND id NOT IN (SELECT DISTINCT post_parent FROM wp_posts)
+            )
+            SELECT 
+                f.*,
+                pm.name
+            FROM final f
+            LEFT JOIN (
+                SELECT 
+                post_id, 
+                meta_value AS name
+                FROM wp_postmeta
+                WHERE meta_key = '_billing_first_name'
+            ) pm ON pm.post_id = f.id
+            WHERE f.id =  {orderId};
+
 
         """
         # Ejecutar la primera consulta
@@ -517,8 +544,184 @@ select * from final where id = {orderId}
         cursor.close()
         conexion.close()
     if len(wp_check_statusses) > 0:
-        wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs', 'post_parent']]
+        wp_check_statusses = wp_check_statusses[['id','num_agrupados','childs', 'post_parent','post_date','name']]
         # Nueva lista de nombres de columnas
-        wp_check_statusses.columns = ['id','num_agrupados','childs', 'post_parent']
+        wp_check_statusses.columns = ['id','num_agrupados','childs', 'post_parent','post_date','name']
         wp_check_statusses_general_dict = wp_check_statusses.to_dict(orient='list')
         return wp_check_statusses_general_dict
+
+
+def insert_producto_problema(producto, db='repl'):
+    db = 'prod'
+    config = config_db(db)
+    start_time = time.time()
+
+    # Determinar la incidencia y su detalle
+    incidencia = "Sin incidencia"
+    piezas_faltantes = int(producto['piezas_faltantes']) if 'piezas_faltantes' in producto else 0
+    defectuoso = producto['defectuoso'] if 'defectuoso' in producto and producto['defectuoso'] else None
+
+    if producto['cantidad_nueva'] < producto['cantidad_sistema']:
+        incidencia = "No llegó el producto (paquetes)"
+    if piezas_faltantes > 0:
+        incidencia = "Llegó producto (paquetes) con piezas faltantes"
+    if producto['razon'] == "Defectuoso":
+        incidencia = "Llegó defectuoso"
+
+    try:
+        connection = mysql.connector.connect(**config)
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+            # Consulta SQL para insertar datos
+            insert_query = """
+            INSERT INTO rintin_auditoria_productos_incidencias 
+            (order_id, product_id, nombre_producto, sku, cantidad_sistema, cantidad_nueva, piezas_faltantes, defectuoso, incidencia, estado, seller_id) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+
+            # Datos a insertar
+            event_data = (
+                int(producto['order_id']), 
+                int(producto['producto_id']), 
+                producto['nombre_producto'], 
+                producto['sku'], 
+                int(producto['cantidad_sistema']),
+                int(producto['cantidad_nueva']), 
+                piezas_faltantes, 
+                defectuoso, 
+                incidencia, 
+                "pending",
+                producto.get('seller_id', None)  # Puede ser NULL si no hay seller_id
+            )
+
+            # Ejecutar la consulta
+            cursor.execute(insert_query, event_data)
+            connection.commit()
+            print("Evento insertado correctamente")
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("Conexión cerrada")
+
+def guardar_productos_extra(productos, idPedido, sellerId, db='repl'):
+    """
+    Guarda los productos extra en la base de datos.
+
+    :param db_config: Configuración de conexión a la base de datos.
+    :param productos_extra: Lista de productos extra a guardar.
+    """
+    db = 'prod'
+    config = config_db(db)
+    start_time = time.time()
+    
+    try:
+        connection = mysql.connector.connect(**config)
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+
+            # Consulta SQL para insertar productos extra
+            insert_query = """
+            INSERT INTO rintin_auditorio_productos_extra (order_id, codigo_producto, seller_id, unidad, cantidad) 
+            VALUES (%s, %s, %s, %s, %s)
+            """
+
+            # Insertar cada producto extra en la base de datos
+            for producto in productos:
+                event_data = (
+                    idPedido,
+                    producto["codigo_extra_producto"],
+                    sellerId,
+                    producto["unidad_extra_producto"],
+                    producto["cantidad_extra_producto"]
+                )
+                cursor.execute(insert_query, event_data)
+
+            # Confirmar cambios en la base de datos
+            connection.commit()
+            print(f"✅ {len(productos)} productos extra guardados correctamente en la base de datos.")
+    
+    except mysql.connector.Error as err:
+        print(f"❌ Error al guardar productos extra: {err}")
+    
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("🔌 Conexión cerrada con la base de datos.")
+
+def get_order_issues(order_id, db='repl') -> dict:
+    config = config_db(db)
+    start_time = time.time()
+
+    try:
+        conexion = mysql.connector.connect(**config)
+        cursor = conexion.cursor(dictionary=True)
+
+        # Query con los campos correctos
+        order_issues_sql = """
+            SELECT 
+                id,
+                order_id,
+                product_id,
+                nombre_producto AS order_item_name,
+                sku,
+                cantidad_sistema,
+                cantidad_nueva,
+                piezas_faltantes,
+                defectuoso,
+                incidencia,
+                estado,
+                seller_id,
+                created_at,
+                updated_at
+            FROM wordpress.rintin_auditoria_productos_incidencias
+            WHERE order_id = %s;
+        """
+
+        # Ejecutar la consulta con parámetro seguro
+        cursor.execute(order_issues_sql, (order_id,))
+        resultados_order_issues_sql = cursor.fetchall()
+
+        # Convertir los resultados en un DataFrame de Pandas
+        wp_pickeo = pd.DataFrame(resultados_order_issues_sql)
+
+    except Exception as e:
+        print(f"Error en get_order_issues: {e}")
+        return {}
+
+    finally:
+        cursor.close()
+        conexion.close()
+
+    end_time = time.time()
+    duration = end_time - start_time
+
+    # Validación: Si hay datos, ajustamos nombres de columnas
+    if not wp_pickeo.empty:
+        wp_pickeo.columns = ['ID', 'order_id', 'product_id', 'Producto', 'SKU', 'Cantidad Sistema', 
+                             'Cantidad Nueva', 'Piezas Faltantes', 'Defectuoso', 'Incidencia', 
+                             'Estado', 'Seller ID', 'Creado', 'Actualizado']
+        return wp_pickeo.to_dict(orient='list')  # 🔹 Retorna diccionario con listas
+
+    return {}
+
+
+def get_wa_group_id(seller_id, db='repl'):
+	config = config_db(db)
+	try:
+		connection = mysql.connector.connect(**config)
+		cursor = connection.cursor(dictionary=True)
+		sql = f"select meta_value  from wp_usermeta wu where user_id = '{seller_id}' and meta_key = 'wa_group_id';"
+		cursor.execute(sql)
+		results = cursor.fetchone()
+		cursor.close()
+	finally:
+
+		connection.close()
+		if results is None:
+			return 0
+		else:
+			return results['meta_value']
