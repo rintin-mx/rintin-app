@@ -31,3 +31,19 @@ aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
 
 #aws endpoint
 aws_endpoint_getseller_url=os.getenv('AWS_ENDPOINT_GETSELLER_URL')
+
+
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+
+WORDPRESS_BASE_URL = os.getenv('WORDPRESS_BASE_URL')
+
+WHAPI_URL = os.getenv('WHAPI_URL')
+WHAPI_TOKEN = os.getenv('WHAPI_TOKEN')
+
+WATI_BASE_URL = os.getenv('WATI_BASE_URL')
+WATI_TOKEN = os.getenv('WATI_TOKEN')
+
+AWS_INSERTION_URL = os.getenv('AWS_INSERTION_URL')
+
+BUCKET_NAME = os.getenv('BUCKET_NAME')

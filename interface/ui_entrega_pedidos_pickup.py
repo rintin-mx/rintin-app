@@ -1,5 +1,7 @@
 import asyncio
 import time
+
+from config import BUCKET_NAME
 from integration.endpoint_wordpress import endpoint_update_status_by_order_id
 from fpdf import FPDF
 import streamlit as st
@@ -563,7 +565,7 @@ def ui_validacion_entrega(order_id, number_unified, address, order_items, metodo
         last_product_fail = ''
         img_url = ''
         if photo is not None:
-            img_url = insertOrderImage(photo, order_id, 'rintin-internal-apps')
+            img_url = insertOrderImage(photo, order_id, BUCKET_NAME)
         for product in order_items_con_falla:
             if product['tipo'] == 0:
                 insert_item_problem(product)

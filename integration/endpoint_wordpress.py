@@ -3,11 +3,11 @@ sys.path.append('..')
 
 import aiohttp
 
-from config import USER_WOOCOMMERCE, PASSWORD_WOOCOMMERCE,USER_WOOCOMMERCE_NOTE,PASSWORD_WOOCOMMERCE_NOTE
+from config import USER_WOOCOMMERCE, PASSWORD_WOOCOMMERCE,USER_WOOCOMMERCE_NOTE,PASSWORD_WOOCOMMERCE_NOTE, WORDPRESS_BASE_URL
 #para llamar este método se debe de importar el método y llamarlo de la siguiente manera
 # result = await endpoint_update_status_by_order_id(order_id, order_status)
 async def endpoint_update_status_by_order_id(order_id, order_status):
-    url = f"https://rintin.mx/wp-json/wc/v3/orders/{order_id}"
+    url = f"{WORDPRESS_BASE_URL}/wp-json/wc/v3/orders/{order_id}"
     # Credenciales para la autenticación Basic Auth
     user = USER_WOOCOMMERCE
     password = PASSWORD_WOOCOMMERCE
@@ -29,7 +29,7 @@ async def endpoint_update_status_by_order_id(order_id, order_status):
 
 
 async def endpoint_write_order_note(order_id, order_notes):
-    url = f"https://rintin.mx/wp-json/wc/v3/orders/{order_id}/notes"
+    url = f"{WORDPRESS_BASE_URL}/wp-json/wc/v3/orders/{order_id}/notes"
     # Credenciales para la autenticación Basic Auth
     user = USER_WOOCOMMERCE_NOTE
     password = PASSWORD_WOOCOMMERCE_NOTE
@@ -46,7 +46,7 @@ async def endpoint_write_order_note(order_id, order_notes):
 
 
 async def endpoint_update_order_meta_data(order_id, meta_data):
-    url = f"https://rintin.mx/wp-json/wc/v3/orders/{order_id}"
+    url = f"{WORDPRESS_BASE_URL}/wp-json/wc/v3/orders/{order_id}"
     # Credenciales para la autenticación Basic Auth
     user = USER_WOOCOMMERCE
     password = PASSWORD_WOOCOMMERCE
@@ -55,7 +55,6 @@ async def endpoint_update_order_meta_data(order_id, meta_data):
     }
     async with aiohttp.ClientSession() as session:
         async with session.put(url, auth=aiohttp.BasicAuth(user, password), json=data) as response:
-            json_response = await response.json()
             if response.status == 200:
                 json_response = await response.json()
                 return {"success": True, "message": "Orden actualizada con éxito", "response": json_response}

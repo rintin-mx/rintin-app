@@ -1,6 +1,9 @@
 import aiohttp
 import json
 
+from config import AWS_INSERTION_URL
+
+
 async def make_post_request(url, data):
     '''
     Make an http request to AWS Lambda API
@@ -31,7 +34,7 @@ async def insert_product_to_db(data):
     Params:
     data: dictionary
     '''
-    url = "https://nxmatrad06.execute-api.us-east-2.amazonaws.com/default/streamlit-product-creation"
+    url = AWS_INSERTION_URL
     response = await make_post_request(url, data)
     print(response)
     return response

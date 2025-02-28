@@ -1,4 +1,7 @@
 import sys
+
+from config import WATI_BASE_URL, WATI_TOKEN
+
 sys.path.append('..')
 import json
 
@@ -6,7 +9,7 @@ import aiohttp
 import requests
 
 def send_post_request_to_api(template, parameters, customer_phone_number):
-    api_url = f'https://live-server-11723.wati.io/api/v1/sendTemplateMessage?whatsappNumber={customer_phone_number}'
+    api_url = f'{WATI_BASE_URL}/sendTemplateMessage?whatsappNumber={customer_phone_number}'
     body = {
         "parameters": parameters,
         "broadcast_name": template,
@@ -14,7 +17,7 @@ def send_post_request_to_api(template, parameters, customer_phone_number):
     }
     headers = {
         'content-type': "text/json",  # Note: Adjusted content-type
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NGNmZjI1OS00Nzk4LTRhNTUtYjNkOS0wYjhiODEwNTgzMmIiLCJ1bmlxdWVfbmFtZSI6ImFkbWluQHJpbnRpbi5jbyIsIm5hbWVpZCI6ImFkbWluQHJpbnRpbi5jbyIsImVtYWlsIjoiYWRtaW5AcmludGluLmNvIiwiYXV0aF90aW1lIjoiMDcvMjUvMjAyMyAxNjo1ODowMyIsImRiX25hbWUiOiIxMTcyMyIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFETUlOSVNUUkFUT1IiLCJleHAiOjI1MzQwMjMwMDgwMCwiaXNzIjoiQ2xhcmVfQUkiLCJhdWQiOiJDbGFyZV9BSSJ9.gFGAM_Dc5UfwDrtlruZ649XI2KlGPtE65fGM7nepO7o'
+        'Authorization': f'Bearer {WATI_TOKEN}',
     }
     try:
         response = requests.post(api_url, headers=headers, json=body)

@@ -1,4 +1,7 @@
 import sys
+
+from config import BUCKET_NAME
+
 sys.path.append('..')
 
 import streamlit as st
@@ -268,7 +271,7 @@ def order_detail(order_id, number_unified, address, order_items, route_id, estad
             del orders_dict[order_id]
         img_url = ''
         if photo is not None:
-            img_url = insertOrderImage(photo, order_id, 'rintin-internal-apps')
+            img_url = insertOrderImage(photo, order_id, BUCKET_NAME)
         for product in order_items_con_falla:
             if product['tipo'] == 0:
                 insert_item_problem(product)

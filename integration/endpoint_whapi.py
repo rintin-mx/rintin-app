@@ -1,15 +1,18 @@
 import sys
+
+from config import WHAPI_URL, WHAPI_TOKEN
+
 sys.path.append('..')
 import requests
 
 def send_post_request_to_api(group_id, message):
-    api_url = f'https://gate.whapi.cloud/messages/text'
+    api_url = WHAPI_URL
     body = {
         "to": group_id,
         "body": message,
     }
     headers = { # Note: Adjusted content-type
-        'Authorization': 'Bearer 48XTINC05z564RAMEHkfrh8fXKas5xUX'
+        'Authorization': WHAPI_TOKEN,
     }
     try:
         response = requests.post(api_url, headers=headers, json=body)

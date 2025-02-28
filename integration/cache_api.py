@@ -1,7 +1,8 @@
 import requests
 from requests.auth import HTTPBasicAuth
 
-from config import USER_WORDPRESS, PASSWORD_WORDPRESS
+from config import USER_WORDPRESS, PASSWORD_WORDPRESS, WORDPRESS_BASE_URL
+
 
 def update_stock_by_sku(sku, qty, source):
 
@@ -16,7 +17,7 @@ def update_stock_by_sku(sku, qty, source):
     returns: nothing
     '''
 
-    url = f"https://rintin.mx/wp-json/rintin/v1/product/stock"
+    url = f"{WORDPRESS_BASE_URL}/wp-json/rintin/v1/product/stock"
     # Credenciales para la autenticación Basic Auth
     user = USER_WORDPRESS
     password = PASSWORD_WORDPRESS
@@ -43,7 +44,7 @@ def update_order_metadata(order_ids, key, value):
     returns: nothing
     '''
 
-    url = f"https://rintin.mx/wp-json/rintin/v1/orders/update-meta"
+    url = f"{WORDPRESS_BASE_URL}/wp-json/rintin/v1/orders/update-meta"
     # Credenciales para la autenticación Basic Auth
     user = USER_WORDPRESS
     password = PASSWORD_WORDPRESS

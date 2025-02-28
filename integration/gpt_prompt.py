@@ -1,7 +1,9 @@
 from openai import OpenAI
 
+import config
+
 # API key
-key = "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"
+key = config.OPENAI_API_KEY
 
 client = OpenAI(
     api_key=key,
