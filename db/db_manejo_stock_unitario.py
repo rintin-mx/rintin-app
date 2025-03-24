@@ -110,8 +110,7 @@ from
   wp_posts
   inner join wp_postmeta on wp_postmeta.post_id = wp_posts.ID
 where
-  meta_key = '_proveedor'
-  and meta_value = '1663'
+  post_author= 2166
 )
        """
         # Ejecutar la primera consulta

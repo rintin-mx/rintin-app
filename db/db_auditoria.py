@@ -77,9 +77,9 @@ def get_seller_centro(db='repl') -> dict:
             SELECT 
                 oi.order_id,
                 oi.seller_name,
-                COALESCE(GROUP_CONCAT(DISTINCT rapi.incidencia SEPARATOR '; '), '-') AS incidencias
+                COALESCE(GROUP_CONCAT(DISTINCT rapi.incident_type SEPARATOR '; '), '-') AS incidencias
             FROM order_info oi
-            LEFT JOIN wordpress.rintin_auditoria_productos_incidencias rapi 
+            LEFT JOIN wordpress.rintin_product_incidents_audit rapi 
                 ON oi.order_id = rapi.order_id
             GROUP BY oi.order_id, oi.seller_name;
         """
@@ -551,7 +551,7 @@ def checkForChildStatusses(orderId, db='repl'):
         return wp_check_statusses_general_dict
 
 
-def insert_producto_problema(producto, db='repl'):
+def insert_producto_problema(producto, msg, db='repl'):
     db = 'prod'
     config = config_db(db)
     start_time = time.time()
@@ -562,9 +562,9 @@ def insert_producto_problema(producto, db='repl'):
     defectuoso = producto['defectuoso'] if 'defectuoso' in producto and producto['defectuoso'] else None
 
     if producto['cantidad_nueva'] < producto['cantidad_sistema']:
-        incidencia = "No llegó el producto (paquetes)"
+        incidencia = "No llegó el producto"
     if piezas_faltantes > 0:
-        incidencia = "Llegó producto (paquetes) con piezas faltantes"
+        incidencia = "Llegó producto con piezas faltantes"
     if producto['razon'] == "Defectuoso":
         incidencia = "Llegó defectuoso"
 
@@ -574,9 +574,9 @@ def insert_producto_problema(producto, db='repl'):
             cursor = connection.cursor(dictionary=True)
             # Consulta SQL para insertar datos
             insert_query = """
-            INSERT INTO rintin_auditoria_productos_incidencias 
-            (order_id, product_id, nombre_producto, sku, cantidad_sistema, cantidad_nueva, piezas_faltantes, defectuoso, incidencia, estado, seller_id) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO rintin_product_incidents_audit 
+                    (order_id, product_id, product_name, sku, system_quantity, new_quantity, missing_pieces, defective, incident_type, status, msg, seller_id) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
 
             # Datos a insertar
@@ -591,6 +591,7 @@ def insert_producto_problema(producto, db='repl'):
                 defectuoso, 
                 incidencia, 
                 "pending",
+                msg,
                 producto.get('seller_id', None)  # Puede ser NULL si no hay seller_id
             )
 
@@ -624,8 +625,8 @@ def guardar_productos_extra(productos, idPedido, sellerId, db='repl'):
 
             # Consulta SQL para insertar productos extra
             insert_query = """
-            INSERT INTO rintin_auditorio_productos_extra (order_id, codigo_producto, seller_id, unidad, cantidad) 
-            VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO rintin_product_extra_audit (order_id, product_code, seller_id, unit, quantity) 
+                    VALUES (%s, %s, %s, %s, %s)
             """
 
             # Insertar cada producto extra en la base de datos
@@ -677,7 +678,7 @@ def get_order_issues(order_id, db='repl') -> dict:
                 seller_id,
                 created_at,
                 updated_at
-            FROM wordpress.rintin_auditoria_productos_incidencias
+            FROM wordpress.rintin_product_incidents_audit
             WHERE order_id = %s;
         """
 

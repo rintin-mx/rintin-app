@@ -16,9 +16,10 @@ from st_mui_table import st_mui_table
 from fpdf import FPDF
 import base64
 from integration.endpoint_whapi import send_post_request_to_api
+from integration.slack import send_slack_notification
 
 
-noAuditoriaOpt = ['No llego', 'Defectuoso']
+noAuditoriaOpt = ['No llego', 'Incompleto' , 'Defectuoso']
 
 async def update_status_wordpress(order_id, order_status):
     result = await endpoint_update_status_by_order_id(order_id, order_status)
@@ -127,25 +128,11 @@ def UIDetallePedido(data_deta,data_issues,idPedido):
 
         with col4:
             cantidad_pickeada = st.number_input(f"Auditado", key=f"cantidad_{i}", value=0,min_value=0, max_value=int(pedido.Cantidad))
-            faltan_piezas = st.checkbox(
-                "Faltan piezas", 
-                key=f"faltan_piezas_{i}"
-            )
+           
             piezas_faltantes = 0
-            if faltan_piezas:
-                piezas_faltantes = st.number_input(
-                    "Ingrese piezas faltantes", 
-                    key=f"piezas_faltantes_{i}", 
-                    value=0, 
-                    min_value=0, 
-                    max_value=10,
-                    placeholder="Ingrese piezas faltantes"
-                )
+           
         with col5:
-            if faltan_piezas:
-                estado = 'NO OK'
-                st.error('Faltan piezas - NO OK')
-            elif cantidad_pickeada == int(pedido.Cantidad):
+            if cantidad_pickeada == int(pedido.Cantidad):
                 estado = 'OK'
                 st.success(estado)
             elif cantidad_pickeada > int(pedido.Cantidad):
@@ -161,7 +148,7 @@ def UIDetallePedido(data_deta,data_issues,idPedido):
             # Mostrar "Razón no auditoría" solo si:
             # - La cantidad pickeada es menor a la cantidad pedida
             # - NO se ha marcado "Faltan piezas" mientras la cantidad pickeada es completa
-            if cantidad_pickeada < int(pedido.Cantidad) or (faltan_piezas and cantidad_pickeada < int(pedido.Cantidad)):
+            if cantidad_pickeada < int(pedido.Cantidad) or (cantidad_pickeada < int(pedido.Cantidad)):
                 razon = st.selectbox(
                     'Razón no auditoría', 
                     options=noAuditoriaOpt, 
@@ -169,6 +156,9 @@ def UIDetallePedido(data_deta,data_issues,idPedido):
                 )
                 if razon == 'Defectuoso':
                     defectuoso = st.text_input('Describa defecto', key=f"defecto_{pedido.product_id}")
+
+                if razon == 'Incompleto':
+                    piezas_faltantes = st.text_input("Ingrese piezas que llegaron",key=f"piezas_faltantes_{i}")
 
 
         estados.append(estado)
@@ -182,7 +172,7 @@ def UIDetallePedido(data_deta,data_issues,idPedido):
                         "seller_id":pedido.seller_id,
                         "razon": razon, 
                         "defectuoso": defectuoso,
-                        "faltan_piezas": faltan_piezas,
+                        "faltan_piezas": razon == 'Defectuoso',
                         "piezas_faltantes": piezas_faltantes,
                         "pedido": pedido
                         })
@@ -283,6 +273,17 @@ def UIDetallePedido(data_deta,data_issues,idPedido):
                 
                 banner_status='agrupar-pedidos'
                 r = asyncio.run(update_status_wordpress(idPedido, banner_status))
+
+                if not st.session_state["extra_productos"]:
+                    st.error("⚠️ No hay productos extra para guardar.")
+                else:
+                    mensaje_seller = generar_mensaje_seller({'order_id': idPedido}, st.session_state["extra_productos"])
+                    # print(mensaje_seller)
+                    # st.error(mensaje_seller)
+                    guardar_productos_extra(st.session_state["extra_productos"], idPedido, sellerId)
+                    st.session_state["extra_productos"] = []  # Limpiar después de guardar
+
+
             st.session_state.current_view = 'finalProceso'
             st.session_state.current_status = banner_text
             st.rerun()
@@ -296,18 +297,25 @@ def UIDetallePedido(data_deta,data_issues,idPedido):
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
                         #lineasProblemas.append(orderMsjString(objeto, banner_status))
-                        insert_producto_problema(objeto)
+                        mensaje_seller = generar_mensaje_seller(objeto, st.session_state["extra_productos"])
+                        insert_producto_problema(objeto, mensaje_seller)
                         wa_group_id = get_wa_group_id(sellerId)
-                        mensaje_seller = generar_mensaje_seller(objeto)
+                        
+                        # print(objeto)
+                        # print(mensaje_seller)
+                        # st.error(objeto)
+                        # st.error(mensaje_seller)
                         if wa_group_id is not 0:
                             send_post_request_to_api(wa_group_id,mensaje_seller)
                         asyncio.run(update_order_note__wordpress(idPedido,  generar_mensaje_wordpress(objeto)))
+
+                        send_slack_notification('auditoria', mensaje_seller)
 
                 #if len(lineasProblemas) > 0:
                 #    order_notes = "\n".join(lineasProblemas)
                 #    with st.spinner(f'Actualizano las notas del pedido para auditoria  en las bodegas CDMX'):
                 #        asyncio.run(update_order_note__wordpress(idPedido, order_notes))
-                # OJO QUITAR
+                
                 r = asyncio.run(update_status_wordpress(idPedido, banner_status))
 
                 if not st.session_state["extra_productos"]:
@@ -466,81 +474,213 @@ def create_download_link(val, filename):
     b64 = base64.b64encode(val) 
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Descargar PDF</a>'
 
-def generar_mensaje_wordpress(objeto):
-
-    incidencia = "Sin incidencia"
-    piezas_faltantes = int(objeto['piezas_faltantes']) if 'piezas_faltantes' in objeto else 0
-    defectuoso = objeto['defectuoso'] if 'defectuoso' in objeto and objeto['defectuoso'] else None
-
-    if objeto['cantidad_nueva'] < objeto['cantidad_sistema']:
-        incidencia = "No llegó el producto (paquetes)"
-    if piezas_faltantes > 0:
-        incidencia = "Llegó objeto (paquetes) con piezas faltantes"
-    if objeto['razon'] == "Defectuoso":
-        incidencia = "Llegó defectuoso"
-
-    mensaje = f"""
-    Producto: {objeto.get('nombre_producto', 'Desconocido')} - SKU: {objeto.get('sku', 'Desconocido')}
-    Se auditó {objeto.get('cantidad_nueva', 0)} de {objeto.get('cantidad_sistema', 0)}
-    Razón de diferencia: {incidencia}
+def generar_mensaje_wordpress(objeto, extra=None):
     """
-
-    # Si el producto es defectuoso, agregar descripción
-    if objeto.get('razon') == "Defectuoso" and objeto.get('defectuoso'):
-        mensaje += f"\n    Descripción del defecto: {objeto['defectuoso']}"
-
-    # Si hay piezas faltantes, agregar la cantidad
-    if objeto.get('faltan_piezas', False) and objeto.get('piezas_faltantes', 0) > 0:
-        mensaje += f"\n    Se recibieron solo {objeto['piezas_faltantes']} piezas."
-
-    return mensaje.strip()  # Elimina espacios extra al inicio y final
-
-def generar_mensaje_seller(producto):
-    """
-    Genera un mensaje para el seller basado en la incidencia y si hay productos extra.
-
-    :param producto: Diccionario con los datos del pedido y el producto afectado.
-    :param link_cambio: Link para que el seller acepte el cambio.
+    Genera un mensaje para WordPress basado en la incidencia del pedido y productos extra.
+    
+    :param objeto: Diccionario con los datos del pedido y el producto afectado.
+    :param extra: Lista de productos extra o None si no hay extras.
     :return: Mensaje formateado.
     """
-
-    # Calcular la incidencia
-    incidencia = "Sin incidencia"
-    piezas_faltantes = int(producto['piezas_faltantes']) if 'piezas_faltantes' in producto else 0
-    defectuoso = producto['defectuoso'] if 'defectuoso' in producto and producto['defectuoso'] else None
-
-    if producto['cantidad_nueva'] < producto['cantidad_sistema']:
-        incidencia = "No llegó el producto (paquetes)"
-    if piezas_faltantes > 0:
-        incidencia = "Llegó producto (paquetes) con piezas faltantes"
-    if producto['razon'] == "Defectuoso":
-        incidencia = "Llegó defectuoso"
-
-    # Generar el mensaje según el tipo de incidencia y si hay producto extra
-    mensaje = f"Tuvimos una incidencia en el pedido: {producto['order_id']}\n"
-
-    if incidencia != "Sin incidencia" and not producto.get('producto_extra'):
-        # Caso 1: Incidencia sin producto extra
-        mensaje += (f"Con el producto {producto['nombre_producto']} "
-                    f" {incidencia} {defectuoso or ''} con {producto['cantidad_nueva']} {producto.get('unidad', 'Unidad')}.\n")
-    elif incidencia != "Sin incidencia" and producto.get('producto_extra'):
-        # Caso 2: Incidencia con producto extra  
-        mensaje += (f"Con el producto {producto['nombre_producto']} "
-                    f" {incidencia} {defectuoso or ''}.\n"
-                    f"Y recibimos el producto extra: {producto['producto_extra']} - {producto.get('cantidad_extra', 0)} {producto.get('unidad_extra', 'Unidad')}.\n")
-    elif producto.get('producto_extra'):
-        # Caso 3: Solo producto extra sin incidencia
-        mensaje += (f"Recibimos el producto extra: {producto['producto_extra']} - {producto.get('cantidad_extra', 0)} {producto.get('unidad_extra', 'Unidad')}.\n")
-
-    # Agregar el link al mensaje
-    mensaje += f"Necesitamos que lo revises aquí:\n https://mitienda.rintin.mx/order/{producto['order_id']}"
+    # Validar que objeto sea un diccionario
+    if not isinstance(objeto, dict):
+        raise TypeError("El parámetro 'objeto' debe ser un diccionario")
     
-
+    # Validar que extra sea None o una lista
+    if extra is not None and not isinstance(extra, list):
+        raise TypeError("El parámetro 'extra' debe ser una lista o None")
+    
+    # Extraer valores con manejo seguro de tipos
+    cantidad_sistema = int(objeto.get('cantidad_sistema', 0))
+    cantidad_nueva = int(objeto.get('cantidad_nueva', 0))
+    piezas_faltantes = int(objeto.get('piezas_faltantes', 0))
+    razon = objeto.get('razon', '')
+    defectuoso = objeto.get('defectuoso', '')
+    nombre_producto = objeto.get('nombre_producto', 'Desconocido')
+    sku = objeto.get('sku', 'Desconocido')
+    unidad = objeto.get('unidad', 'paquete')
+    unidad_plural = unidad + "s" if not unidad.endswith('s') else unidad
+    
+    # Determinar el tipo de incidencia
+    incidencia = "Sin incidencia"
+    
+    if razon == "No llego":
+        if cantidad_sistema == 1:
+            incidencia = f"No llegó el {unidad}"
+        else:
+            if cantidad_nueva == 0:
+                incidencia = f"No llegó ningún {unidad}"
+            else:
+                incidencia = f"Llegaron {cantidad_nueva} de {cantidad_sistema} {unidad_plural}"
+    
+    elif razon == "Incompleto":
+        if cantidad_sistema == 1:
+            if cantidad_nueva == 0:
+                incidencia = f"No llegó el {unidad} y se recibieron {piezas_faltantes} unidades"
+            else:
+                incidencia = f"Llegó el {unidad} incompleto con {piezas_faltantes} unidades"
+        else:
+            if cantidad_nueva == 0:
+                incidencia = f"No llegó ningún {unidad} y se recibieron {piezas_faltantes} unidades"
+            elif cantidad_nueva == 1:
+                incidencia = f"Llegó 1 {unidad} y se recibieron {piezas_faltantes} unidades"
+            else:
+                incidencia = f"Llegaron {cantidad_nueva} {unidad_plural} y se recibieron {piezas_faltantes} unidades"
+    
+    elif razon == "Defectuoso":
+        if cantidad_nueva == 1:
+            incidencia = f"Llegó {cantidad_nueva} unidad con defecto"
+        else:
+            incidencia = f"Llegaron {cantidad_nueva} unidades con defecto"
+    
+    # Construir el mensaje principal
+    mensaje = f"""
+    Producto: {nombre_producto} - SKU: {sku}
+    Se auditó {cantidad_nueva} de {cantidad_sistema}
+    Razón de diferencia: {incidencia}
+    """
+    
+    # Agregar descripción del defecto si aplica
+    if razon == "Defectuoso" and defectuoso:
+        mensaje += f"\n    Descripción del defecto: {defectuoso}"
+    
+    # Agregar información de piezas faltantes si aplica
+    if razon == "Incompleto" and piezas_faltantes > 0:
+        mensaje += f"\n    Se recibieron solo {piezas_faltantes} piezas."
+    
+    # Agregar información de productos extra si existen
+    if extra:
+        mensaje += "\n    Productos extra recibidos:"
+        for producto_extra in extra:
+            if not isinstance(producto_extra, dict):
+                continue  # Saltar elementos que no sean diccionarios
+            
+            codigo = producto_extra.get('codigo_extra_producto', 'Sin código')
+            cantidad = producto_extra.get('cantidad_extra_producto', 1)
+            unidad_extra = producto_extra.get('unidad_extra_producto', 'Unidad')
+            
+            mensaje += f"\n    - {codigo}: {cantidad} {unidad_extra}"
+    
     return mensaje.strip()
 
-
-
+def generar_mensaje_seller(producto, extra=None):
+    """
+    Genera un mensaje para el seller basado en la incidencia y si hay productos extra.
+    
+    :param producto: Diccionario con los datos del pedido y el producto afectado.
+    :param extra: Lista de productos extra o None si no hay extras.
+    :return: Mensaje formateado.
+    """
+    # Validar que producto sea un diccionario y contenga order_id
+    if not isinstance(producto, dict):
+        raise TypeError("El parámetro 'producto' debe ser un diccionario")
+    
+    if 'order_id' not in producto:
+        raise ValueError("El diccionario 'producto' debe contener la clave 'order_id'")
+    
+    # Validar que extra sea None o una lista
+    if extra is not None and not isinstance(extra, list):
+        raise TypeError("El parámetro 'extra' debe ser una lista o None")
+    
+    # Iniciar mensaje con el order_id
+    mensaje = f"Tuvimos una incidencia en el pedido: {producto['order_id']}\n"
+    
+    # Caso 1: Solo hay productos extras sin otra incidencia
+    print(extra)
+    if (extra and (producto.get('razon') == "Sin incidencia" or not producto.get('razon'))):
+        if extra:
+            # Agregar cada producto extra de la lista
+            for producto_extra in extra:
+                print(producto_extra)
+                if not isinstance(producto_extra, dict):
+                    continue  # Saltar elementos que no sean diccionarios
+                
+                # Usar los campos correctos para productos extra
+                nombre = producto_extra.get('codigo_extra_producto', 'Sin código')
+                cantidad = producto_extra.get('cantidad_extra_producto', 1)
+                unidad = producto_extra.get('unidad_extra_producto', 'Unidad')
+                
+                mensaje += f"Recibimos el producto extra: {nombre} - {cantidad} {unidad}\n"
+    
+    # Caso 2: Hay otra incidencia (posiblemente además de productos extra)
+    else:
+        razon = producto.get('razon', '')
+        nombre_producto = producto.get('nombre_producto', 'producto no especificado')
+        cantidad_sistema = int(producto.get('cantidad_sistema', 0))
+        cantidad_nueva = int(producto.get('cantidad_nueva', 0))
+        unidad = producto.get('unidad', 'paquete')
+        
+        # Pluralizar unidad si es necesario
+        unidad_plural = unidad + "s" if not unidad.endswith('s') else unidad
+        
+        if razon == "No llego":
+            # Caso: No llegó el producto
+            if cantidad_sistema == 1:
+                mensaje += f"Se pide {cantidad_sistema} {unidad} del {nombre_producto}\n"
+                mensaje += "No llegó el paquete\n"
+            else:
+                mensaje += f"Se piden {cantidad_sistema} {unidad_plural} del {nombre_producto}\n"
+                
+                if cantidad_nueva == 0:
+                    mensaje += "No llegó ningún paquete\n"
+                else:
+                    mensaje += f"Llegaron {cantidad_nueva} de {cantidad_sistema} paquetes\n"
+        
+        elif razon == "Incompleto":
+            # Caso: Producto incompleto
+            if cantidad_sistema == 1:
+                mensaje += f"Se pide {cantidad_sistema} {unidad} del {nombre_producto}\n"
+            else:
+                mensaje += f"Se piden {cantidad_sistema} {unidad_plural} del {nombre_producto}\n"
             
+            piezas_recibidas = int(producto.get('piezas_faltantes', 0))
+            
+            if cantidad_sistema == 1:
+                if cantidad_nueva == 0:
+                    mensaje += f"No llegó el {unidad} y llegaron {piezas_recibidas} unidades\n"
+                else:
+                    mensaje += f"Llegó el {unidad} incompleto con {piezas_recibidas} unidades\n"
+            else:
+                if cantidad_nueva == 0:
+                    mensaje += f"No llegó ningún {unidad} y llegaron {piezas_recibidas} unidades\n"
+                elif cantidad_nueva == 1:
+                    mensaje += f"Llegó 1 {unidad} y llegaron {piezas_recibidas} unidades\n"
+                else:
+                    mensaje += f"Llegaron {cantidad_nueva} {unidad_plural} y llegaron {piezas_recibidas} unidades\n"
+        
+        elif razon == "Defectuoso":
+            # Caso: Producto defectuoso
+            mensaje += f"Con el producto {nombre_producto}\n"
+            
+            if cantidad_sistema == 1:
+                mensaje += f"Se pide {cantidad_sistema} {unidad}\n"
+            else:
+                mensaje += f"Se piden {cantidad_sistema} {unidad_plural}\n"
+            
+            tipo_defecto = producto.get('defectuoso', 'sin especificar')
 
+          
+            if cantidad_nueva == 0:
+                mensaje += f"Llegó el {unidad} con el siguiente defecto: {tipo_defecto}\n"
+            elif cantidad_nueva == 1:
+                mensaje += f"Llegó {cantidad_nueva} {unidad} con el siguiente defecto: {tipo_defecto}\n"
+            else:
+                mensaje += f"Llegaron {cantidad_nueva} {unidad_plural} con el siguiente defecto: {tipo_defecto}\n"
+        
+        # Agregar información de productos extra si existen y hay otra incidencia
+        if extra:
+            for producto_extra in extra:
+                if not isinstance(producto_extra, dict):
+                    continue  # Saltar elementos que no sean diccionarios
+                
+                # Usar los campos correctos para productos extra
+                nombre = producto_extra.get('codigo_extra_producto', 'Sin código')
+                cantidad = producto_extra.get('cantidad_extra_producto', 1)
+                unidad = producto_extra.get('unidad_extra_producto', 'Unidad')
+                
+                mensaje += f"Y recibimos el producto extra: {nombre} - {cantidad} {unidad}\n"
 
+    mensaje += f"Necesitamos que lo revises aquí:\n https://mitienda.rintin.mx/order/{producto['order_id']}"
+    
+    return mensaje.strip()
 
