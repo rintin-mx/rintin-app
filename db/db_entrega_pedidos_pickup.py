@@ -221,7 +221,11 @@ with orders as (
         order_items.order_item_name,
         line_qty,
         sku,
-        replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
+        CASE
+            WHEN REPLACE(wp_posts.guid, 'http://dev.', 'https://') LIKE '%://rintin.mx/uploads/%' 
+            THEN REPLACE(REPLACE(wp_posts.guid, 'http://dev.', 'https://'), '://rintin.mx/uploads/', '://rintin.mx/wp-content/uploads/')
+            ELSE REPLACE(wp_posts.guid, 'http://dev.', 'https://')
+        END as img_url,
         order_items.order_id,
         case 
             when order_item_type = 'line_item' then line_subtotal / line_qty

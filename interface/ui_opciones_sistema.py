@@ -26,7 +26,7 @@ def opcionSistema():
     st.subheader("Lista de Opciones de Sistema")
     lista_roles = obtener_todos_los_opciones_sistema()
     if lista_roles:
-        df_opciones = pd.DataFrame(lista_roles, columns=['ops_id', 'nombre_opcion', 'descripcion'])
+        df_opciones = pd.DataFrame(lista_roles, columns=['ops_id', 'nombre_opcion', 'descripcion', 'updated_at'])
         st.dataframe(df_opciones)  # Mostrar los roles en un DataFrame
 
         # Selección de rol para editar o eliminar

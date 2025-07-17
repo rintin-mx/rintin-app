@@ -5,7 +5,7 @@ from db.db_opciones_sistema import obtener_todos_los_opciones_sistema
 
 def opcionSistema():
     lista_roles = obtener_todos_los_opciones_sistema()
-    df_opciones = pd.DataFrame(lista_roles, columns=['ops_id', 'nombre_opcion', 'descripcion'])
+    df_opciones = pd.DataFrame(lista_roles, columns=['ops_id', 'nombre_opcion', 'descripcion','updated_at'])
     df_opciones['opsCompuesta'] = df_opciones['ops_id'].astype(str) + '-' + df_opciones['nombre_opcion']
     return df_opciones
 
@@ -33,7 +33,7 @@ def permisos():
     st.subheader("Lista de Permisos")
     lista_permisos = obtener_todos_los_permisos()
     if lista_permisos:
-        df_permisos = pd.DataFrame(lista_permisos, columns=['permiso_id', 'ops_id_fk', 'nombre_permiso', 'descripcion'])
+        df_permisos = pd.DataFrame(lista_permisos, columns=['permiso_id', 'ops_id_fk', 'nombre_permiso', 'descripcion', 'updated_at'])
         st.dataframe(df_permisos)  # Mostrar los permisos en un DataFrame
         df_permisos['opsCompuesta'] = df_permisos['permiso_id'].astype(str) + '-' + df_permisos['nombre_permiso']
 

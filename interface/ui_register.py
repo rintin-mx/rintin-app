@@ -31,7 +31,7 @@ def UIRegister():
     password = st.text_input('Password',type='password', key='passwordRegistro')
     username = st.text_input("Ingresa tu nombre de usuario")
     lista_roles = obtener_todos_los_roles()
-    df_rol = pd.DataFrame(lista_roles, columns=['rol_id','nombre_rol', 'descripcion'])
+    df_rol = pd.DataFrame(lista_roles, columns=['rol_id','nombre_rol', 'descripcion','updated_at'])
     df_rol['opsCompuesta'] = df_rol['rol_id'].astype(str) + '-' + df_rol['nombre_rol']
     rol_id_fk=st.selectbox("Seleccione una opción del rol", df_rol['opsCompuesta'], key='rol_id_fk')
 

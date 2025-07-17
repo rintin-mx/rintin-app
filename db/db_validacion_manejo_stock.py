@@ -159,7 +159,11 @@ select
     product_meta.post_title,
     product_meta.post_status,
     sku,
-    replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
+    CASE
+        WHEN REPLACE(wp_posts.guid, 'http://dev.', 'https://') LIKE '%://rintin.mx/uploads/%' 
+        THEN REPLACE(REPLACE(wp_posts.guid, 'http://dev.', 'https://'), '://rintin.mx/uploads/', '://rintin.mx/wp-content/uploads/')
+        ELSE REPLACE(wp_posts.guid, 'http://dev.', 'https://')
+    END as img_url,
     units_per_pack,
     stock,
     cost

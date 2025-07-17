@@ -26,7 +26,7 @@ def users():
         st.write("Has seleccionado:", selected_user.split('-')[1])
         lista_roles = obtener_todos_los_roles()
         if lista_roles:
-            df_roles = pd.DataFrame(lista_roles, columns=['id', 'nombre_rol', 'descripcion'])
+            df_roles = pd.DataFrame(lista_roles, columns=['id', 'nombre_rol', 'descripcion','updated_at'])
             df_roles['opsCompuesta'] = df_roles['id'].astype(str) + '-' + df_roles['nombre_rol']
             # Selección de permiso para editar o eliminar
             selected_role_id = st.selectbox("Seleccione un rol para editar o eliminar", df_roles['opsCompuesta'])

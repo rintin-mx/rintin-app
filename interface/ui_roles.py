@@ -23,7 +23,7 @@ def roles():
     st.subheader("Lista de Roles")
     lista_roles = obtener_todos_los_roles()
     if lista_roles:
-        df_roles = pd.DataFrame(lista_roles, columns=['id', 'nombre_rol', 'descripcion'])
+        df_roles = pd.DataFrame(lista_roles, columns=['id', 'nombre_rol', 'descripcion','updated_at'])
         st.dataframe(df_roles)  # Mostrar los roles en un DataFrame
 
         # Selección de rol para editar o eliminar

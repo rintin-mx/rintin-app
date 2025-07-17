@@ -31,11 +31,11 @@ def rolespermisos():
         if 'tabla' not in st.session_state:
             st.session_state.tabla = pd.DataFrame(columns=['Rol', 'Permiso'])
         lista_roles = obtener_todos_los_roles()
-        df_rol = pd.DataFrame(lista_roles, columns=['rol_id','nombre_rol', 'descripcion'])
+        df_rol = pd.DataFrame(lista_roles, columns=['rol_id','nombre_rol', 'descripcion','updated_at'])
         df_rol['opsCompuesta'] = df_rol['rol_id'].astype(str) + '-' + df_rol['nombre_rol']
         rol_id_fk=st.selectbox("Seleccione una opción del rol", df_rol['opsCompuesta'], key='rol_id_fk_opsCompuesta')
         lista_permisos = obtener_todos_los_permisos()
-        df_permiso = pd.DataFrame(lista_permisos, columns=['permiso_id', 'ops_id_fk','nombre_permiso', 'descripcion'])
+        df_permiso = pd.DataFrame(lista_permisos, columns=['permiso_id', 'ops_id_fk','nombre_permiso', 'descripcion','updated_at'])
         df_permiso['opsCompuestaPermiso'] = df_permiso['permiso_id'].astype(str) + '-' + df_permiso['nombre_permiso']
         permiso_id_fk=st.selectbox("Seleccione una opción de los permisos", df_permiso['opsCompuestaPermiso'],key='permiso_id_fk')
         # Botón para añadir una fila

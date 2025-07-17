@@ -306,7 +306,11 @@ def get_order_auditoria(id,db='repl') -> dict:
                     line_qty,
                     sku,
                     units_per_pack,
-                    replace(wp_posts.guid, 'http://dev.', 'https://') as img_url,
+                    CASE
+                        WHEN REPLACE(wp_posts.guid, 'http://dev.', 'https://') LIKE '%://rintin.mx/uploads/%' 
+                        THEN REPLACE(REPLACE(wp_posts.guid, 'http://dev.', 'https://'), '://rintin.mx/uploads/', '://rintin.mx/wp-content/uploads/')
+                        ELSE REPLACE(wp_posts.guid, 'http://dev.', 'https://')
+                    END as img_url,
                     bodega,
                     order_items.order_item_id
                 from 

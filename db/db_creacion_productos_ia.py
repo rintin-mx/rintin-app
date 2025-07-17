@@ -43,16 +43,20 @@ def get_urls(date, db='repl'):
         # Crear un cursor para ejecutar consultas
         cursor = conexion.cursor(dictionary=True)
         image_urls = f"""
-        select
-            guid as url
-        from
-            wp_posts
-        where
-            post_type = 'attachment'
-            and post_mime_type like '%image%'
-            and date(post_date) = '{date}'
-        order by
-            post_date desc
+            select
+                CASE
+                    WHEN guid LIKE '%rintin.mx/uploads/%' 
+                    THEN REPLACE(guid, 'rintin.mx/uploads/', 'rintin.mx/wp-content/uploads/')
+                    ELSE guid
+                END as url
+            from
+                wp_posts
+            where
+                post_type = 'attachment'
+                and post_mime_type like '%image%'
+                and date(post_date) = '{date}'
+            order by
+                post_date desc
         """
         
         # Ejecutar la primera consulta
