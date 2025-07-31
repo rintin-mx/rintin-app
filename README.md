@@ -3,7 +3,7 @@
 ## Backend migration
 
 A minimal FastAPI backend has been added in `backend/` to start moving logic away from Streamlit. It exposes login and register endpoints that reuse the existing database helpers.
-Additional endpoints now allow listing users, retrieving permissions by email and fetching available roles.
+Additional endpoints now allow listing users, retrieving permissions and roles by email, fetching available roles, and enumerating all system permissions.
 
 Run it with:
 
@@ -19,4 +19,6 @@ This will start an HTTP server on port 8000 by default.
 * `POST /register` – create a new user
 * `GET /users` – list users
 * `GET /users/{email}/permissions` – permissions for a user
+* `GET /users/{email}/roles` – roles for a user
 * `GET /roles` – list roles
+* `GET /permissions` – list permissions

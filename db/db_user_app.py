@@ -171,3 +171,30 @@ def get_all_user():
         if connection.is_connected():
             cursor.close()
             connection.close()
+
+
+def get_user_roles_by_email(email):
+    db = 'repl'
+    config = config_db(db)
+    start_time = time.time()
+    connection = mysql.connector.connect(**config)
+    try:
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+
+            sql = """
+            SELECT r.rol_id, r.nombre_rol
+                FROM userApp u
+                JOIN usuarios_roles ur ON u.id = ur.usuario_id_fk
+                JOIN roles r ON ur.rol_id_fk = r.rol_id
+                WHERE u.email = %s;
+
+            """
+            cursor.execute(sql, (email,))
+            result = cursor.fetchall()
+            return result
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
