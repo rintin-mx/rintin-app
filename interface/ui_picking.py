@@ -8,7 +8,7 @@ import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
-from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
+from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note, update_order_status
 from db.db_productos_validados import insert_productos_validados
 from db.db_user_interaction_events import event_instert
 from db.db_auditoria import get_product_changes
@@ -131,6 +131,11 @@ def UIDetallePedido(data_deta,idPedido):
     cantidad_pickeada =0
 
     df = pd.DataFrame(data_deta)
+    # Validar si el DataFrame tiene datos y la columna necesaria
+    if df.empty or 'order_item_id' not in df.columns:
+        st.warning('No se encontraron productos asociados a esta orden')
+        return
+
     objArry=[]
 
     # Extrae los ids de las ordenes para buscar cambios en productos
@@ -245,10 +250,30 @@ def UIDetallePedido(data_deta,idPedido):
                         lineasTest.append(linea)
                 
                 order_notes = "\n".join(lineasTest)
-                order_status='stock-2'
+                order_status='wc-stock-2'
                 #idPedido
                 #para test '281660'
-                asyncio.run(update_status_wordpress(idPedido, order_status))
+                # Construir order_items para productos con validación
+                order_items = []
+                for objeto in objArry:
+                    if objeto["estado"] == valor_estado_esperado:
+                        item = {
+                            "product_id": objeto.get("producto_id", 0),
+                            "name": objeto.get("nombre_producto", ""),
+                            "sku": objeto.get("sku", ""),
+                            "pick_amount": objeto.get("cantidad_nueva", 0),
+                            "original_quantity": objeto.get("cantidad_sistema", 0),
+                            "product_code": "",
+                            "product_price": 0,
+                            "product_difference": f"Pickeado {objeto.get('cantidad_nueva', 0)} de {objeto.get('cantidad_sistema', 0)}"
+                        }
+                        order_items.append(item)
+                
+                if order_items:
+                    asyncio.run(update_order_status(idPedido, "wc-stock-2", order_items))
+                else:
+                    st.warning("No se encontraron productos para enviar a validación")
+
                 st.snow()
             with st.spinner(f'Actualizano las notas del pedido de {st.session_state.nombreSeller}'):
                 #idPedido

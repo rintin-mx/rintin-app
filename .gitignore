@@ -14,3 +14,4 @@ rintin-16fee-firebase-adminsdk-zcrog-536fdf1dfb.json
 # Ignora el ambiente de desarrollo
 .env
 __pycache__
+.idea

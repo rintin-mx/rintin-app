@@ -7,7 +7,7 @@ from integration.insert_to_S3 import insertImage
 import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
-from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
+from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note, update_order_status
 from db.db_user_interaction_events import event_instert
 from datetime import datetime
 from db.db_productos_validados import insert_productos_validados
@@ -134,12 +134,31 @@ def UIpicking_detalle(order_info, order_id, orden_padre):
                 i=0
                 for objeto in objArry:
                     if objeto['estado'] == 'NO OK':
-                        lineasProblemas.append(orderMsjString(objeto, 'stock-2'))
+                        lineasProblemas.append(orderMsjString(objeto, 'wc-stock-2'))
                 if len(lineasProblemas) > 0:
                     order_notes = "\n".join(lineasProblemas)
                     with st.spinner(f'Actualizano las notas del pedido para auditoria  en las bodegas CDMX'):
                         asyncio.run(update_order_note__wordpress(order_id, order_notes))
-                r = asyncio.run(update_status_wordpress(order_id, 'stock-2'))
+
+                    # Construir order_items para la actualización de estado
+                    order_items = []
+                    for objeto in objArry:
+                        if objeto['estado'] == 'NO OK':
+                            item = {
+                                "product_id": objeto.get('producto_id', 0),
+                                "name": objeto.get('nombre_producto', ''),
+                                "sku": objeto.get('sku', ''),
+                                "pick_amount": objeto.get('cantidad_nueva', 0),
+                                "original_quantity": objeto.get('cantidad_sistema', 0),
+                                "product_code": "",
+                                "product_price": 0,
+                                "product_difference": "Producto con faltantes en picking"
+                            }
+                            order_items.append(item)
+                if order_items:  # Solo actualizar si hay items con faltantes
+                    r = asyncio.run(update_order_status(order_id, 'wc-stock-2', order_items))
+                else:
+                    st.warning("No se encontraron productos con faltantes para actualizar")
                 if st.session_state.useremail is not None:
                     EventName,EventAction,EventUser='picking_pickups','final_proceso_picking_pickups Se envio el pedido a "Recepción"',st.session_state.useremail
                     event_instert(EventName,EventAction,EventUser, order_id)

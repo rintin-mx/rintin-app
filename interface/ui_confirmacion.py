@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 import streamlit_shadcn_ui as ui
 import asyncio
-from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note
+from integration.endpoint_wordpress import endpoint_update_status_by_order_id, endpoint_write_order_note, update_order_status
 from db.db_productos_validados import insert_productos_validados
 from datetime import datetime
 from streamlit_searchbox import st_searchbox
@@ -200,11 +200,28 @@ def UIDetallePedido(data_deta,idPedido):
                     with st.spinner(f'Actualizano las notas del pedido para confirmación de seller  en las bodegas CDMX'):
                         asyncio.run(update_order_note__wordpress(idPedido, order_notes))
                 
-                # if (Faltante no reemplazo/Faltante reemplazo)
-                if(faltante_no_reemplazo):
+                # Construir order_items para productos con faltantes
+                order_items = []
+                for objeto in objArry:
+                    if objeto['estado'] == 'NO OK':
+                        item = {
+                            "product_id": objeto['producto_id'],
+                            "name": objeto['nombre_producto'],
+                            "sku": objeto['sku'],
+                            "pick_amount": objeto['cantidad_nueva'],
+                            "original_quantity": objeto['cantidad_sistema'],
+                            "product_code": objeto.get('producto_nuevo_sku', ''),
+                            "product_price": 0,
+                            "product_difference": f"Faltante de {objeto['cantidad_sistema'] - objeto['cantidad_nueva']} unidades"
+                        }
+                        order_items.append(item)
+
+                if(faltante_no_reemplazo and order_items):
                     with st.spinner('Actualizando estado de orden a "Validacion stock"'):
-                        r = asyncio.run(update_status_wordpress(idPedido, 'stock-2'))
-                else: 
+                        r = asyncio.run(update_order_status(idPedido, 'wc-stock-2', order_items))
+                elif faltante_no_reemplazo and not order_items:
+                    st.warning("Hay faltantes pero no se pudo construir la información de los productos")
+                else:
                     with st.spinner('Actualizando estado de orden a "Recolectar"'):
                         r = asyncio.run(update_status_wordpress(idPedido, 'recolectar-2'))
                 
